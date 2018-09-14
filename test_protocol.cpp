@@ -36,7 +36,7 @@ void testEncodeDatagram() {
     waggle::DatagramInfo dg;
 
     dg.pluginID = 37;
-    encoder.EncodeDatagram(dg, (const byte *)"some data", 8);
+    encoder.EncodeDatagram(dg, (const byte *)"some data", 9);
 
     printf("datagram ");
     printHex(buffer.Bytes(), buffer.Length());

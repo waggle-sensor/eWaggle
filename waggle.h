@@ -2,7 +2,7 @@ typedef unsigned char byte;
 
 namespace waggle {
 
-byte CRC8Table[256] = {
+const byte CRC8Table[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83,
     0xc2, 0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41,
     0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
@@ -97,23 +97,23 @@ private:
 };
 
 struct SensorgramInfo {
-    int sensorID;
-    int sensorInstance;
-    int parameterID;
-    long timestamp;
+    unsigned int sensorID;
+    unsigned int sensorInstance;
+    unsigned int parameterID;
+    unsigned int timestamp;
 };
 
 struct DatagramInfo {
-    int protocolVersion;
-    int timestamp;
-    int packetSeq;
-    int packetType;
-    int pluginID;
-    int pluginMajorVersion;
-    int pluginMinorVersion;
-    int pluginPatchVersion;
-    int pluginInstance;
-    int pluginRunID;
+    unsigned int protocolVersion;
+    unsigned int timestamp;
+    unsigned int packetSeq;
+    unsigned int packetType;
+    unsigned int pluginID;
+    unsigned int pluginMajorVersion;
+    unsigned int pluginMinorVersion;
+    unsigned int pluginPatchVersion;
+    unsigned int pluginInstance;
+    unsigned int pluginRunID;
 };
 
 class Encoder {
@@ -126,7 +126,8 @@ public:
         writer.Write(data, size);
     }
 
-    void EncodeInt(int size, int x) {
+    template<typename T>
+    void EncodeInt(int size, T x) {
         byte data[size];
 
         for (int i = size - 1; i >= 0; i--) {
@@ -147,9 +148,9 @@ public:
         EncodeBytes(data, size);
     }
 
-    // maybe break this down so
-
     void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
+        unsigned int crc = crc8(body, size);
+
         EncodeInt(1, 0xaa);
         EncodeInt(3, size);
         EncodeInt(1, dg.protocolVersion);
@@ -163,7 +164,7 @@ public:
         EncodeInt(1, dg.pluginInstance);
         EncodeInt(2, dg.pluginRunID);
         EncodeBytes(body, size);
-        EncodeInt(1, crc8(body, size));
+        EncodeInt(1, crc);
         EncodeInt(1, 0x55);
     }
 
