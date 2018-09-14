@@ -51,9 +51,6 @@ void testEncodeDatagram() {
     printf("\n");
 }
 
-// class Plugin {
-// };
-
 int main() {
     testEncodeSensorgram();
     testEncodeDatagram();
