@@ -36,6 +36,14 @@ void testEncodeDatagram() {
     waggle::DatagramInfo dg;
 
     dg.pluginID = 37;
+    dg.pluginInstance = 0;
+    dg.pluginMajorVersion = 0;
+    dg.pluginMinorVersion = 0;
+    dg.pluginPatchVersion = 0;
+    dg.pluginRunID = 0;
+    df.packetSeq = 0;
+    df.packetType = 0;
+    dg.timestamp = 1234;
     encoder.EncodeDatagram(dg, (const byte *)"some data", 9);
 
     printf("datagram ");
