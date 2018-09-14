@@ -101,6 +101,7 @@ struct SensorgramInfo {
     unsigned int sensorInstance;
     unsigned int parameterID;
     unsigned int timestamp;
+    unsigned int dataType;
 };
 
 struct DatagramInfo {
@@ -144,7 +145,7 @@ public:
         EncodeInt(1, s.sensorInstance);
         EncodeInt(1, s.parameterID);
         EncodeInt(4, s.timestamp);
-        EncodeInt(1, 0);
+        EncodeInt(1, s.dataType);
         EncodeBytes(data, size);
     }
 
@@ -173,24 +174,60 @@ private:
     Writer &writer;
 };
 
+// NOTE Could also provide two different types here.
+
+class Plugin {
+public:
+
+    Plugin() : sensorgramBuffer(sensorgramBytes, 1024) {
+        datagramInfo.protocolVersion = 2;
+        datagramInfo.timestamp = 0;
+        datagramInfo.pluginRunID = 0;
+    }
+
+    void SetInstance(int instance) {
+        datagramInfo.pluginInstance = instance;
+    }
+
+    void SetVersion(int major, int minor, int patch) {
+        datagramInfo.pluginMajorVersion = major;
+        datagramInfo.pluginMinorVersion = minor;
+        datagramInfo.pluginPatchVersion = patch;
+    }
+
+    void AddMeasurement(int sid, int sinst, int pid, unsigned long ts, int type, byte *data, int size) {
+        SensorgramInfo sg;
+
+        sg.sensorID = sid;
+        sg.sensorInstance = sinst;
+        sg.parameterID = pid;
+        sg.timestamp = ts;
+        sg.dataType = type;
+
+        Encoder encoder(sensorgramBuffer);
+        encoder.EncodeSensorgram(sg, data, size);
+    }
+
+    // ah, right. publish will publish to another buffer which can be provided.
+    // hence, only a single internal buffer is needed and can be provided.
+    void PublishMeasurements(Buffer &buffer) {
+        Encoder encoder(buffer);
+        encoder.EncodeDatagram(datagramInfo, sensorgramBuffer.Bytes(), sensorgramBuffer.Length());
+
+        // printf("publish: ");
+        // printHex(datagramBuffer.Bytes(), datagramBuffer.Length());
+        // printf("\n");
+    }
+
+    void ClearMeasurements() {
+        sensorgramBuffer.Reset();
+    }
+
+private:
+
+    DatagramInfo datagramInfo;
+    byte sensorgramBytes[1024];
+    Buffer sensorgramBuffer;
 };
 
-
-//
-// plugin.clearMeasurements();
-// plugin.addMeasurement(...);
-// plugin.addMeasurement(...);
-// plugin.publishMeasurements();
-//
-// EncodeInt(1, dg.protocolVersion); // auto
-// EncodeInt(1, dg.timestamp); // maybe auto??
-// EncodeInt(2, dg.pluginID); // one time
-// EncodeInt(4, dg.timestamp);
-// EncodeInt(2, dg.packetSeq);
-// EncodeInt(1, dg.packetType);
-// EncodeInt(2, dg.pluginID); // TODO check the layout again.
-// EncodeInt(1, dg.pluginMajorVersion);
-// EncodeInt(1, dg.pluginMinorVersion);
-// EncodeInt(1, dg.pluginPatchVersion);
-// EncodeInt(1, dg.pluginInstance);
-// EncodeInt(2, dg.pluginRunID);
+};

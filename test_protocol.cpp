@@ -41,8 +41,8 @@ void testEncodeDatagram() {
     dg.pluginMinorVersion = 0;
     dg.pluginPatchVersion = 0;
     dg.pluginRunID = 0;
-    df.packetSeq = 0;
-    df.packetType = 0;
+    dg.packetSeq = 0;
+    dg.packetType = 0;
     dg.timestamp = 1234;
     encoder.EncodeDatagram(dg, (const byte *)"some data", 9);
 
@@ -51,7 +51,22 @@ void testEncodeDatagram() {
     printf("\n");
 }
 
+byte publishBuffer[1024];
+
+void testPlugin() {
+    waggle::Buffer buffer(publishBuffer, 1024);
+    waggle::Plugin plugin;
+
+    plugin.AddMeasurement(1, 0, 0, 0, 0, (byte *)"some data", 9);
+    plugin.PublishMeasurements(buffer);
+
+    printf("publish ");
+    printHex(buffer.Bytes(), buffer.Length());
+    printf("\n");
+}
+
 int main() {
     testEncodeSensorgram();
     testEncodeDatagram();
+    testPlugin();
 }
