@@ -1,6 +1,8 @@
+typedef unsigned char byte;
+
 namespace waggle {
 
-unsigned char CRC8Table[256] = {
+byte CRC8Table[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83,
     0xc2, 0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41,
     0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
@@ -35,8 +37,8 @@ unsigned char CRC8Table[256] = {
     0xb6, 0xe8, 0x0a, 0x54, 0xd7, 0x89, 0x6b, 0x35,
 };
 
-char crc8(const char *data, int size) {
-    char crc = 0;
+byte crc8(const byte *data, int size) {
+    byte crc = 0;
 
     for (int i = 0; i < size; i++) {
         crc = CRC8Table[crc ^ data[i]];
@@ -45,22 +47,24 @@ char crc8(const char *data, int size) {
     return crc;
 }
 
+// Writer Interface
 class Writer {
 public:
 
-    virtual int Write(const char *data, int size) = 0;
+    virtual int Write(const byte *data, int size) = 0;
 
 private:
 };
 
+// Memory Buffer Writer
 class Buffer : public Writer {
 public:
 
-    Buffer(char *b, int c) : buffer(b), capacity(c) {
+    Buffer(byte *b, int c) : buffer(b), capacity(c) {
         Reset();
     }
 
-    int Write(const char *data, int size) {
+    int Write(const byte *data, int size) {
 
         for (int i = 0; i < size; i++) {
             if (length >= capacity) {
@@ -77,7 +81,7 @@ public:
         length = 0;
     }
 
-    const char *Bytes() const {
+    const byte *Bytes() const {
         return buffer;
     }
 
@@ -87,7 +91,7 @@ public:
 
 private:
 
-    char *buffer;
+    byte *buffer;
     int capacity;
     int length;
 };
@@ -118,22 +122,22 @@ public:
     Encoder(Writer &w) : writer(w) {
     }
 
-    void EncodeBytes(const char *data, int size) {
+    void EncodeBytes(const byte *data, int size) {
         writer.Write(data, size);
     }
 
     void EncodeInt(int size, int x) {
-        char data[size];
+        byte data[size];
 
         for (int i = size - 1; i >= 0; i--) {
-            data[i] = (char)(x & 0xff);
+            data[i] = (byte)(x & 0xff);
             x >>= 8;
         }
 
         EncodeBytes(data, size);
     }
 
-    void EncodeSensorgram(const SensorgramInfo &s, const char *data, int size) {
+    void EncodeSensorgram(const SensorgramInfo &s, const byte *data, int size) {
         EncodeInt(2, size);
         EncodeInt(2, s.sensorID);
         EncodeInt(1, s.sensorInstance);
@@ -145,7 +149,7 @@ public:
 
     // maybe break this down so
 
-    void EncodeDatagram(const DatagramInfo &dg, const char *body, int size) {
+    void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
         EncodeInt(1, 0xaa);
         EncodeInt(3, size);
         EncodeInt(1, dg.protocolVersion);
@@ -169,3 +173,23 @@ private:
 };
 
 };
+
+
+//
+// plugin.clearMeasurements();
+// plugin.addMeasurement(...);
+// plugin.addMeasurement(...);
+// plugin.publishMeasurements();
+//
+// EncodeInt(1, dg.protocolVersion); // auto
+// EncodeInt(1, dg.timestamp); // maybe auto??
+// EncodeInt(2, dg.pluginID); // one time
+// EncodeInt(4, dg.timestamp);
+// EncodeInt(2, dg.packetSeq);
+// EncodeInt(1, dg.packetType);
+// EncodeInt(2, dg.pluginID); // TODO check the layout again.
+// EncodeInt(1, dg.pluginMajorVersion);
+// EncodeInt(1, dg.pluginMinorVersion);
+// EncodeInt(1, dg.pluginPatchVersion);
+// EncodeInt(1, dg.pluginInstance);
+// EncodeInt(2, dg.pluginRunID);

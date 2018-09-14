@@ -10,7 +10,10 @@ for line in sys.stdin:
 
     with suppress(AttributeError):
         s = re.match(r'sensorgram (\S+)', line).group(1)
-        pprint(waggle.protocol.unpack_sensorgrams(bytes.fromhex(s)))
+
+        for r in waggle.protocol.unpack_sensorgrams(bytes.fromhex(s)):
+            pprint(r)
+
         print()
 
     with suppress(AttributeError):
