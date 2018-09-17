@@ -20,3 +20,17 @@ for line in sys.stdin:
         s = re.match(r'datagram (\S+)', line).group(1)
         pprint(waggle.protocol.unpack_datagram(bytes.fromhex(s)))
         print()
+
+    with suppress(AttributeError):
+        s = re.match(r'publish (\S+)', line).group(1)
+        msg = waggle.protocol.unpack_datagram(bytes.fromhex(s))
+
+        print('datagram header:')
+
+        pprint(msg)
+        print('sensor data:')
+
+        for r in waggle.protocol.unpack_sensorgrams(msg['body']):
+            pprint(r)
+
+        print()

@@ -1,19 +1,25 @@
 #include "waggle.h"
 #include <cstdio>
 
+using namespace waggle;
+
 byte encodeBuffer[1024];
 
-void printHex(const byte *data, int length) {
+void printBuffer(const char *name, const byte *data, int length) {
+    printf("%s ", name);
+
     for (int i = 0; i < length; i++) {
         printf("%02x", data[i] & 0xff);
     }
+
+    printf("\n");
 }
 
 void testEncodeSensorgram() {
-    waggle::Buffer buffer(encodeBuffer, 1024);
+    Buffer buffer(encodeBuffer, 1024);
 
-    waggle::Encoder encoder(buffer);
-    waggle::SensorgramInfo s;
+    Encoder encoder(buffer);
+    SensorgramInfo s;
 
     s.sensorID = 1;
     s.parameterID = 0;
@@ -25,15 +31,13 @@ void testEncodeSensorgram() {
     s.timestamp = 1000000;
     encoder.EncodeSensorgram(s, (const byte *)"second", 6);
 
-    printf("sensorgram ");
-    printHex(buffer.Bytes(), buffer.Length());
-    printf("\n");
+    printBuffer("sensorgram", buffer.Bytes(), buffer.Length());
 }
 
 void testEncodeDatagram() {
-    waggle::Buffer buffer(encodeBuffer, 1024);
-    waggle::Encoder encoder(buffer);
-    waggle::DatagramInfo dg;
+    Buffer buffer(encodeBuffer, 1024);
+    Encoder encoder(buffer);
+    DatagramInfo dg;
 
     dg.pluginID = 37;
     dg.pluginInstance = 0;
@@ -46,23 +50,24 @@ void testEncodeDatagram() {
     dg.timestamp = 1234;
     encoder.EncodeDatagram(dg, (const byte *)"some data", 9);
 
-    printf("datagram ");
-    printHex(buffer.Bytes(), buffer.Length());
-    printf("\n");
+    printBuffer("datagram", buffer.Bytes(), buffer.Length());
 }
 
 byte publishBuffer[1024];
 
 void testPlugin() {
-    waggle::Buffer buffer(publishBuffer, 1024);
-    waggle::Plugin plugin;
+    Buffer buffer(publishBuffer, 1024);
 
-    plugin.AddMeasurement(1, 0, 0, 0, 0, (byte *)"some data", 9);
+    Plugin plugin;
+
+    // plugin.SetID(23);
+    // plugin.SetVersion(0, 1, 1);
+
+    plugin.AddMeasurement(1, 0, 0, 0, 0, (byte *)"first", 5);
+    plugin.AddMeasurement(2, 0, 0, 0, 0, (byte *)"second", 6);
     plugin.PublishMeasurements(buffer);
 
-    printf("publish ");
-    printHex(buffer.Bytes(), buffer.Length());
-    printf("\n");
+    printBuffer("publish", buffer.Bytes(), buffer.Length());
 }
 
 int main() {

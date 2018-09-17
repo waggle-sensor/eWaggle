@@ -213,10 +213,7 @@ public:
     void PublishMeasurements(Buffer &buffer) {
         Encoder encoder(buffer);
         encoder.EncodeDatagram(datagramInfo, sensorgramBuffer.Bytes(), sensorgramBuffer.Length());
-
-        // printf("publish: ");
-        // printHex(datagramBuffer.Bytes(), datagramBuffer.Length());
-        // printf("\n");
+        sensorgramBuffer.Reset();
     }
 
     void ClearMeasurements() {
