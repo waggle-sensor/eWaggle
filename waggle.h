@@ -96,6 +96,25 @@ private:
     int length;
 };
 
+#ifdef Stream
+
+class StreamWriter : public Writer {
+public:
+
+    StreamWriter(Stream &s) : stream(s) {
+    }
+
+    int Write(const byte *data, int size) {
+        return s.write(data, size);
+    }
+
+private:
+
+    Stream &stream;
+};
+
+#endif
+
 struct SensorgramInfo {
     unsigned int sensorID;
     unsigned int sensorInstance;
@@ -180,36 +199,32 @@ unsigned long defaultGetTimestamp() {
     return 0;
 }
 
+struct PluginInfo {
+    int id;
+    struct {
+        int major;
+        int minor;
+        int patch;
+    } version;
+    int instance;
+};
+
 class Plugin {
 public:
 
-    Plugin(Buffer &pluginBuffer) : buffer(pluginBuffer) {
+    Plugin(const PluginInfo &pluginInfo, Buffer &pluginBuffer) : buffer(pluginBuffer) {
         datagramInfo.protocolVersion = 2;
-        datagramInfo.timestamp = 0;
-        datagramInfo.pluginRunID = 0;
 
-        datagramInfo.pluginInstance = 0;
-
-        datagramInfo.pluginMajorVersion = 0;
-        datagramInfo.pluginMinorVersion = 0;
-        datagramInfo.pluginPatchVersion = 0;
+        datagramInfo.pluginID = pluginInfo.id;
+        datagramInfo.pluginMajorVersion = pluginInfo.version.major;
+        datagramInfo.pluginMinorVersion = pluginInfo.version.minor;
+        datagramInfo.pluginPatchVersion = pluginInfo.version.patch;
+        datagramInfo.pluginInstance = pluginInfo.instance;
 
         datagramInfo.packetType = 0;
         datagramInfo.packetSeq = 0;
-    }
-
-    void SetID(int id) {
-        datagramInfo.pluginID = id;
-    }
-
-    void SetInstance(int instance) {
-        datagramInfo.pluginInstance = instance;
-    }
-
-    void SetVersion(int major, int minor, int patch) {
-        datagramInfo.pluginMajorVersion = major;
-        datagramInfo.pluginMinorVersion = minor;
-        datagramInfo.pluginPatchVersion = patch;
+        datagramInfo.timestamp = 0;
+        datagramInfo.pluginRunID = 0;
     }
 
     void AddMeasurement(int sid, int sinst, int pid, int type, byte *data, int size) {

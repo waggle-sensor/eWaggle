@@ -3,7 +3,7 @@
 
 using namespace waggle;
 
-byte encodeBuffer[1024];
+byte bufferBytes[1024];
 
 void printBuffer(const char *name, const Buffer &buffer) {
     printf("%s ", name);
@@ -16,7 +16,7 @@ void printBuffer(const char *name, const Buffer &buffer) {
 }
 
 void testEncodeSensorgram() {
-    Buffer buffer(encodeBuffer, 1024);
+    Buffer buffer(bufferBytes, 1024);
 
     Encoder encoder(buffer);
     SensorgramInfo s;
@@ -35,7 +35,7 @@ void testEncodeSensorgram() {
 }
 
 void testEncodeDatagram() {
-    Buffer buffer(encodeBuffer, 1024);
+    Buffer buffer(bufferBytes, 1024);
     Encoder encoder(buffer);
     DatagramInfo dg;
 
@@ -53,16 +53,19 @@ void testEncodeDatagram() {
     printBuffer("datagram", buffer);
 }
 
-byte bufferBytes[1024];
-byte publishBytes[1024];
+byte publishBufferBytes[1024];
+
+const PluginInfo pluginInfo = {
+    .id = 1,
+    .version = {2, 0, 0},
+    .instance = 0,
+};
 
 void testPlugin() {
-    Buffer publishBuffer(publishBytes, sizeof(publishBytes));
+    Buffer publishBuffer(publishBufferBytes, sizeof(publishBufferBytes));
 
     Buffer pluginBuffer(bufferBytes, sizeof(bufferBytes));
-    Plugin plugin(pluginBuffer);
-    plugin.SetID(7);
-    plugin.SetVersion(1, 0, 2);
+    Plugin plugin(pluginInfo, pluginBuffer);
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
