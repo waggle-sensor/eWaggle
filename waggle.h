@@ -1,8 +1,8 @@
-typedef unsigned char byte;
-
 namespace waggle {
 
-const byte CRC8Table[256] = {
+typedef unsigned char byte;
+
+const byte crc8table[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83,
     0xc2, 0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41,
     0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
@@ -41,7 +41,7 @@ byte crc8(const byte *data, int size) {
     byte crc = 0;
 
     for (int i = 0; i < size; i++) {
-        crc = CRC8Table[crc ^ data[i]];
+        crc = crc8table[crc ^ data[i]];
     }
 
     return crc;
@@ -150,7 +150,7 @@ public:
     }
 
     void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
-        unsigned int crc = crc8(body, size);
+        unsigned int crc = waggle::crc8(body, size);
 
         EncodeInt(1, 0xaa);
         EncodeInt(3, size);
@@ -176,13 +176,30 @@ private:
 
 // NOTE Could also provide two different types here.
 
+unsigned long defaultGetTimestamp() {
+    return 0;
+}
+
 class Plugin {
 public:
 
-    Plugin() : sensorgramBuffer(sensorgramBytes, 1024) {
+    Plugin(Buffer &pluginBuffer) : buffer(pluginBuffer) {
         datagramInfo.protocolVersion = 2;
         datagramInfo.timestamp = 0;
         datagramInfo.pluginRunID = 0;
+
+        datagramInfo.pluginInstance = 0;
+
+        datagramInfo.pluginMajorVersion = 0;
+        datagramInfo.pluginMinorVersion = 0;
+        datagramInfo.pluginPatchVersion = 0;
+
+        datagramInfo.packetType = 0;
+        datagramInfo.packetSeq = 0;
+    }
+
+    void SetID(int id) {
+        datagramInfo.pluginID = id;
     }
 
     void SetInstance(int instance) {
@@ -195,36 +212,39 @@ public:
         datagramInfo.pluginPatchVersion = patch;
     }
 
-    void AddMeasurement(int sid, int sinst, int pid, unsigned long ts, int type, byte *data, int size) {
+    void AddMeasurement(int sid, int sinst, int pid, int type, byte *data, int size) {
         SensorgramInfo sg;
 
         sg.sensorID = sid;
         sg.sensorInstance = sinst;
         sg.parameterID = pid;
-        sg.timestamp = ts;
+        sg.timestamp = defaultGetTimestamp();
         sg.dataType = type;
 
-        Encoder encoder(sensorgramBuffer);
+        Encoder encoder(buffer);
         encoder.EncodeSensorgram(sg, data, size);
     }
 
     // ah, right. publish will publish to another buffer which can be provided.
     // hence, only a single internal buffer is needed and can be provided.
-    void PublishMeasurements(Buffer &buffer) {
-        Encoder encoder(buffer);
-        encoder.EncodeDatagram(datagramInfo, sensorgramBuffer.Bytes(), sensorgramBuffer.Length());
-        sensorgramBuffer.Reset();
+    void PublishMeasurements(Buffer &writeBuffer) {
+        datagramInfo.packetType = 0;
+
+        Encoder encoder(writeBuffer);
+        encoder.EncodeDatagram(datagramInfo, buffer.Bytes(), buffer.Length());
+        buffer.Reset();
+
+        datagramInfo.packetSeq++;
     }
 
     void ClearMeasurements() {
-        sensorgramBuffer.Reset();
+        buffer.Reset();
     }
 
 private:
 
     DatagramInfo datagramInfo;
-    byte sensorgramBytes[1024];
-    Buffer sensorgramBuffer;
+    Buffer buffer;
 };
 
 };
