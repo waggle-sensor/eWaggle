@@ -199,27 +199,17 @@ unsigned long defaultGetTimestamp() {
     return 0;
 }
 
-struct PluginInfo {
-    int id;
-    struct {
-        int major;
-        int minor;
-        int patch;
-    } version;
-    int instance;
-};
-
 class Plugin {
 public:
 
-    Plugin(const PluginInfo &pluginInfo, Buffer &pluginBuffer) : buffer(pluginBuffer) {
+    Plugin(int id, int majorVersion, int minorVersion, int patchVersion, int instance, Buffer &pluginBuffer) : buffer(pluginBuffer) {
         datagramInfo.protocolVersion = 2;
 
-        datagramInfo.pluginID = pluginInfo.id;
-        datagramInfo.pluginMajorVersion = pluginInfo.version.major;
-        datagramInfo.pluginMinorVersion = pluginInfo.version.minor;
-        datagramInfo.pluginPatchVersion = pluginInfo.version.patch;
-        datagramInfo.pluginInstance = pluginInfo.instance;
+        datagramInfo.pluginID = id;
+        datagramInfo.pluginMajorVersion = majorVersion;
+        datagramInfo.pluginMinorVersion = minorVersion;
+        datagramInfo.pluginPatchVersion = patchVersion;
+        datagramInfo.pluginInstance = instance;
 
         datagramInfo.packetType = 0;
         datagramInfo.packetSeq = 0;

@@ -55,17 +55,11 @@ void testEncodeDatagram() {
 
 byte publishBufferBytes[1024];
 
-const PluginInfo pluginInfo = {
-    .id = 1,
-    .version = {2, 0, 0},
-    .instance = 0,
-};
-
 void testPlugin() {
     Buffer publishBuffer(publishBufferBytes, sizeof(publishBufferBytes));
 
     Buffer pluginBuffer(bufferBytes, sizeof(bufferBytes));
-    Plugin plugin(pluginInfo, pluginBuffer);
+    Plugin plugin(1, 2, 0, 0, 0, pluginBuffer);
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
