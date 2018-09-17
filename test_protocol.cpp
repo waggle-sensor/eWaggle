@@ -57,6 +57,7 @@ byte bufferBytes[1024];
 byte publishBytes[1024];
 
 void testPlugin() {
+    Buffer publishBuffer(publishBytes, sizeof(publishBytes));
     Buffer pluginBuffer(bufferBytes, sizeof(bufferBytes));
     Plugin plugin(pluginBuffer);
 
@@ -65,9 +66,10 @@ void testPlugin() {
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
-    plugin.AddMeasurement(3, 0, 1, 0, (byte *)"333", 3);
+    plugin.PublishMeasurements(publishBuffer);
+    printBuffer("publish", publishBuffer.Bytes(), publishBuffer.Length());
 
-    Buffer publishBuffer(publishBytes, sizeof(publishBytes));
+    plugin.AddMeasurement(3, 0, 1, 0, (byte *)"333", 3);
     plugin.PublishMeasurements(publishBuffer);
     printBuffer("publish", publishBuffer.Bytes(), publishBuffer.Length());
 }

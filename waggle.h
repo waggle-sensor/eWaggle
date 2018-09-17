@@ -225,8 +225,6 @@ public:
         encoder.EncodeSensorgram(sg, data, size);
     }
 
-    // ah, right. publish will publish to another buffer which can be provided.
-    // hence, only a single internal buffer is needed and can be provided.
     void PublishMeasurements(Buffer &writeBuffer) {
         datagramInfo.packetType = 0;
 
