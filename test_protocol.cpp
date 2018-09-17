@@ -56,13 +56,9 @@ void testEncodeDatagram() {
 byte bufferBytes[1024];
 byte publishBytes[1024];
 
-void testPluginPublish(Plugin &plugin) {
-    Buffer publishBuffer(publishBytes, sizeof(publishBytes));
-    plugin.PublishMeasurements(publishBuffer);
-    printBuffer("publish", publishBuffer.Bytes(), publishBuffer.Length());
-}
-
 void testPlugin() {
+    Buffer publishBuffer(publishBytes, sizeof(publishBytes));
+
     Buffer pluginBuffer(bufferBytes, sizeof(bufferBytes));
     Plugin plugin(pluginBuffer);
     plugin.SetID(7);
@@ -70,10 +66,12 @@ void testPlugin() {
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
-    testPluginPublish(plugin);
+    plugin.PublishMeasurements(publishBuffer);
 
     plugin.AddMeasurement(3, 0, 1, 0, (byte *)"333", 3);
-    testPluginPublish(plugin);
+    plugin.PublishMeasurements(publishBuffer);
+
+    printBuffer("publish", publishBuffer.Bytes(), publishBuffer.Length());
 }
 
 int main() {

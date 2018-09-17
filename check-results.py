@@ -23,14 +23,14 @@ for line in sys.stdin:
 
     with suppress(AttributeError):
         s = re.match(r'publish (\S+)', line).group(1)
-        msg = waggle.protocol.unpack_datagram(bytes.fromhex(s))
 
-        print('datagram header:')
+        for msg in waggle.protocol.unpack_datagrams(bytes.fromhex(s)):
+            print('datagram header:')
 
-        pprint(msg)
-        print('sensor data:')
+            pprint(msg)
+            print('sensor data:')
 
-        for r in waggle.protocol.unpack_sensorgrams(msg['body']):
-            pprint(r)
+            for r in waggle.protocol.unpack_sensorgrams(msg['body']):
+                pprint(r)
 
-        print()
+            print()
