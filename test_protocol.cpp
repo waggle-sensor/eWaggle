@@ -5,11 +5,11 @@ using namespace waggle;
 
 byte encodeBuffer[1024];
 
-void printBuffer(const char *name, const byte *data, int length) {
+void printBuffer(const char *name, const Buffer &buffer) {
     printf("%s ", name);
 
-    for (int i = 0; i < length; i++) {
-        printf("%02x", data[i] & 0xff);
+    for (int i = 0; i < buffer.Length(); i++) {
+        printf("%02x", buffer.Bytes()[i] & 0xff);
     }
 
     printf("\n");
@@ -31,7 +31,7 @@ void testEncodeSensorgram() {
     s.timestamp = 1000000;
     encoder.EncodeSensorgram(s, (const byte *)"second", 6);
 
-    printBuffer("sensorgram", buffer.Bytes(), buffer.Length());
+    printBuffer("sensorgram", buffer);
 }
 
 void testEncodeDatagram() {
@@ -50,7 +50,7 @@ void testEncodeDatagram() {
     dg.timestamp = 1234;
     encoder.EncodeDatagram(dg, (const byte *)"some data", 9);
 
-    printBuffer("datagram", buffer.Bytes(), buffer.Length());
+    printBuffer("datagram", buffer);
 }
 
 byte bufferBytes[1024];
@@ -74,7 +74,7 @@ void testPlugin() {
     plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
     plugin.PublishMeasurements(publishBuffer);
 
-    printBuffer("publish", publishBuffer.Bytes(), publishBuffer.Length());
+    printBuffer("publish", publishBuffer);
 }
 
 int main() {
