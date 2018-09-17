@@ -19,17 +19,14 @@ void testEncodeSensorgram() {
     Buffer buffer(bufferBytes, 1024);
 
     Encoder encoder(buffer);
-    SensorgramInfo s;
 
-    s.sensorID = 1;
-    s.parameterID = 0;
-    s.timestamp = 1000000;
-    encoder.EncodeSensorgram(s, (const byte *)"first", 5);
+    SensorgramInfo sensorgram = {
+        .sensorID = 1,
+        .parameterID = 0,
+        .timestamp = 1000000,
+    };
 
-    s.sensorID = 2;
-    s.parameterID = 0;
-    s.timestamp = 1000000;
-    encoder.EncodeSensorgram(s, (const byte *)"second", 6);
+    encoder.EncodeSensorgram(sensorgram, (const byte *)"hello", 5);
 
     printBuffer("sensorgram", buffer);
 }
@@ -37,18 +34,20 @@ void testEncodeSensorgram() {
 void testEncodeDatagram() {
     Buffer buffer(bufferBytes, 1024);
     Encoder encoder(buffer);
-    DatagramInfo dg;
 
-    dg.pluginID = 37;
-    dg.pluginInstance = 0;
-    dg.pluginMajorVersion = 0;
-    dg.pluginMinorVersion = 0;
-    dg.pluginPatchVersion = 0;
-    dg.pluginRunID = 0;
-    dg.packetSeq = 0;
-    dg.packetType = 0;
-    dg.timestamp = 1234;
-    encoder.EncodeDatagram(dg, (const byte *)"some data", 9);
+    DatagramInfo datagram = {
+        .pluginID = 37,
+        .pluginInstance = 0,
+        .pluginMajorVersion = 0,
+        .pluginMinorVersion = 0,
+        .pluginPatchVersion = 0,
+        .pluginRunID = 0,
+        .packetSeq = 0,
+        .packetType = 0,
+        .timestamp = 1234,
+    };
+
+    encoder.EncodeDatagram(datagram, (const byte *)"some data", 9);
 
     printBuffer("datagram", buffer);
 }
@@ -59,7 +58,7 @@ void testPlugin() {
     Buffer publishBuffer(publishBufferBytes, sizeof(publishBufferBytes));
 
     Buffer pluginBuffer(bufferBytes, sizeof(bufferBytes));
-    Plugin plugin(1, 2, 0, 0, 0, pluginBuffer);
+    Plugin plugin(37, 2, 0, 0, 0, pluginBuffer);
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
