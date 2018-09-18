@@ -58,8 +58,8 @@ void testEncodeDatagram() {
 }
 
 void testPlugin() {
-    Buffer<1024> publishBuffer;
     Plugin<1024> plugin(37, 2, 0, 0, 0);
+    Buffer<1024> publishBuffer;
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
@@ -71,7 +71,6 @@ void testPlugin() {
     plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
     plugin.PublishMeasurements(publishBuffer);
 
-    // expect all three datagrams appended with correct internal sensorgrams
     printBuffer("publish", publishBuffer);
 }
 
@@ -170,7 +169,6 @@ public:
     }
 };
 
-// use fixed size in buffer constructor for safety...
 void testMessageReceiver() {
     Buffer<256> testBuffer;
     Buffer<256> messageBuffer;
