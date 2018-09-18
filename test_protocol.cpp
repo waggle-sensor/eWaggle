@@ -198,12 +198,7 @@ void testMessageReceiver() {
     }
 }
 
-int main() {
-    testEncodeSensorgram();
-    testEncodeDatagram();
-    testPlugin();
-    testMessageReceiver();
-
+void testEncodeDecode() {
     Buffer<256> buffer;
     Encoder encoder(buffer);
 
@@ -233,4 +228,12 @@ int main() {
         data[size] = 0;
         printf("%d %d %s\n", s.sensorID, s.parameterID, (const char *)data);
     }
+}
+
+int main() {
+    testEncodeSensorgram();
+    testEncodeDatagram();
+    testPlugin();
+    testMessageReceiver();
+    testEncodeDecode();
 }
