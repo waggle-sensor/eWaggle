@@ -175,7 +175,7 @@ public:
         return n;
     }
 
-    void DecoderSensorgram(SensorgramInfo &s, byte *data, int &size) {
+    void DecodeSensorgram(SensorgramInfo &s, byte *data, int &size) {
         DecodeInt(2, size);
         DecodeInt(2, s.sensorID);
         DecodeInt(1, s.sensorInstance);
