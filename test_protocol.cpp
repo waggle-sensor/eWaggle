@@ -20,13 +20,20 @@ void testEncodeSensorgram() {
 
     Encoder encoder(buffer);
 
-    SensorgramInfo sensorgram = {
+    SensorgramInfo sensorgram1 = {
         .sensorID = 1,
         .parameterID = 0,
         .timestamp = 1000000,
     };
 
-    encoder.EncodeSensorgram(sensorgram, (const byte *)"hello", 5);
+    SensorgramInfo sensorgram2 = {
+        .sensorID = 2,
+        .parameterID = 1,
+        .timestamp = 1000000,
+    };
+
+    encoder.EncodeSensorgram(sensorgram1, (const byte *)"hello", 5);
+    encoder.EncodeSensorgram(sensorgram2, (const byte *)"second", 6);
 
     printBuffer("sensorgram", buffer);
 }
@@ -74,8 +81,26 @@ void testPlugin() {
     printBuffer("publish", publishBuffer);
 }
 
+byte exampleBytes[] = {
+0, 5, 0, 1, 0, 0, 0, 15, 66, 64, 0, 104, 101, 108, 108, 111, 0, 6, 0, 2, 0, 1, 0, 15, 66, 64, 0, 115, 101, 99, 111, 110, 100};
+
+
 int main() {
-    testEncodeSensorgram();
-    testEncodeDatagram();
-    testPlugin();
+    // testEncodeSensorgram();
+    // testEncodeDatagram();
+    // testPlugin();
+
+    Buffer buffer(exampleBytes, sizeof(exampleBytes));
+    Decoder decoder(buffer);
+    SensorgramInfo s;
+    byte data[64];
+    int size;
+
+    decoder.DecoderSensorgram(s, data, size);
+    data[size] = 0;
+    printf("%d %d %s\n", s.sensorID, s.parameterID, (const char *)data);
+
+    decoder.DecoderSensorgram(s, data, size);
+    data[size] = 0;
+    printf("%d %d %s\n", s.sensorID, s.parameterID, (const char *)data);
 }

@@ -47,25 +47,40 @@ byte crc8(const byte *data, int size) {
     return crc;
 }
 
+class Reader {
+public:
+
+    virtual int Read(byte *data, int length) = 0;
+};
+
 // Writer Interface
 class Writer {
 public:
 
     virtual int Write(const byte *data, int size) = 0;
-
-private:
 };
 
 // Memory Buffer Writer
-class Buffer : public Writer {
+class Buffer : public Reader, public Writer {
 public:
 
     Buffer(byte *b, int c) : buffer(b), capacity(c) {
         Reset();
     }
 
-    int Write(const byte *data, int size) {
+    int Read(byte *data, int size) {
+        for (int i = 0; i < size; i++) {
+            if (offset >= length) {
+                return i;
+            }
 
+            data[i] = buffer[offset++];
+        }
+
+        return size;
+    }
+
+    int Write(const byte *data, int size) {
         for (int i = 0; i < size; i++) {
             if (length >= capacity) {
                 return i;
@@ -79,6 +94,7 @@ public:
 
     void Reset() {
         length = 0;
+        offset = 0;
     }
 
     const byte *Bytes() const {
@@ -94,6 +110,7 @@ private:
     byte *buffer;
     int capacity;
     int length;
+    int offset;
 };
 
 #ifdef Stream
@@ -136,14 +153,55 @@ struct DatagramInfo {
     unsigned int pluginRunID;
 };
 
+class Decoder {
+public:
+
+    Decoder(Reader &r) : reader(r) {
+    }
+
+    int DecodeBytes(byte *data, int size) {
+        return reader.Read(data, size);
+    }
+
+    template<typename T>
+    int DecodeInt(int size, T &x) {
+        byte data[size];
+
+        int n = DecodeBytes(data, size);
+
+        x = 0;
+
+        for (int i = 0; i < n; i++) {
+            x <<= 8;
+            x |= data[i];
+        }
+
+        return n;
+    }
+
+    void DecoderSensorgram(SensorgramInfo &s, byte *data, int &size) {
+        DecodeInt(2, size);
+        DecodeInt(2, s.sensorID);
+        DecodeInt(1, s.sensorInstance);
+        DecodeInt(1, s.parameterID);
+        DecodeInt(4, s.timestamp);
+        DecodeInt(1, s.dataType);
+        DecodeBytes(data, size);
+    }
+
+private:
+
+    Reader &reader;
+};
+
 class Encoder {
 public:
 
     Encoder(Writer &w) : writer(w) {
     }
 
-    void EncodeBytes(const byte *data, int size) {
-        writer.Write(data, size);
+    int EncodeBytes(const byte *data, int size) {
+        return writer.Write(data, size);
     }
 
     template<typename T>
