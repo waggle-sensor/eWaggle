@@ -194,7 +194,7 @@ void testMessageReceiver() {
         printf("\ngot message!\n");
     }
 
-    printf("adding end flag and printing more messages:\n");
+    printf("\nadding end flag and printing more messages:\n");
 
     testBuffer.WriteByte(endByte);
 
