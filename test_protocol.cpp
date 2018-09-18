@@ -3,20 +3,27 @@
 
 using namespace waggle;
 
-class PrintWriter : public Writer {
+class PrintfWriter : public Writer {
 public:
+
+    PrintfWriter(const char *fmt) : fmt(fmt) {
+    }
 
     int Write(const byte *data, int size) {
         for (int i = 0; i < size; i++) {
-            printf("%02x", (byte)(data[i]));
+            printf(fmt, (byte)(data[i]));
         }
 
         return size;
     }
+
+private:
+
+    const char *fmt;
 };
 
 void testEncodeSensorgram() {
-    PrintWriter printer;
+    PrintfWriter printer("%02x");
     Encoder encoder(printer);
 
     SensorgramInfo sensorgram1 = {
@@ -38,7 +45,7 @@ void testEncodeSensorgram() {
 }
 
 void testEncodeDatagram() {
-    PrintWriter printer;
+    PrintfWriter printer("%02x");
     Encoder encoder(printer);
 
     DatagramInfo datagram = {
@@ -59,7 +66,7 @@ void testEncodeDatagram() {
 }
 
 void testPlugin() {
-    PrintWriter printer;
+    PrintfWriter printer("%02x");
     Plugin<256> plugin(37, 2, 0, 0, 0);
 
     printf("publish ");
@@ -82,13 +89,13 @@ const byte endByte = 0x7f;
 const byte escapeByte = 0x7d;
 const byte escapeMask = 0x20;
 
-class MessageSender {
+class MessageWriter {
 public:
 
-    MessageSender(Writer &writer) : writer(writer) {
+    MessageWriter(Writer &writer) : writer(writer) {
     }
 
-    void SendMessage(const byte *data, int size) {
+    void WriteMessage(const byte *data, int size) {
         writer.WriteByte(startByte);
 
         for (int i = 0; i < size; i++) {
@@ -108,15 +115,15 @@ private:
     Writer &writer;
 };
 
-class MessageReceiver {
+class MessageReader {
 public:
 
-    MessageReceiver(Reader &reader) : reader(reader) {
+    MessageReader(Reader &reader) : reader(reader) {
         start = false;
         escape = false;
     }
 
-    bool ReceiveMessage(Writer &writer) {
+    bool ReadMessage(Writer &writer) {
         byte b;
 
         while (!start) {
@@ -161,29 +168,21 @@ private:
 };
 
 void testMessageReceiver() {
-    Buffer<256> testBuffer;
-    Buffer<256> messageBuffer;
+    Buffer<256> buffer;
+    MessageWriter msgWriter(buffer);
+    MessageReader msgReader(buffer);
 
-    byte testBytes[] = {startByte, 1, 2, 3, endByte, startByte, 4, 5, 6};
-    testBuffer.Write(testBytes, sizeof(testBytes));
+    msgWriter.WriteMessage((byte *)"hello world", 11);
+    msgWriter.WriteMessage((byte *)"another", 7);
 
-    MessageReceiver receiver(testBuffer);
+    Buffer<256> msg;
+    PrintfWriter printer("%c");
 
-    PrintWriter printer;
-
-    printf("printing messages:\n");
-
-    while (receiver.ReceiveMessage(printer)) {
-        printf("\ngot message!\n");
-    }
-
-    printf("\nadding end flag and printing more messages:\n");
-
-    testBuffer.WriteByte(7);
-    testBuffer.WriteByte(endByte);
-
-    while (receiver.ReceiveMessage(printer)) {
-        printf("\ngot message!\n");
+    while (msgReader.ReadMessage(msg)) {
+        printf("message ");
+        Copy(msg, printer);
+        printf("\n");
+        msg.Reset();
     }
 }
 
