@@ -70,6 +70,7 @@ void testPlugin() {
     plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
     plugin.PublishMeasurements(publishBuffer);
 
+    // expect all three datagrams appended with correct internal sensorgrams
     printBuffer("publish", publishBuffer);
 }
 
