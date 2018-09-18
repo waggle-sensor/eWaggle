@@ -57,7 +57,11 @@ public:
 class Writer {
 public:
 
-    virtual int Write(const byte *data, int size) = 0;
+    virtual int Write(const byte *data, int size) = 0 ;
+
+    int WriteByte(byte b) {
+        return Write(&b, 1);
+    }
 };
 
 // Memory Buffer Writer
@@ -247,8 +251,6 @@ private:
     Writer &writer;
 };
 
-// NOTE Could also provide two different types here.
-
 unsigned long defaultGetTimestamp() {
     return 0;
 }
@@ -296,6 +298,14 @@ public:
 
     void ClearMeasurements() {
         buffer.Reset();
+    }
+
+    void ConsumeMeasurements() {
+        //
+    }
+
+    void ProcessMeasurements(SensorgramInfo &info) {
+        //
     }
 
 private:
