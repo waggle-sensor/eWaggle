@@ -69,27 +69,23 @@ public:
     }
 
     int Read(byte *data, int size) {
-        for (int i = 0; i < size; i++) {
-            if (offset >= length) {
-                return i;
-            }
+        int i = 0;
 
-            data[i] = buffer[offset++];
+        while (i < size && offset < length) {
+            data[i++] = buffer[offset++];
         }
 
-        return size;
+        return i;
     }
 
     int Write(const byte *data, int size) {
-        for (int i = 0; i < size; i++) {
-            if (length >= capacity) {
-                return i;
-            }
+        int i = 0;
 
-            buffer[length++] = data[i];
+        while (i < size && length < capacity) {
+            buffer[length++] = data[i++];
         }
 
-        return size;
+        return i;
     }
 
     void Reset() {
