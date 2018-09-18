@@ -3,20 +3,21 @@
 
 using namespace waggle;
 
-template<unsigned int N>
-void printBuffer(const char *name, const Buffer<N> &buffer) {
-    printf("%s ", name);
+class PrintWriter : public Writer {
+public:
 
-    for (int i = 0; i < buffer.Length(); i++) {
-        printf("%02x", buffer.Bytes()[i] & 0xff);
+    int Write(const byte *data, int size) {
+        for (int i = 0; i < size; i++) {
+            printf("%02x", (byte)(data[i]));
+        }
+
+        return size;
     }
-
-    printf("\n");
-}
+};
 
 void testEncodeSensorgram() {
-    Buffer<256> buffer;
-    Encoder encoder(buffer);
+    PrintWriter printer;
+    Encoder encoder(printer);
 
     SensorgramInfo sensorgram1 = {
         .sensorID = 1,
@@ -30,15 +31,15 @@ void testEncodeSensorgram() {
         .timestamp = 1000000,
     };
 
+    printf("sensorgram ");
     encoder.EncodeSensorgram(sensorgram1, (const byte *)"hello", 5);
     encoder.EncodeSensorgram(sensorgram2, (const byte *)"second", 6);
-
-    printBuffer("sensorgram", buffer);
+    printf("\n");
 }
 
 void testEncodeDatagram() {
-    Buffer<256> buffer;
-    Encoder encoder(buffer);
+    PrintWriter printer;
+    Encoder encoder(printer);
 
     DatagramInfo datagram = {
         .pluginID = 37,
@@ -52,26 +53,28 @@ void testEncodeDatagram() {
         .timestamp = 1234,
     };
 
+    printf("datagram ");
     encoder.EncodeDatagram(datagram, (const byte *)"some data", 9);
-
-    printBuffer("datagram", buffer);
+    printf("\n");
 }
 
 void testPlugin() {
+    PrintWriter printer;
     Plugin<256> plugin(37, 2, 0, 0, 0);
-    Buffer<256> buffer;
+
+    printf("plugin ");
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
-    plugin.PublishMeasurements(buffer);
+    plugin.PublishMeasurements(printer);
 
     plugin.AddMeasurement(3, 0, 1, 0, (byte *)"333", 3);
-    plugin.PublishMeasurements(buffer);
+    plugin.PublishMeasurements(printer);
 
     plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
-    plugin.PublishMeasurements(buffer);
+    plugin.PublishMeasurements(printer);
 
-    printBuffer("publish", buffer);
+    printf("\n");
 }
 
 const byte startByte = 0x7e;
@@ -155,18 +158,6 @@ private:
     Reader &reader;
     bool start;
     bool escape;
-};
-
-class PrintWriter : public Writer {
-public:
-
-    int Write(const byte *data, int size) {
-        for (int i = 0; i < size; i++) {
-            printf("%02x ", (byte)(data[i]));
-        }
-
-        return size;
-    }
 };
 
 void testMessageReceiver() {

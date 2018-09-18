@@ -64,6 +64,24 @@ public:
     }
 };
 
+int Copy(Reader &r, Writer &w) {
+    int total = 0;
+    byte data[256];
+
+    for (;;) {
+        int n = r.Read(data, sizeof(data));
+        w.Write(data, n);
+
+        total += n;
+
+        if (n < sizeof(data)) {
+            break;
+        }
+    }
+
+    return total;
+}
+
 template<unsigned int N>
 class Buffer : public Reader, public Writer {
 public:
