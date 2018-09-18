@@ -62,7 +62,7 @@ void testPlugin() {
     PrintWriter printer;
     Plugin<256> plugin(37, 2, 0, 0, 0);
 
-    printf("plugin ");
+    printf("publish ");
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
