@@ -58,20 +58,20 @@ void testEncodeDatagram() {
 }
 
 void testPlugin() {
-    Plugin<1024> plugin(37, 2, 0, 0, 0);
-    Buffer<1024> publishBuffer;
+    Plugin<256> plugin(37, 2, 0, 0, 0);
+    Buffer<256> buffer;
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
-    plugin.PublishMeasurements(publishBuffer);
+    plugin.PublishMeasurements(buffer);
 
     plugin.AddMeasurement(3, 0, 1, 0, (byte *)"333", 3);
-    plugin.PublishMeasurements(publishBuffer);
+    plugin.PublishMeasurements(buffer);
 
     plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
-    plugin.PublishMeasurements(publishBuffer);
+    plugin.PublishMeasurements(buffer);
 
-    printBuffer("publish", publishBuffer);
+    printBuffer("publish", buffer);
 }
 
 const byte startByte = 0x7e;
