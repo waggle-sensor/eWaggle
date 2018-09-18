@@ -65,11 +65,11 @@ public:
 };
 
 int Copy(Reader &r, Writer &w) {
-    int total = 0;
+    unsigned int total = 0;
     byte data[256];
 
     for (;;) {
-        int n = r.Read(data, sizeof(data));
+        unsigned int n = r.Read(data, sizeof(data));
         w.Write(data, n);
 
         total += n;
