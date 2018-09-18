@@ -178,30 +178,36 @@ public:
     }
 };
 
+void testMessageReceiver() {
+    Buffer testBuffer(bufferBytes, sizeof(bufferBytes));
+
+    byte testBytes[] = {startByte, 1, 2, 3, endByte, startByte, 4, 5, 6};
+    testBuffer.Write(testBytes, sizeof(testBytes));
+
+    MessageReceiver receiver(testBuffer);
+
+    PrintWriter printer;
+
+    printf("printing messages:\n");
+
+    while (receiver.ReceiveMessage(printer)) {
+        printf("\ngot message!\n");
+    }
+
+    printf("adding end flag and printing more messages:\n");
+
+    testBuffer.WriteByte(endByte);
+
+    while (receiver.ReceiveMessage(printer)) {
+        printf("\ngot message!\n");
+    }
+}
+
 int main() {
+    testMessageReceiver();
     // testEncodeSensorgram();
     // testEncodeDatagram();
     // testPlugin();
-
-    PrintWriter printer;
-    Buffer msgBuffer(bufferBytes, sizeof(bufferBytes));
-    MessageSender sender(msgBuffer);
-
-    const byte test[] = {0xaa, startByte, escapeByte, endByte, 0x55};
-    sender.SendMessage(test, sizeof(test));
-
-    printBuffer("msg", msgBuffer);
-
-    msgBuffer.WriteByte(startByte);
-    msgBuffer.WriteByte(1);
-    msgBuffer.WriteByte(2);
-    msgBuffer.WriteByte(3);
-
-    MessageReceiver receiver(msgBuffer);
-
-    while (receiver.ReceiveMessage(printer)) {
-        printf("got message!\n");
-    }
 
     // Buffer buffer(exampleBytes, sizeof(exampleBytes));
     // Encoder encoder(buffer);
