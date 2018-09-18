@@ -3,9 +3,8 @@
 
 using namespace waggle;
 
-byte bufferBytes[1024];
-
-void printBuffer(const char *name, const Buffer &buffer) {
+template<unsigned int N>
+void printBuffer(const char *name, const Buffer<N> &buffer) {
     printf("%s ", name);
 
     for (int i = 0; i < buffer.Length(); i++) {
@@ -16,8 +15,7 @@ void printBuffer(const char *name, const Buffer &buffer) {
 }
 
 void testEncodeSensorgram() {
-    Buffer buffer(bufferBytes, 1024);
-
+    Buffer<256> buffer;
     Encoder encoder(buffer);
 
     SensorgramInfo sensorgram1 = {
@@ -39,7 +37,7 @@ void testEncodeSensorgram() {
 }
 
 void testEncodeDatagram() {
-    Buffer buffer(bufferBytes, 1024);
+    Buffer<256> buffer;
     Encoder encoder(buffer);
 
     DatagramInfo datagram = {
@@ -59,13 +57,9 @@ void testEncodeDatagram() {
     printBuffer("datagram", buffer);
 }
 
-byte publishBufferBytes[1024];
-
 void testPlugin() {
-    Buffer publishBuffer(publishBufferBytes, sizeof(publishBufferBytes));
-
-    Buffer pluginBuffer(bufferBytes, sizeof(bufferBytes));
-    Plugin plugin(37, 2, 0, 0, 0, pluginBuffer);
+    Buffer<1024> publishBuffer;
+    Plugin<1024> plugin(37, 2, 0, 0, 0);
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
@@ -80,8 +74,6 @@ void testPlugin() {
     // expect all three datagrams appended with correct internal sensorgrams
     printBuffer("publish", publishBuffer);
 }
-
-byte exampleBytes[1024];
 
 const byte startByte = 0x7e;
 const byte endByte = 0x7f;
@@ -178,8 +170,10 @@ public:
     }
 };
 
+// use fixed size in buffer constructor for safety...
 void testMessageReceiver() {
-    Buffer testBuffer(bufferBytes, sizeof(bufferBytes));
+    Buffer<256> testBuffer;
+    Buffer<256> messageBuffer;
 
     byte testBytes[] = {startByte, 1, 2, 3, endByte, startByte, 4, 5, 6};
     testBuffer.Write(testBytes, sizeof(testBytes));
@@ -196,6 +190,7 @@ void testMessageReceiver() {
 
     printf("\nadding end flag and printing more messages:\n");
 
+    testBuffer.WriteByte(7);
     testBuffer.WriteByte(endByte);
 
     while (receiver.ReceiveMessage(printer)) {
@@ -204,38 +199,38 @@ void testMessageReceiver() {
 }
 
 int main() {
+    testEncodeSensorgram();
+    testEncodeDatagram();
+    testPlugin();
     testMessageReceiver();
-    // testEncodeSensorgram();
-    // testEncodeDatagram();
-    // testPlugin();
 
-    // Buffer buffer(exampleBytes, sizeof(exampleBytes));
-    // Encoder encoder(buffer);
-    //
-    // SensorgramInfo sensorgram1 = {
-    //     .sensorID = 1,
-    //     .parameterID = 3,
-    //     .timestamp = 1000000,
-    // };
-    //
-    // SensorgramInfo sensorgram2 = {
-    //     .sensorID = 2,
-    //     .parameterID = 7,
-    //     .timestamp = 1000000,
-    // };
-    //
-    // encoder.EncodeSensorgram(sensorgram1, (byte *)"hello", 5);
-    // encoder.EncodeSensorgram(sensorgram2, (byte *)"data", 4);
-    //
-    // Decoder decoder(buffer);
-    //
-    // for (int i = 0; i < 2; i++) {
-    //     SensorgramInfo s;
-    //     byte data[64];
-    //     int size;
-    //
-    //     decoder.DecodeSensorgram(s, data, size);
-    //     data[size] = 0;
-    //     printf("%d %d %s\n", s.sensorID, s.parameterID, (const char *)data);
-    // }
+    Buffer<256> buffer;
+    Encoder encoder(buffer);
+
+    SensorgramInfo sensorgram1 = {
+        .sensorID = 1,
+        .parameterID = 3,
+        .timestamp = 1000000,
+    };
+
+    SensorgramInfo sensorgram2 = {
+        .sensorID = 2,
+        .parameterID = 7,
+        .timestamp = 1000000,
+    };
+
+    encoder.EncodeSensorgram(sensorgram1, (byte *)"hello", 5);
+    encoder.EncodeSensorgram(sensorgram2, (byte *)"data", 4);
+
+    Decoder decoder(buffer);
+
+    for (int i = 0; i < 2; i++) {
+        SensorgramInfo s;
+        byte data[64];
+        int size;
+
+        decoder.DecodeSensorgram(s, data, size);
+        data[size] = 0;
+        printf("%d %d %s\n", s.sensorID, s.parameterID, (const char *)data);
+    }
 }

@@ -57,18 +57,19 @@ public:
 class Writer {
 public:
 
-    virtual int Write(const byte *data, int size) = 0 ;
+    virtual int Write(const byte *data, int size) = 0;
 
     int WriteByte(byte b) {
         return Write(&b, 1);
     }
 };
 
-// Memory Buffer Writer
+template<unsigned int N>
 class Buffer : public Reader, public Writer {
 public:
 
-    Buffer(byte *b, int c) : buffer(b), capacity(c) {
+    Buffer() {
+        capacity = N;
         Reset();
     }
 
@@ -105,12 +106,16 @@ public:
         return length;
     }
 
+    unsigned int Capacity() const {
+        return capacity;
+    }
+
 private:
 
-    byte *buffer;
-    int capacity;
-    int length;
-    int offset;
+    byte buffer[N];
+    unsigned int capacity;
+    unsigned int length;
+    unsigned int offset;
 };
 
 #ifdef Stream
@@ -255,10 +260,11 @@ unsigned long defaultGetTimestamp() {
     return 0;
 }
 
+template<unsigned int N>
 class Plugin {
 public:
 
-    Plugin(int id, int majorVersion, int minorVersion, int patchVersion, int instance, Buffer &pluginBuffer) : buffer(pluginBuffer) {
+    Plugin(int id, int majorVersion, int minorVersion, int patchVersion, int instance) {
         datagramInfo.protocolVersion = 2;
 
         datagramInfo.pluginID = id;
@@ -286,10 +292,10 @@ public:
         encoder.EncodeSensorgram(sg, data, size);
     }
 
-    void PublishMeasurements(Buffer &writeBuffer) {
+    void PublishMeasurements(Writer &writer) {
         datagramInfo.packetType = 0;
 
-        Encoder encoder(writeBuffer);
+        Encoder encoder(writer);
         encoder.EncodeDatagram(datagramInfo, buffer.Bytes(), buffer.Length());
         buffer.Reset();
 
@@ -311,7 +317,7 @@ public:
 private:
 
     DatagramInfo datagramInfo;
-    Buffer buffer;
+    Buffer<N> buffer;
 };
 
 };
