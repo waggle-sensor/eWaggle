@@ -66,7 +66,7 @@ public:
 
 int Copy(Reader &r, Writer &w) {
     unsigned int total = 0;
-    byte data[256];
+    byte data[64];
 
     for (;;) {
         unsigned int n = r.Read(data, sizeof(data));
