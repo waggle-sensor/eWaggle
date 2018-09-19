@@ -23,6 +23,8 @@ private:
 };
 
 void testEncodeSensorgram() {
+    printf("--- testEncodeSensorgram\n");
+
     PrintfWriter printer("%02x");
     Encoder encoder(printer);
 
@@ -45,6 +47,8 @@ void testEncodeSensorgram() {
 }
 
 void testEncodeDatagram() {
+    printf("--- testEncodeDatagram\n");
+
     PrintfWriter printer("%02x");
     Encoder encoder(printer);
 
@@ -66,12 +70,14 @@ void testEncodeDatagram() {
 }
 
 void testPlugin() {
+    printf("--- testPlugin\n");
+
     PrintfWriter printer("%02x");
-    Plugin<256> plugin(37, 2, 0, 0, 0);
+    Plugin<256> plugin(37, 2, 0, 0, 0); // move into struct or name params...
 
     printf("publish ");
 
-    plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
+    plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5); // same thing...
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
     plugin.PublishMeasurements(printer);
 
@@ -85,6 +91,8 @@ void testPlugin() {
 }
 
 void testMessageReceiver() {
+    printf("--- testMessageReceiver\n");
+
     Buffer<256> buffer;
     MessageWriter msgWriter(buffer);
     MessageReader msgReader(buffer);
@@ -104,6 +112,8 @@ void testMessageReceiver() {
 }
 
 void testEncodeDecode() {
+    printf("--- testEncodeDecode\n");
+
     Buffer<256> buffer;
     Encoder encoder(buffer);
 
@@ -136,6 +146,8 @@ void testEncodeDecode() {
 }
 
 void testWriteMessage() {
+    printf("--- testWriteMessage\n");
+
     PrintfWriter printer("%02x");
     MessageWriter msgWriter(printer);
 
@@ -146,6 +158,25 @@ void testWriteMessage() {
     printf("\n");
 }
 
+void testMessenger() {
+    printf("--- testMessenger\n");
+
+    Buffer<256> loopbackBuffer;
+    Messenger<256> messenger(loopbackBuffer);
+
+    messenger.WriteMessage((byte *)"first", 5);
+    messenger.WriteMessage((byte *)"second", 6);
+    messenger.WriteMessage((byte *)"third", 5);
+
+    PrintfWriter printer("%02x ");
+
+    while (messenger.ReadMessage()) {
+        printf("message ");
+        Copy(messenger.Message(), printer);
+        printf("\n");
+    }
+}
+
 int main() {
     testEncodeSensorgram();
     testEncodeDatagram();
@@ -153,4 +184,5 @@ int main() {
     testWriteMessage();
     testMessageReceiver();
     testEncodeDecode();
+    testMessenger();
 }
