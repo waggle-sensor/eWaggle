@@ -1,9 +1,24 @@
 #!/usr/bin/env python3
 import waggle.protocol
+from waggle.messaging import Messenger
 import sys
 import re
+import io
 from contextlib import suppress
 from pprint import pprint
+
+
+def checkWriteMessage(data):
+    m = Messenger(io.BytesIO(data))
+
+    while True:
+        msg = m.readMessage()
+
+        if msg is None:
+            break
+
+        print('message', msg)
+
 
 for line in sys.stdin:
     print(line)
@@ -34,3 +49,7 @@ for line in sys.stdin:
                 pprint(r)
 
             print()
+
+    with suppress(AttributeError):
+        s = re.match(r'writeMessage (\S+)', line).group(1)
+        checkWriteMessage(bytes.fromhex(s))

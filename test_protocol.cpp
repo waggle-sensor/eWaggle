@@ -84,89 +84,6 @@ void testPlugin() {
     printf("\n");
 }
 
-const byte startByte = 0x7e;
-const byte endByte = 0x7f;
-const byte escapeByte = 0x7d;
-const byte escapeMask = 0x20;
-
-class MessageWriter {
-public:
-
-    MessageWriter(Writer &writer) : writer(writer) {
-    }
-
-    void WriteMessage(const byte *data, int size) {
-        writer.WriteByte(startByte);
-
-        for (int i = 0; i < size; i++) {
-            if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
-                writer.WriteByte(escapeByte);
-                writer.WriteByte(data[i] ^ escapeMask);
-            } else {
-                writer.WriteByte(data[i]);
-            }
-        }
-
-        writer.WriteByte(endByte);
-    }
-
-private:
-
-    Writer &writer;
-};
-
-class MessageReader {
-public:
-
-    MessageReader(Reader &reader) : reader(reader) {
-        start = false;
-        escape = false;
-    }
-
-    bool ReadMessage(Writer &writer) {
-        byte b;
-
-        while (!start) {
-            if (reader.Read(&b, 1) == 0) {
-                return false;
-            }
-
-            if (b == startByte) {
-                start = true;
-                escape = false;
-            }
-        }
-
-        while (start) {
-            if (reader.Read(&b, 1) == 0) {
-                return false;
-            }
-
-            if (b == endByte) {
-                start = false;
-                return true;
-            }
-
-            if (escape) {
-                writer.WriteByte(b ^ escapeMask);
-                escape = false;
-            } else if (b == escapeByte) {
-                escape = true;
-            } else {
-                writer.WriteByte(b);
-            }
-        }
-
-        return false;
-    }
-
-private:
-
-    Reader &reader;
-    bool start;
-    bool escape;
-};
-
 void testMessageReceiver() {
     Buffer<256> buffer;
     MessageWriter msgWriter(buffer);
@@ -218,10 +135,22 @@ void testEncodeDecode() {
     }
 }
 
+void testWriteMessage() {
+    PrintfWriter printer("%02x");
+    MessageWriter msgWriter(printer);
+
+    printf("writeMessage ");
+    msgWriter.WriteMessage((byte *)"first", 5);
+    msgWriter.WriteMessage((byte *)"second", 6);
+    msgWriter.WriteMessage((byte *)"third", 5);
+    printf("\n");
+}
+
 int main() {
-    testEncodeSensorgram();
-    testEncodeDatagram();
-    testPlugin();
-    testMessageReceiver();
-    testEncodeDecode();
+    // testEncodeSensorgram();
+    // testEncodeDatagram();
+    // testPlugin();
+    // testWriteMessage();
+    // testMessageReceiver();
+    // testEncodeDecode();
 }
