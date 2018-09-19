@@ -147,10 +147,10 @@ void testWriteMessage() {
 }
 
 int main() {
-    // testEncodeSensorgram();
-    // testEncodeDatagram();
-    // testPlugin();
-    // testWriteMessage();
-    // testMessageReceiver();
-    // testEncodeDecode();
+    testEncodeSensorgram();
+    testEncodeDatagram();
+    testPlugin();
+    testWriteMessage();
+    testMessageReceiver();
+    testEncodeDecode();
 }

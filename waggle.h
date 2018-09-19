@@ -432,7 +432,7 @@ template<unsigned int N>
 class Messenger {
 public:
 
-    Messenger(ReadWriter &rw) : rw(rw), reader(rw), writer(rw) {
+    Messenger(ReadWriter &rw) : reader(rw), writer(rw) {
         hasMessage = false;
     }
 
@@ -455,7 +455,6 @@ public:
 
 private:
 
-    ReadWriter &rw;
     MessageReader reader;
     MessageWriter writer;
     Buffer<N> buffer;
