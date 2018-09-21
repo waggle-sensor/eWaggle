@@ -96,8 +96,8 @@ void testMessageReceiver() {
     }
 }
 
-void testEncodeDecode() {
-    printf("--- testEncodeDecode\n");
+void testEncodeDecodeSensorgram() {
+    printf("--- testEncodeDecodeSensorgram\n");
 
     Buffer<256> buffer;
     Encoder encoder(buffer);
@@ -120,14 +120,20 @@ void testEncodeDecode() {
 
     encoder.EncodeSensorgram(sensorgram2, (byte *)"data");
 
-    for (int i = 0; i < 2; i++) {
-        Decoder decoder(buffer);
+    Decoder decoder(buffer);
+
+    for (;;) {
         SensorgramInfo info;
         byte data[64];
 
         decoder.DecodeSensorgram(info, data);
+
+        if (decoder.Error()) {
+            break;
+        }
+
         data[info.dataSize] = 0;
-        printf("%d %d \"%s\" %d\n", info.sensorID, info.parameterID, (const char *)data, decoder.Error());
+        printf("%d %d \"%s\"\n", info.sensorID, info.parameterID, (const char *)data);
     }
 }
 
@@ -204,7 +210,7 @@ int main() {
     testPlugin();
     testWriteMessage();
     testMessageReceiver();
-    testEncodeDecode();
+    testEncodeDecodeSensorgram();
     testMessenger();
     testComplete();
 }

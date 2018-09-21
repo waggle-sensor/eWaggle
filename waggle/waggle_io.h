@@ -55,6 +55,10 @@ public:
             buffer[length++] = data[i++];
         }
 
+        if (offset == length) {
+            Reset();
+        }
+
         return i;
     }
 
@@ -68,7 +72,7 @@ public:
     }
 
     size_t Length() const {
-        return length;
+        return length - offset;
     }
 
     size_t Capacity() const {
