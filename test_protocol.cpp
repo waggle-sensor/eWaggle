@@ -99,8 +99,9 @@ void testMessageReceiver() {
 void testEncodeDecodeSensorgram() {
     printf("--- testEncodeDecodeSensorgram\n");
 
-    Buffer<256> buffer;
-    Encoder encoder(buffer);
+    Buffer<256> loopbackBuffer;
+    Encoder encoder(loopbackBuffer);
+    Decoder decoder(loopbackBuffer);
 
     SensorgramInfo sensorgram1 = {
         .sensorID = 1,
@@ -120,8 +121,6 @@ void testEncodeDecodeSensorgram() {
 
     encoder.EncodeSensorgram(sensorgram2, (byte *)"data");
 
-    Decoder decoder(buffer);
-
     for (;;) {
         SensorgramInfo info;
         byte data[64];
@@ -132,7 +131,7 @@ void testEncodeDecodeSensorgram() {
             break;
         }
 
-        data[info.dataSize] = 0;
+        data[info.dataSize] = 0; // test data is all strings here
         printf("%d %d \"%s\"\n", info.sensorID, info.parameterID, (const char *)data);
     }
 }

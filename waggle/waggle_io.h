@@ -38,6 +38,12 @@ public:
         Reset();
     }
 
+    Buffer(byte *data, size_t size) {
+        capacity = N;
+        Reset();
+        Write(data, size);
+    }
+
     size_t Read(byte *data, size_t size) {
         size_t i = 0;
 
@@ -89,20 +95,35 @@ private:
 
 size_t Copy(Reader &r, Writer &w) {
     size_t total = 0;
-    byte data[64];
+    byte buffer[64];
 
     for (;;) {
-        size_t n = r.Read(data, sizeof(data));
-        w.Write(data, n);
+        size_t n = r.Read(buffer, sizeof(buffer));
+        w.Write(buffer, n);
 
         total += n;
 
-        if (n < sizeof(data)) {
-            break;
+        if (n < sizeof(buffer)) {
+            return total;
         }
     }
-
-    return total;
 }
+
+// size_t CopyN(Reader &r, Writer &w, size_t size) {
+//     size_t total = 0;
+//     byte buffer[64];
+//
+//     for (;;) {
+//         //...
+//         size_t n = r.Read(buffer, sizeof(data));
+//         w.Write(buffer, n);
+//
+//         total += n;
+//
+//         if (n < sizeof(buffer)) {
+//             return total;
+//         }
+//     }
+// }
 
 };
