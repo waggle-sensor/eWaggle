@@ -4,6 +4,7 @@
 namespace waggle {
 
 struct SensorgramInfo {
+    unsigned int dataSize;
     unsigned int sensorID;
     unsigned int sensorInstance;
     unsigned int parameterID;
@@ -12,6 +13,7 @@ struct SensorgramInfo {
 };
 
 struct DatagramInfo {
+    unsigned int bodySize;
     unsigned int protocolVersion;
     unsigned int timestamp;
     unsigned int packetSeq;
@@ -28,41 +30,87 @@ class Decoder {
 public:
 
     Decoder(Reader &r) : reader(r) {
+        error = 0;
     }
 
-    int DecodeBytes(byte *data, int size) {
-        return reader.Read(data, size);
+    int Error() const {
+        return error;
     }
 
-    template<typename T>
-    int DecodeInt(int size, T &x) {
-        byte data[size];
-
-        int n = DecodeBytes(data, size);
-
-        x = 0;
-
-        for (int i = 0; i < n; i++) {
-            x <<= 8;
-            x |= data[i];
+    void DecodeBytes(byte *data, int size) {
+        if (error) {
+            return;
         }
 
-        return n;
+        error = reader.Read(data, size) == size;
     }
 
-    void DecodeSensorgram(SensorgramInfo &s, byte *data, int &size) {
-        DecodeInt(2, size);
-        DecodeInt(2, s.sensorID);
-        DecodeInt(1, s.sensorInstance);
-        DecodeInt(1, s.parameterID);
-        DecodeInt(4, s.timestamp);
-        DecodeInt(1, s.dataType);
+    unsigned int DecodeUint(unsigned int size) {
+        byte data[size];
         DecodeBytes(data, size);
+
+        if (error) {
+            return 0;
+        }
+
+        unsigned int r = 0;
+
+        for (int i = 0; i < size; i++) {
+            r <<= 8;
+            r |= data[i];
+        }
+
+        return r;
+    }
+
+    void DecodeSensorgram(SensorgramInfo &s, byte *data) {
+        s.dataSize = DecodeUint(2);
+        s.sensorID = DecodeUint(2);
+        s.sensorInstance = DecodeUint(1);
+        s.parameterID = DecodeUint(1);
+        s.timestamp = DecodeUint(4);
+        s.dataType = DecodeUint(1);
+        DecodeBytes(data, s.dataSize);
+    }
+
+    void DecodeDatagram(DatagramInfo &info, byte *data) {
+        if (DecodeUint(1) != 0xaa) {
+            error = true;
+            return;
+        }
+
+        info.bodySize = DecodeUint(3);
+        info.protocolVersion = DecodeUint(1);
+        info.timestamp = DecodeUint(4);
+        info.packetSeq = DecodeUint(2);
+        info.packetType = DecodeUint(1);
+        info.pluginID = DecodeUint(2);
+        info.pluginMajorVersion = DecodeUint(1);
+        info.pluginMinorVersion = DecodeUint(1);
+        info.pluginPatchVersion = DecodeUint(1);
+        info.pluginInstance = DecodeUint(1);
+        info.pluginRunID = DecodeUint(2);
+
+        DecodeBytes(data, info.bodySize);
+
+        byte crc1 = waggle::crc8(data, info.bodySize);
+        byte crc2 = DecodeUint(1);
+
+        if (crc1 != crc2) {
+            error = true;
+            return;
+        }
+
+        if (DecodeUint(1) != 0x55) {
+            error = true;
+            return;
+        }
     }
 
 private:
 
     Reader &reader;
+    int error;
 };
 
 class Encoder {
