@@ -5,15 +5,15 @@ namespace waggle {
 class StreamIO : public ReadWriter {
 public:
 
-    StreamIO(Stream &s) : stream(s) {
+    StreamIO(Stream &stream) : stream(stream) {
     }
 
     int Read(byte *data, int size) {
-        return s.readBytes(data, size);
+        return stream.readBytes(data, size);
     }
 
     int Write(const byte *data, int size) {
-        return s.write(data, size);
+        return stream.write(data, size);
     }
 
 private:
