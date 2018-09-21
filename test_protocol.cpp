@@ -177,6 +177,40 @@ void testMessenger() {
     }
 }
 
+void testComplete() {
+    printf("--- testComplete\n");
+
+    // setup loopback messenger
+    Buffer<256> loopbackBuffer;
+    Messenger<256> messenger(loopbackBuffer);
+
+    // setup plugin
+    Plugin<256> plugin(37, 2, 0, 0, 0);
+    Buffer<256> publishBuffer;
+
+    plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
+    plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
+
+    plugin.PublishMeasurements(publishBuffer);
+    messenger.WriteMessage(publishBuffer);
+    publishBuffer.Reset();
+
+    plugin.AddMeasurement(3, 0, 1, 0, (byte *)"123", 3);
+    plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
+
+    plugin.PublishMeasurements(publishBuffer);
+    messenger.WriteMessage(publishBuffer);
+    publishBuffer.Reset();
+
+    PrintfWriter printer("%02x");
+
+    while (messenger.ReadMessage()) {
+        printf("message \"");
+        Copy(messenger.Message(), printer);
+        printf("\"\n");
+    }
+}
+
 int main() {
     testEncodeSensorgram();
     testEncodeDatagram();
@@ -185,4 +219,5 @@ int main() {
     testMessageReceiver();
     testEncodeDecode();
     testMessenger();
+    testComplete();
 }

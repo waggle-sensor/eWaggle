@@ -64,6 +64,14 @@ public:
     }
 };
 
+class Array {
+public:
+
+    virtual const byte *Bytes() const = 0;
+    virtual unsigned int Length() const = 0;
+    virtual unsigned int Capacity() const = 0;
+};
+
 class ReadWriter : public Reader, public Writer {
 };
 
@@ -86,7 +94,7 @@ int Copy(Reader &r, Writer &w) {
 }
 
 template<unsigned int N>
-class Buffer : public ReadWriter {
+class Buffer : public ReadWriter, public Array {
 public:
 
     Buffer() {
@@ -123,7 +131,7 @@ public:
         return buffer;
     }
 
-    int Length() const {
+    unsigned int Length() const {
         return length;
     }
 
@@ -438,6 +446,10 @@ public:
 
     void WriteMessage(const byte *data, int size) {
         return writer.WriteMessage(data, size);
+    }
+
+    void WriteMessage(const Array &a) {
+        return writer.WriteMessage(a.Bytes(), a.Length());
     }
 
     bool ReadMessage() {
