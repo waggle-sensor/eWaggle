@@ -24,7 +24,11 @@ struct DatagramInfo {
     unsigned int pluginPatchVersion;
     unsigned int pluginInstance;
     unsigned int pluginRunID;
+    byte dataCRC;
 };
+
+// we need to fix the fixed type thing too
+// we should be able to pass buffer without templating the whole thing...
 
 class Decoder {
 public:
@@ -63,17 +67,21 @@ public:
         return r;
     }
 
-    void DecodeSensorgram(SensorgramInfo &info, byte *data) {
+    void DecodeSensorgramInfo(SensorgramInfo &info) {
         info.dataSize = DecodeUint(2);
         info.sensorID = DecodeUint(2);
         info.sensorInstance = DecodeUint(1);
         info.parameterID = DecodeUint(1);
         info.timestamp = DecodeUint(4);
         info.dataType = DecodeUint(1);
+    }
+
+    void DecodeSensorgram(SensorgramInfo &info, byte *data) {
+        DecodeSensorgramInfo(info);
         DecodeBytes(data, info.dataSize);
     }
 
-    void DecodeDatagram(DatagramInfo &info, byte *data) {
+    void DecodeDatagram(DatagramInfo &info, Writer &w) {
         if (DecodeUint(1) != 0xaa) {
             error = true;
             return;
@@ -91,12 +99,18 @@ public:
         info.pluginInstance = DecodeUint(1);
         info.pluginRunID = DecodeUint(2);
 
-        DecodeBytes(data, info.bodySize);
+        // fix to CopyN later...
+        byte crc = 0;
+        for (size_t i = 0; i < info.bodySize; i++) {
+            byte b;
+            DecodeBytes(&b, 1);
+            w.WriteByte(b);
+            crc = waggle::crc8(&b, 1, crc);
+        }
 
-        byte crc1 = waggle::crc8(data, info.bodySize);
-        byte crc2 = DecodeUint(1);
+        info.dataCRC = DecodeUint(1);
 
-        if (crc1 != crc2) {
+        if (crc != info.dataCRC) {
             error = true;
             return;
         }
@@ -231,22 +245,6 @@ private:
 
     DatagramInfo datagramInfo;
     Buffer<N> buffer;
-};
-
-class MessageScanner {
-public:
-
-    MessageScanner(Reader &reader) : reader(reader) {
-    }
-
-    bool Scan() {
-        return true;
-    }
-
-
-private:
-
-    Reader &reader;
 };
 
 const byte startByte = 0x7e;
@@ -395,6 +393,43 @@ private:
     MessageWriter writer;
     Buffer<N> buffer;
     bool hasMessage;
+};
+
+class MessageScanner {
+public:
+
+    MessageScanner(Reader &reader) : decoder(reader), sensorgramDecoder(sensorgramBuffer) {
+    }
+
+    bool ScanDatagram() {
+        sensorgramBuffer.Reset();
+        decoder.DecodeDatagram(datagramInfo, sensorgramBuffer);
+        return !decoder.Error();
+    }
+
+    bool ScanSensorgram() {
+        byte temp[32];
+        sensorgramDecoder.DecodeSensorgram(sensorgramInfo, temp);
+        return !sensorgramDecoder.Error();
+    }
+
+    const DatagramInfo &Datagram() const {
+        return datagramInfo;
+    }
+
+    const SensorgramInfo &Sensorgram() const {
+        return sensorgramInfo;
+    }
+
+    // need error support for things like full buffer, etc...
+
+private:
+
+    Decoder decoder;
+    Buffer<256> sensorgramBuffer;
+    Decoder sensorgramDecoder;
+    DatagramInfo datagramInfo;
+    SensorgramInfo sensorgramInfo;
 };
 
 };

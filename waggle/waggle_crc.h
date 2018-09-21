@@ -37,9 +37,7 @@ const byte crc8table[256] = {
     0xb6, 0xe8, 0x0a, 0x54, 0xd7, 0x89, 0x6b, 0x35,
 };
 
-byte crc8(const byte *data, int size) {
-    byte crc = 0;
-
+byte crc8(const byte *data, int size, byte crc=0) {
     for (int i = 0; i < size; i++) {
         crc = crc8table[crc ^ data[i]];
     }
