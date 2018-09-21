@@ -8,21 +8,26 @@ void testEncodeSensorgram() {
     PrintfWriter printer("%02x");
     Encoder encoder(printer);
 
+    printf("sensorgram ");
+
     SensorgramInfo sensorgram1 = {
         .sensorID = 1,
         .parameterID = 0,
         .timestamp = 1000000,
+        .dataSize = 5,
     };
+
+    encoder.EncodeSensorgram(sensorgram1, (const byte *)"hello");
 
     SensorgramInfo sensorgram2 = {
         .sensorID = 2,
         .parameterID = 1,
         .timestamp = 1000000,
+        .dataSize = 6,
     };
 
-    printf("sensorgram ");
-    encoder.EncodeSensorgram(sensorgram1, (const byte *)"hello", 5);
-    encoder.EncodeSensorgram(sensorgram2, (const byte *)"second", 6);
+    encoder.EncodeSensorgram(sensorgram2, (const byte *)"second");
+
     printf("\n");
 }
 
@@ -101,27 +106,28 @@ void testEncodeDecode() {
         .sensorID = 1,
         .parameterID = 3,
         .timestamp = 1000000,
+        .dataSize = 5,
     };
+
+    encoder.EncodeSensorgram(sensorgram1, (byte *)"hello");
 
     SensorgramInfo sensorgram2 = {
         .sensorID = 2,
         .parameterID = 7,
         .timestamp = 1000000,
+        .dataSize = 4,
     };
 
-    encoder.EncodeSensorgram(sensorgram1, (byte *)"hello", 5);
-    encoder.EncodeSensorgram(sensorgram2, (byte *)"data", 4);
-
-    Decoder decoder(buffer);
+    encoder.EncodeSensorgram(sensorgram2, (byte *)"data");
 
     for (int i = 0; i < 2; i++) {
-        SensorgramInfo s;
+        Decoder decoder(buffer);
+        SensorgramInfo info;
         byte data[64];
-        int size;
 
-        decoder.DecodeSensorgram(s, data, size);
-        data[size] = 0;
-        printf("%d %d %s\n", s.sensorID, s.parameterID, (const char *)data);
+        decoder.DecodeSensorgram(info, data);
+        data[info.dataSize] = 0;
+        printf("%d %d \"%s\" %d\n", info.sensorID, info.parameterID, (const char *)data, decoder.Error());
     }
 }
 

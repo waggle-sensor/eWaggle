@@ -1,18 +1,19 @@
 namespace waggle {
 
+typedef unsigned int size_t;
+
 class Reader {
 public:
 
-    virtual int Read(byte *data, int length) = 0;
+    virtual size_t Read(byte *data, size_t size) = 0;
 };
 
-// Writer Interface
 class Writer {
 public:
 
-    virtual int Write(const byte *data, int size) = 0;
+    virtual size_t Write(const byte *data, size_t size) = 0;
 
-    int WriteByte(byte b) {
+    size_t WriteByte(byte b) {
         return Write(&b, 1);
     }
 };
@@ -20,33 +21,15 @@ public:
 class ReadWriter : public Reader, public Writer {
 };
 
-int Copy(Reader &r, Writer &w) {
-    unsigned int total = 0;
-    byte data[64];
-
-    for (;;) {
-        unsigned int n = r.Read(data, sizeof(data));
-        w.Write(data, n);
-
-        total += n;
-
-        if (n < sizeof(data)) {
-            break;
-        }
-    }
-
-    return total;
-}
-
 class Array {
 public:
 
     virtual const byte *Bytes() const = 0;
-    virtual unsigned int Length() const = 0;
-    virtual unsigned int Capacity() const = 0;
+    virtual size_t Length() const = 0;
+    virtual size_t Capacity() const = 0;
 };
 
-template<unsigned int N>
+template<size_t N>
 class Buffer : public ReadWriter, public Array {
 public:
 
@@ -55,8 +38,8 @@ public:
         Reset();
     }
 
-    int Read(byte *data, int size) {
-        int i = 0;
+    size_t Read(byte *data, size_t size) {
+        size_t i = 0;
 
         while (i < size && offset < length) {
             data[i++] = buffer[offset++];
@@ -65,8 +48,8 @@ public:
         return i;
     }
 
-    int Write(const byte *data, int size) {
-        int i = 0;
+    size_t Write(const byte *data, size_t size) {
+        size_t i = 0;
 
         while (i < size && length < capacity) {
             buffer[length++] = data[i++];
@@ -84,20 +67,38 @@ public:
         return buffer;
     }
 
-    unsigned int Length() const {
+    size_t Length() const {
         return length;
     }
 
-    unsigned int Capacity() const {
+    size_t Capacity() const {
         return capacity;
     }
 
 private:
 
     byte buffer[N];
-    unsigned int capacity;
-    unsigned int length;
-    unsigned int offset;
+    size_t capacity;
+    size_t length;
+    size_t offset;
 };
+
+size_t Copy(Reader &r, Writer &w) {
+    size_t total = 0;
+    byte data[64];
+
+    for (;;) {
+        size_t n = r.Read(data, sizeof(data));
+        w.Write(data, n);
+
+        total += n;
+
+        if (n < sizeof(data)) {
+            break;
+        }
+    }
+
+    return total;
+}
 
 };

@@ -8,11 +8,11 @@ public:
     StreamIO(Stream &stream) : stream(stream) {
     }
 
-    int Read(byte *data, int size) {
+    size_t Read(byte *data, size_t size) {
         return stream.readBytes(data, size);
     }
 
-    int Write(const byte *data, int size) {
+    size_t Write(const byte *data, size_t size) {
         return stream.write(data, size);
     }
 

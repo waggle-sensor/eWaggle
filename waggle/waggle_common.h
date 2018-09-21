@@ -30,7 +30,7 @@ class Decoder {
 public:
 
     Decoder(Reader &r) : reader(r) {
-        error = 0;
+        error = false;
     }
 
     int Error() const {
@@ -42,7 +42,7 @@ public:
             return;
         }
 
-        error = reader.Read(data, size) == size;
+        error = reader.Read(data, size) != size;
     }
 
     unsigned int DecodeUint(unsigned int size) {
@@ -63,14 +63,14 @@ public:
         return r;
     }
 
-    void DecodeSensorgram(SensorgramInfo &s, byte *data) {
-        s.dataSize = DecodeUint(2);
-        s.sensorID = DecodeUint(2);
-        s.sensorInstance = DecodeUint(1);
-        s.parameterID = DecodeUint(1);
-        s.timestamp = DecodeUint(4);
-        s.dataType = DecodeUint(1);
-        DecodeBytes(data, s.dataSize);
+    void DecodeSensorgram(SensorgramInfo &info, byte *data) {
+        info.dataSize = DecodeUint(2);
+        info.sensorID = DecodeUint(2);
+        info.sensorInstance = DecodeUint(1);
+        info.parameterID = DecodeUint(1);
+        info.timestamp = DecodeUint(4);
+        info.dataType = DecodeUint(1);
+        DecodeBytes(data, info.dataSize);
     }
 
     void DecodeDatagram(DatagramInfo &info, byte *data) {
@@ -110,17 +110,22 @@ public:
 private:
 
     Reader &reader;
-    int error;
+    bool error;
 };
 
 class Encoder {
 public:
 
     Encoder(Writer &w) : writer(w) {
+        error = false;
     }
 
-    int EncodeBytes(const byte *data, int size) {
-        return writer.Write(data, size);
+    void EncodeBytes(const byte *data, int size) {
+        if (error) {
+            return;
+        }
+
+        error = writer.Write(data, size) != size;
     }
 
     template<typename T>
@@ -135,14 +140,14 @@ public:
         EncodeBytes(data, size);
     }
 
-    void EncodeSensorgram(const SensorgramInfo &s, const byte *data, int size) {
-        EncodeInt(2, size);
+    void EncodeSensorgram(const SensorgramInfo &s, const byte *data) {
+        EncodeInt(2, s.dataSize);
         EncodeInt(2, s.sensorID);
         EncodeInt(1, s.sensorInstance);
         EncodeInt(1, s.parameterID);
         EncodeInt(4, s.timestamp);
         EncodeInt(1, s.dataType);
-        EncodeBytes(data, size);
+        EncodeBytes(data, s.dataSize);
     }
 
     void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
@@ -168,13 +173,14 @@ public:
 private:
 
     Writer &writer;
+    bool error;
 };
 
 unsigned long defaultGetTimestamp() {
     return 0;
 }
 
-template<unsigned int N>
+template<size_t N>
 class Plugin {
 public:
 
@@ -201,9 +207,10 @@ public:
         sg.parameterID = pid;
         sg.timestamp = defaultGetTimestamp();
         sg.dataType = type;
+        sg.dataSize = size;
 
         Encoder encoder(buffer);
-        encoder.EncodeSensorgram(sg, data, size);
+        encoder.EncodeSensorgram(sg, data);
     }
 
     void PublishMeasurements(Writer &writer) {
@@ -261,7 +268,7 @@ public:
         writer.WriteByte(endByte);
     }
 
-    int Write(const byte *data, int size) {
+    size_t Write(const byte *data, size_t size) {
         for (int i = 0; i < size; i++) {
             if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
                 writer.WriteByte(escapeByte);
@@ -274,7 +281,7 @@ public:
         return size;
     }
 
-    void WriteMessage(const byte *data, int size) {
+    void WriteMessage(const byte *data, size_t size) {
         StartMessage();
         Write(data, size);
         EndMessage();
@@ -337,7 +344,7 @@ private:
     bool escape;
 };
 
-template<unsigned int N>
+template<size_t N>
 class Messenger : public Writer {
 public:
 
@@ -345,7 +352,7 @@ public:
         hasMessage = false;
     }
 
-    void WriteMessage(const byte *data, int size) {
+    void WriteMessage(const byte *data, size_t size) {
         return writer.WriteMessage(data, size);
     }
 
@@ -361,11 +368,11 @@ public:
         writer.EndMessage();
     }
 
-    int Write(const byte *data, int size) {
+    size_t Write(const byte *data, size_t size) {
         return writer.Write(data, size);
     }
 
-    int Write(const Array &a) {
+    size_t Write(const Array &a) {
         return writer.Write(a.Bytes(), a.Length());
     }
 
