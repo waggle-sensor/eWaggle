@@ -168,12 +168,12 @@ void testMessenger() {
     messenger.WriteMessage((byte *)"second", 6);
     messenger.WriteMessage((byte *)"third", 5);
 
-    PrintfWriter printer("%02x ");
+    PrintfWriter printer("%c");
 
     while (messenger.ReadMessage()) {
-        printf("message ");
+        printf("message \"");
         Copy(messenger.Message(), printer);
-        printf("\n");
+        printf("\"\n");
     }
 }
 
