@@ -395,6 +395,7 @@ private:
     bool hasMessage;
 };
 
+template<size_t N>
 class MessageScanner {
 public:
 
@@ -426,7 +427,7 @@ public:
 private:
 
     Decoder decoder;
-    Buffer<256> sensorgramBuffer;
+    Buffer<N> sensorgramBuffer;
     Decoder sensorgramDecoder;
     DatagramInfo datagramInfo;
     SensorgramInfo sensorgramInfo;
