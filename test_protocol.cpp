@@ -1,4 +1,4 @@
-#include "waggle.h"
+#include "waggle/waggle.h"
 #include <cstdio>
 
 using namespace waggle;
@@ -186,21 +186,20 @@ void testComplete() {
 
     // setup plugin
     Plugin<256> plugin(37, 2, 0, 0, 0);
-    Buffer<256> publishBuffer;
 
     plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
     plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
 
-    plugin.PublishMeasurements(publishBuffer);
-    messenger.WriteMessage(publishBuffer);
-    publishBuffer.Reset();
+    messenger.StartMessage();
+    plugin.PublishMeasurements(messenger);
+    messenger.EndMessage();
 
     plugin.AddMeasurement(3, 0, 1, 0, (byte *)"123", 3);
     plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
 
-    plugin.PublishMeasurements(publishBuffer);
-    messenger.WriteMessage(publishBuffer);
-    publishBuffer.Reset();
+    messenger.StartMessage();
+    plugin.PublishMeasurements(messenger);
+    messenger.EndMessage();
 
     PrintfWriter printer("%02x");
 
@@ -210,6 +209,8 @@ void testComplete() {
         printf("\"\n");
     }
 }
+
+// TODO ok...need to check max length case...
 
 int main() {
     testEncodeSensorgram();

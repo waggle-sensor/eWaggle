@@ -339,18 +339,26 @@ public:
         buffer.Reset();
     }
 
-    void ConsumeMeasurements() {
-        //
-    }
-
-    void ProcessMeasurements(SensorgramInfo &info) {
-        //
-    }
-
 private:
 
     DatagramInfo datagramInfo;
     Buffer<N> buffer;
+};
+
+class MessageScanner {
+public:
+
+    MessageScanner(Reader &reader) : reader(reader) {
+    }
+
+    bool Scan() {
+        return true;
+    }
+
+
+private:
+
+    Reader &reader;
 };
 
 const byte startByte = 0x7e;
@@ -358,15 +366,21 @@ const byte endByte = 0x7f;
 const byte escapeByte = 0x7d;
 const byte escapeMask = 0x20;
 
-class MessageWriter {
+class MessageWriter : public Writer {
 public:
 
     MessageWriter(Writer &writer) : writer(writer) {
     }
 
-    void WriteMessage(const byte *data, int size) {
+    void StartMessage() {
         writer.WriteByte(startByte);
+    }
 
+    void EndMessage() {
+        writer.WriteByte(endByte);
+    }
+
+    int Write(const byte *data, int size) {
         for (int i = 0; i < size; i++) {
             if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
                 writer.WriteByte(escapeByte);
@@ -376,7 +390,13 @@ public:
             }
         }
 
-        writer.WriteByte(endByte);
+        return size;
+    }
+
+    void WriteMessage(const byte *data, int size) {
+        StartMessage();
+        Write(data, size);
+        EndMessage();
     }
 
 private:
@@ -437,7 +457,7 @@ private:
 };
 
 template<unsigned int N>
-class Messenger {
+class Messenger : public Writer {
 public:
 
     Messenger(ReadWriter &rw) : reader(rw), writer(rw) {
@@ -450,6 +470,22 @@ public:
 
     void WriteMessage(const Array &a) {
         return writer.WriteMessage(a.Bytes(), a.Length());
+    }
+
+    void StartMessage() {
+        writer.StartMessage();
+    }
+
+    void EndMessage() {
+        writer.EndMessage();
+    }
+
+    int Write(const byte *data, int size) {
+        return writer.Write(data, size);
+    }
+
+    int Write(const Array &a) {
+        return writer.Write(a.Bytes(), a.Length());
     }
 
     bool ReadMessage() {
