@@ -422,6 +422,10 @@ public:
         return !decoder.Error();
     }
 
+    bool ScanSensorgrams() {
+        sensorgramBuffer.Reset();
+    }
+
     bool ScanSensorgram() {
         byte temp[32];
         sensorgramDecoder.DecodeSensorgram(sensorgramInfo, temp);
