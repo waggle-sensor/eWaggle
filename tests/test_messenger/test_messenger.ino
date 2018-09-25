@@ -3,7 +3,7 @@
 using namespace waggle;
 
 StreamIO systemIO(SerialUSB);
-Messenger<4*1024> messenger(systemIO);
+Messenger<1024> messenger(systemIO);
 
 void setup() {
     SerialUSB.begin(9600);
