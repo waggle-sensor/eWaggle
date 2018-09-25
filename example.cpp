@@ -23,10 +23,12 @@ void testProcess() {
         MessageScanner<64> scanner(messenger.Message());
 
         while (scanner.ScanDatagram()) {
-            printf("datagram %d\n", scanner.Datagram().pluginID);
+            const DatagramInfo &datagram = scanner.Datagram();
+            printf("datagram %d\n", datagram.pluginID);
 
             while (scanner.ScanSensorgram()) {
-                printf("sensorgram %d %d\n", scanner.Sensorgram().sensorID, scanner.Sensorgram().parameterID);
+                const SensorgramInfo &sensorgram = scanner.Sensorgram();
+                printf("sensorgram %d %d\n", sensorgram.sensorID, sensorgram.parameterID);
             }
         }
     }
