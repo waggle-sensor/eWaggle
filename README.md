@@ -23,7 +23,7 @@ Clone the `eWaggle` repo and add `eWaggle/src` to your project's include path.
 For example, your project's build process should have something like:
 
 ```make
-CC=c++ -I/path/to/eWaggle/src ...
+c++ -I/path/to/eWaggle/src ...
 ```
 
 ## Examples
