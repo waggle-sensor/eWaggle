@@ -2,29 +2,9 @@
 
 using namespace waggle;
 
-LoopbackIO<512> loopback;
-
-void testPackDatagram() {
-    Datagram<256> dg;
-    Sensorgram<32> s;
-
-    s.sensorID = 1;
-    s.parameterID = 0;
-    s.SetUint(1000);
-    s.Pack(dg.Body());
-
-    s.sensorID = 2;
-    s.parameterID = 0;
-    s.SetUint(341);
-    s.Pack(dg.Body());
-
-    PrintfWriter printer("%02x");
-    dg.Pack(printer);
-    dg.Pack(printer);
-}
-
-void testPack() {
-    Sensorgram<32> s;
+int main() {
+    LoopbackIO<256> loopback;
+    Sensorgram<64> s;
 
     s.sensorID = 1;
     s.parameterID = 0;
@@ -53,18 +33,13 @@ void testPack() {
     s.sensorInstance = 2;
     s.SetUint(43);
     s.Pack(loopback);
-}
-
-void testUnpack() {
-    Sensorgram<32> s;
 
     while (s.Unpack(loopback)) {
-        printf("ok %d %d %d %u\n", s.sensorID, s.parameterID, s.Length(), s.GetUint());
+        printf("sensor id: %d\n", s.sensorID);
+        printf("parameter id: %d\n", s.parameterID);
+        printf("uint value: %d\n", s.GetUint());
+        printf("\n");
     }
-}
 
-int main() {
-    testPack();
-    testUnpack();
-    testPackDatagram();
+    return 0;
 }

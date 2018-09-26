@@ -3,155 +3,155 @@
 
 namespace waggle {
 
-    const byte startByte = 0x7e;
-    const byte endByte = 0x7f;
-    const byte escapeByte = 0x7d;
-    const byte escapeMask = 0x20;
+const byte startByte = 0x7e;
+const byte endByte = 0x7f;
+const byte escapeByte = 0x7d;
+const byte escapeMask = 0x20;
 
-    class MessageWriter : public Writer {
-    public:
+class MessageWriter : public Writer {
+public:
 
-        MessageWriter(Writer &writer) : writer(writer) {
+    MessageWriter(Writer &writer) : writer(writer) {
+    }
+
+    size_t Write(const byte *data, size_t size) {
+        for (int i = 0; i < size; i++) {
+            if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
+                writer.WriteByte(escapeByte);
+                writer.WriteByte(data[i] ^ escapeMask);
+            } else {
+                writer.WriteByte(data[i]);
+            }
         }
 
-        void StartMessage() {
-            writer.WriteByte(startByte);
-        }
+        return size;
+    }
 
-        void EndMessage() {
-            writer.WriteByte(endByte);
-        }
+    void StartMessage() {
+        writer.WriteByte(startByte);
+    }
 
-        size_t Write(const byte *data, size_t size) {
-            for (int i = 0; i < size; i++) {
-                if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
-                    writer.WriteByte(escapeByte);
-                    writer.WriteByte(data[i] ^ escapeMask);
-                } else {
-                    writer.WriteByte(data[i]);
-                }
+    void EndMessage() {
+        writer.WriteByte(endByte);
+    }
+
+    void WriteMessage(const byte *data, size_t size) {
+        StartMessage();
+        Write(data, size);
+        EndMessage();
+    }
+
+private:
+
+    Writer &writer;
+};
+
+class MessageReader {
+public:
+
+    MessageReader(Reader &reader) : reader(reader) {
+        start = false;
+        escape = false;
+    }
+
+    bool ReadMessage(Writer &writer) {
+        byte b;
+
+        while (!start) {
+            if (reader.Read(&b, 1) == 0) {
+                return false;
             }
 
-            return size;
+            if (b == startByte) {
+                start = true;
+                escape = false;
+            }
         }
 
-        void WriteMessage(const byte *data, size_t size) {
-            StartMessage();
-            Write(data, size);
-            EndMessage();
-        }
-
-    private:
-
-        Writer &writer;
-    };
-
-    class MessageReader {
-    public:
-
-        MessageReader(Reader &reader) : reader(reader) {
-            start = false;
-            escape = false;
-        }
-
-        bool ReadMessage(Writer &writer) {
-            byte b;
-
-            while (!start) {
-                if (reader.Read(&b, 1) == 0) {
-                    return false;
-                }
-
-                if (b == startByte) {
-                    start = true;
-                    escape = false;
-                }
+        while (start) {
+            if (reader.Read(&b, 1) == 0) {
+                return false;
             }
 
-            while (start) {
-                if (reader.Read(&b, 1) == 0) {
-                    return false;
-                }
-
-                if (b == endByte) {
-                    start = false;
-                    return true;
-                }
-
-                if (escape) {
-                    writer.WriteByte(b ^ escapeMask);
-                    escape = false;
-                } else if (b == escapeByte) {
-                    escape = true;
-                } else {
-                    writer.WriteByte(b);
-                }
+            if (b == endByte) {
+                start = false;
+                return true;
             }
 
-            return false;
-        }
-
-    private:
-
-        Reader &reader;
-        bool start;
-        bool escape;
-    };
-
-    template<size_t N>
-    class Messenger : public Writer {
-    public:
-
-        Messenger(ReadWriter &rw) : buffer(buf, N), reader(rw), writer(rw) {
-            hasMessage = false;
-        }
-
-        void WriteMessage(const byte *data, size_t size) {
-            return writer.WriteMessage(data, size);
-        }
-
-        void WriteMessage(Buffer &b) {
-            return writer.WriteMessage(b.Bytes(), b.Length());
-        }
-
-        void StartMessage() {
-            writer.StartMessage();
-        }
-
-        void EndMessage() {
-            writer.EndMessage();
-        }
-
-        size_t Write(const byte *data, size_t size) {
-            return writer.Write(data, size);
-        }
-
-        size_t Write(Buffer &b) {
-            return writer.Write(b.Bytes(), b.Length());
-        }
-
-        bool ReadMessage() {
-            if (hasMessage) {
-                buffer.Reset();
+            if (escape) {
+                writer.WriteByte(b ^ escapeMask);
+                escape = false;
+            } else if (b == escapeByte) {
+                escape = true;
+            } else {
+                writer.WriteByte(b);
             }
-
-            hasMessage = reader.ReadMessage(buffer);
-            return hasMessage;
         }
 
-        Buffer &Message() {
-            return buffer;
+        return false;
+    }
+
+private:
+
+    Reader &reader;
+    bool start;
+    bool escape;
+};
+
+template<size_t N>
+class Messenger : public Writer {
+public:
+
+    Messenger(ReadWriter &rw) : buffer(buf, N), reader(rw), writer(rw) {
+        hasMessage = false;
+    }
+
+    void WriteMessage(const byte *data, size_t size) {
+        return writer.WriteMessage(data, size);
+    }
+
+    void WriteMessage(Buffer &b) {
+        return writer.WriteMessage(b.Bytes(), b.Length());
+    }
+
+    void StartMessage() {
+        writer.StartMessage();
+    }
+
+    void EndMessage() {
+        writer.EndMessage();
+    }
+
+    size_t Write(const byte *data, size_t size) {
+        return writer.Write(data, size);
+    }
+
+    size_t Write(Buffer &b) {
+        return writer.Write(b.Bytes(), b.Length());
+    }
+
+    bool ReadMessage() {
+        if (hasMessage) {
+            buffer.Reset();
         }
 
-    private:
+        hasMessage = reader.ReadMessage(buffer);
+        return hasMessage;
+    }
 
-        MessageReader reader;
-        MessageWriter writer;
+    Buffer &Message() {
+        return buffer;
+    }
 
-        byte buf[N];
-        Buffer buffer;
-        bool hasMessage;
-    };
+private:
+
+    MessageReader reader;
+    MessageWriter writer;
+
+    byte buf[N];
+    Buffer buffer;
+    bool hasMessage;
+};
 
 struct SensorgramInfo {
     unsigned int dataSize;
@@ -200,6 +200,30 @@ public:
         byte data[size];
         DecodeBytes(data, size);
         buffer.Write(data, size);
+    }
+
+    unsigned char DecodeUint8() {
+        byte b[1];
+        DecodeBytes(b, 1);
+        return b[0];
+    }
+
+    unsigned short DecodeUint16() {
+        byte b[2];
+        DecodeBytes(b, 2);
+        return (b[0] << 8) + b[1];
+    }
+
+    unsigned int DecodeUint24() {
+        byte b[3];
+        DecodeBytes(b, 3);
+        return (b[0] << 16) + (b[1] << 8) + b[2];
+    }
+
+    unsigned int DecodeUint32() {
+        byte b[4];
+        DecodeBytes(b, 4);
+        return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
     }
 
     unsigned int DecodeUint(unsigned int size) {
@@ -356,8 +380,26 @@ private:
     bool error;
 };
 
+static const byte TYPE_BYTES = 0;
+static const byte TYPE_STRING = 1;
+static const byte TYPE_BOOL = 2;
+static const byte TYPE_INT = 3;
+static const byte TYPE_UINT = 4;
+
+size_t UintSize(unsigned int x) {
+    size_t n = 0;
+
+    do {
+        n++;
+        x >>= 8;
+    } while (x > 0);
+
+    return n;
+}
+
 template<waggle::size_t N>
-struct Sensorgram {
+class Sensorgram {
+public:
 
     unsigned int sensorID;
     unsigned int sensorInstance;
@@ -365,12 +407,12 @@ struct Sensorgram {
     unsigned int valueType;
     unsigned long timestamp;
 
-    Buffer buffer;
-    byte body[N];
-
     Sensorgram() : buffer(body, N) {
+        sensorID = 0;
+        parameterID = 0;
         sensorInstance = 0;
         timestamp = 0;
+        valueType = 0;
     }
 
     Buffer &Body() {
@@ -381,16 +423,34 @@ struct Sensorgram {
         return buffer.Length();
     }
 
-    void SetUint(unsigned int size, unsigned int value) {
-        Encoder encoder(buffer);
+    void SetBytes(const byte *data, size_t size) {
+        valueType = TYPE_BYTES;
         buffer.Reset();
-        encoder.EncodeInt(size, value);
+        buffer.Write(data, size);
     }
 
-    unsigned int GetUint(unsigned int size) {
-        Buffer b(body, size);
-        Decoder decoder(b);
-        return decoder.DecodeUint(size);
+    void SetUint(unsigned int value) {
+        valueType = TYPE_UINT;
+        Encoder encoder(buffer);
+        buffer.Reset();
+        encoder.EncodeInt(UintSize(value), value);
+    }
+
+    void SetBool(bool value) {
+        valueType = TYPE_BOOL;
+        Encoder encoder(buffer);
+        buffer.Reset();
+        encoder.EncodeInt(1, value);
+    }
+
+    unsigned int GetUint() {
+        Decoder decoder(buffer);
+        return decoder.DecodeUint(buffer.Length());
+    }
+
+    bool GetBool() {
+        Decoder decoder(buffer);
+        return decoder.DecodeUint(buffer.Length());
     }
 
     bool Pack(Writer &writer) {
@@ -420,6 +480,11 @@ struct Sensorgram {
 
         return !decoder.Error();
     }
+
+private:
+
+    Buffer buffer;
+    byte body[N];
 };
 
 template<size_t N>
