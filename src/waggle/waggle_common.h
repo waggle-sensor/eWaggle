@@ -381,11 +381,28 @@ private:
     bool error;
 };
 
-static const byte TYPE_BYTES = 0;
-static const byte TYPE_STRING = 1;
-static const byte TYPE_BOOL = 2;
-static const byte TYPE_INT = 3;
-static const byte TYPE_UINT = 4;
+// imported from pywaggle. clean up.
+const byte TYPE_BYTES = 0;
+const byte TYPE_STRING = 1;
+const byte TYPE_NULL = 2;
+const byte TYPE_FALSE = 3;
+const byte TYPE_TRUE = 4;
+
+const byte TYPE_INT8 = 10;
+const byte TYPE_INT16 = 11;
+const byte TYPE_INT24 = 12;
+const byte TYPE_INT32 = 13;
+const byte TYPE_INT64 = 14;
+const byte TYPE_INT = 15;
+
+const byte TYPE_UINT8 = 20;
+const byte TYPE_UINT16 = 21;
+const byte TYPE_UINT24 = 22;
+const byte TYPE_UINT32 = 23;
+const byte TYPE_UINT64 = 24;
+const byte TYPE_UINT = 25;
+
+const byte TYPE_FLOAT32 = 30;
 
 size_t UintSize(unsigned int x) {
     size_t n = 0;
@@ -454,10 +471,13 @@ public:
     }
 
     void SetBool(bool value) {
-        valueType = TYPE_BOOL;
-        Encoder encoder(buffer);
+        if (value) {
+            valueType = TYPE_TRUE;
+        } else {
+            valueType = TYPE_FALSE;
+        }
+
         buffer.Reset();
-        encoder.EncodeInt(1, value);
     }
 
     const byte *GetBytes() {
@@ -474,8 +494,11 @@ public:
     }
 
     bool GetBool() {
-        Decoder decoder(buffer);
-        return decoder.DecodeUint(buffer.Length());
+        if (valueType == TYPE_TRUE) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     bool Pack(Writer &writer) {
