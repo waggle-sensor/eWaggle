@@ -1,4 +1,3 @@
-#include "waggle/waggle_arduino.h"
 
 using namespace waggle;
 
