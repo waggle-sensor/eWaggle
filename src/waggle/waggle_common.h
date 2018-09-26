@@ -538,6 +538,7 @@ public:
         buffer.Reset();
         decoder.DecodeBuffer(buffer, length);
 
+        // Add null-terminator for C style strings.
         if (valueType == TYPE_STRING) {
             buffer.WriteByte(0);
         }
