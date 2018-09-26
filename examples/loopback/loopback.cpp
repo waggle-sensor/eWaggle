@@ -3,7 +3,7 @@
 using namespace Waggle;
 
 int main() {
-    // First we define a loopback device with 256 bytes of scratch space on the stack.
+    // First, we define a loopback device with 256 bytes of scratch space on the stack.
     //
     // Note: A LoopbackIO device is a helper object which "loops" writes back to
     // reads. After testing, other IO devices such as SerialIO can be used as a
