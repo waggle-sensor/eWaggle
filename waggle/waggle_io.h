@@ -100,20 +100,4 @@ private:
     Buffer buffer;
 };
 
-size_t Copy(Reader &r, Writer &w) {
-    size_t total = 0;
-    byte data[64];
-
-    for (;;) {
-        size_t n = r.Read(data, sizeof(data));
-        w.Write(data, n);
-
-        total += n;
-
-        if (n < sizeof(data)) {
-            return total;
-        }
-    }
-}
-
 };

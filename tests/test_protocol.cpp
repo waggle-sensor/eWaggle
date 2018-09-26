@@ -75,28 +75,6 @@ void testPlugin() {
     printf("\n");
 }
 
-void testMessageReceiver() {
-    printf("--- testMessageReceiver\n");
-
-    LoopbackIO<256> loopback;
-    MessageWriter msgWriter(loopback);
-    MessageReader msgReader(loopback);
-
-    msgWriter.WriteMessage((const byte *)"hello world", 11);
-    msgWriter.WriteMessage((const byte *)"another", 7);
-
-    byte msgBytes[256];
-    Buffer msg(msgBytes, 256);
-    PrintfWriter printer("%c");
-
-    while (msgReader.ReadMessage(msg)) {
-        printf("message ");
-        Copy(msg, printer);
-        printf("\n");
-        msg.Reset();
-    }
-}
-
 void testEncodeDecodeSensorgram() {
     printf("--- testEncodeDecodeSensorgram\n");
 
@@ -152,64 +130,11 @@ void testWriteMessage() {
     printf("\n");
 }
 
-void testMessenger() {
-    printf("--- testMessenger\n");
-
-    LoopbackIO<256> loopback;
-    Messenger<256> messenger(loopback);
-
-    messenger.WriteMessage((byte *)"first", 5);
-    messenger.WriteMessage((byte *)"second", 6);
-    messenger.WriteMessage((byte *)"third", 5);
-
-    PrintfWriter printer("%c");
-
-    while (messenger.ReadMessage()) {
-        printf("message \"");
-        Copy(messenger.Message(), printer);
-        printf("\"\n");
-    }
-}
-
-void testComplete() {
-    printf("--- testComplete\n");
-
-    LoopbackIO<256> loopback;
-    Messenger<256> messenger(loopback);
-
-    // setup plugin
-    Plugin<256> plugin(37, 2, 0, 0, 0);
-
-    plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
-    plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
-
-    messenger.StartMessage();
-    plugin.PublishMeasurements(messenger);
-    messenger.EndMessage();
-
-    plugin.AddMeasurement(3, 0, 1, 0, (byte *)"123", 3);
-    plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
-
-    messenger.StartMessage();
-    plugin.PublishMeasurements(messenger);
-    messenger.EndMessage();
-
-    PrintfWriter printer("%02x");
-
-    while (messenger.ReadMessage()) {
-        printf("message \"");
-        Copy(messenger.Message(), printer);
-        printf("\"\n");
-    }
-}
 
 int main() {
     testEncodeSensorgram();
     testEncodeDatagram();
     testPlugin();
     testWriteMessage();
-    testMessageReceiver();
     testEncodeDecodeSensorgram();
-    testMessenger();
-    testComplete();
 }

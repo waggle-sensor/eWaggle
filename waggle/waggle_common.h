@@ -177,9 +177,6 @@ struct DatagramInfo {
     byte dataCRC;
 };
 
-// we need to fix the fixed type thing too
-// we should be able to pass buffer without templating the whole thing...
-
 class Decoder {
 public:
 
@@ -191,12 +188,18 @@ public:
         return error;
     }
 
-    void DecodeBytes(byte *data, int size) {
+    void DecodeBytes(byte *data, size_t size) {
         if (error) {
             return;
         }
 
         error = reader.Read(data, size) != size;
+    }
+
+    void DecodeBuffer(Buffer &buffer, size_t size) {
+        byte data[size];
+        DecodeBytes(data, size);
+        buffer.Write(data, size);
     }
 
     unsigned int DecodeUint(unsigned int size) {
@@ -292,6 +295,10 @@ public:
         error = writer.Write(data, size) != size;
     }
 
+    void EncodeBuffer(Buffer &buffer) {
+        EncodeBytes(buffer.Bytes(), buffer.Length());
+    }
+
     template<typename T>
     void EncodeInt(int size, T x) {
         byte data[size];
@@ -302,6 +309,15 @@ public:
         }
 
         EncodeBytes(data, size);
+    }
+
+    void EncodeSensorgramInfo(const SensorgramInfo &s) {
+        EncodeInt(2, s.dataSize);
+        EncodeInt(2, s.sensorID);
+        EncodeInt(1, s.sensorInstance);
+        EncodeInt(1, s.parameterID);
+        EncodeInt(4, s.timestamp);
+        EncodeInt(1, s.dataType);
     }
 
     void EncodeSensorgram(const SensorgramInfo &s, const byte *data) {
@@ -338,6 +354,127 @@ private:
 
     Writer &writer;
     bool error;
+};
+
+template<waggle::size_t N>
+struct Sensorgram {
+
+    unsigned int sensorID;
+    unsigned int sensorInstance;
+    unsigned int parameterID;
+    unsigned int valueType;
+    unsigned long timestamp;
+
+    Buffer buffer;
+    byte body[N];
+
+    Sensorgram() : buffer(body, N) {
+        sensorInstance = 0;
+        timestamp = 0;
+    }
+
+    Buffer &Body() {
+        return buffer;
+    }
+
+    size_t Length() const {
+        return buffer.Length();
+    }
+
+    void SetUint(unsigned int size, unsigned int value) {
+        Encoder encoder(buffer);
+        buffer.Reset();
+        encoder.EncodeInt(size, value);
+    }
+
+    unsigned int GetUint(unsigned int size) {
+        Buffer b(body, size);
+        Decoder decoder(b);
+        return decoder.DecodeUint(size);
+    }
+
+    bool Pack(Writer &writer) {
+        Encoder encoder(writer);
+        encoder.EncodeInt(2, buffer.Length());
+        encoder.EncodeInt(2, sensorID);
+        encoder.EncodeInt(1, sensorInstance);
+        encoder.EncodeInt(1, parameterID);
+        encoder.EncodeInt(4, timestamp);
+        encoder.EncodeInt(1, valueType);
+        encoder.EncodeBuffer(buffer);
+        return true;
+    }
+
+    bool Unpack(Reader &reader) {
+        Decoder decoder(reader);
+
+        unsigned int length = decoder.DecodeUint(2);
+        sensorID = decoder.DecodeUint(2);
+        sensorInstance = decoder.DecodeUint(1);
+        parameterID = decoder.DecodeUint(1);
+        timestamp = decoder.DecodeUint(4);
+        valueType = decoder.DecodeUint(1);
+
+        buffer.Reset();
+        decoder.DecodeBuffer(buffer, length);
+
+        return !decoder.Error();
+    }
+};
+
+template<size_t N>
+struct Datagram {
+
+    unsigned int protocolVersion;
+    unsigned int timestamp;
+    unsigned int packetSeq;
+    unsigned int packetType;
+    unsigned int pluginID;
+    unsigned int pluginMajorVersion;
+    unsigned int pluginMinorVersion;
+    unsigned int pluginPatchVersion;
+    unsigned int pluginInstance;
+    unsigned int pluginRunID;
+    byte dataCRC;
+    byte body[N];
+    Buffer buffer;
+
+    Datagram() : buffer(body, N) {
+    }
+
+    Buffer &Body() {
+        return buffer;
+    }
+
+    bool Pack(Writer &writer) {
+        Encoder encoder(writer);
+
+        unsigned int crc = waggle::crc8(buffer.Bytes(), buffer.Length());
+
+        encoder.EncodeInt(1, 0xaa);
+        encoder.EncodeInt(3, buffer.Length());
+        encoder.EncodeInt(1, protocolVersion);
+        encoder.EncodeInt(4, timestamp);
+        encoder.EncodeInt(2, packetSeq);
+        encoder.EncodeInt(1, packetType);
+        encoder.EncodeInt(2, pluginID);
+        encoder.EncodeInt(1, pluginMajorVersion);
+        encoder.EncodeInt(1, pluginMinorVersion);
+        encoder.EncodeInt(1, pluginPatchVersion);
+        encoder.EncodeInt(1, pluginInstance);
+        encoder.EncodeInt(2, pluginRunID);
+        encoder.EncodeBuffer(buffer);
+        encoder.EncodeInt(1, crc);
+        encoder.EncodeInt(1, 0x55);
+
+        buffer.Reset();
+
+        return true;
+    }
+
+    bool Unpack(Reader &reader) {
+        return true;
+    }
 };
 
 unsigned long defaultGetTimestamp() {
@@ -410,49 +547,6 @@ private:
     DatagramInfo datagramInfo;
     byte buf[N];
     Buffer buffer;
-};
-
-template<size_t N>
-class MessageScanner {
-public:
-
-    MessageScanner(Reader &reader) :sensorgramBuffer(buf, N), decoder(reader), sensorgramDecoder(sensorgramBuffer) {
-    }
-
-    bool ScanDatagram() {
-        sensorgramBuffer.Reset();
-        decoder.DecodeDatagram(datagramInfo, sensorgramBuffer);
-        return !decoder.Error();
-    }
-
-    bool ScanSensorgrams() {
-        sensorgramBuffer.Reset();
-    }
-
-    bool ScanSensorgram() {
-        byte temp[32];
-        sensorgramDecoder.DecodeSensorgram(sensorgramInfo, temp);
-        return !sensorgramDecoder.Error();
-    }
-
-    const DatagramInfo &Datagram() const {
-        return datagramInfo;
-    }
-
-    const SensorgramInfo &Sensorgram() const {
-        return sensorgramInfo;
-    }
-
-    // need error support for things like full buffer, etc...
-
-private:
-
-    Decoder decoder;
-    byte buf[N];
-    Buffer sensorgramBuffer;
-    Decoder sensorgramDecoder;
-    DatagramInfo datagramInfo;
-    SensorgramInfo sensorgramInfo;
 };
 
 };

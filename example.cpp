@@ -2,38 +2,53 @@
 
 using namespace waggle;
 
-LoopbackIO<1024> loopback;
+LoopbackIO<512> loopback;
 Messenger<256> messenger(loopback);
-Plugin<256> plugin(37, 2, 0, 0, 0);
 
-void testPublish() {
-    plugin.AddMeasurement(1, 0, 0, 0, (byte *)"first", 5);
-    plugin.AddMeasurement(2, 0, 0, 0, (byte *)"second", 6);
-    plugin.PublishMeasurements(messenger);
+void testPack() {
+    Sensorgram<32> s;
 
-    plugin.AddMeasurement(3, 0, 1, 0, (byte *)"123", 3);
-    plugin.AddMeasurement(4, 3, 1, 0, (byte *)"4", 1);
-    plugin.AddMeasurement(9, 3, 2, 0, (byte *)"4", 1);
-    plugin.PublishMeasurements(messenger);
+    messenger.StartMessage();
+
+    s.sensorID = 1;
+    s.parameterID = 0;
+    s.SetUint(1, 39);
+    s.Pack(messenger);
+
+    s.sensorID = 2;
+    s.parameterID = 0;
+    s.Pack(messenger);
+
+    s.sensorID = 3;
+    s.parameterID = 0;
+    s.sensorInstance = 1;
+    s.Pack(messenger);
+
+    s.sensorID = 4;
+    s.parameterID = 3;
+    s.sensorInstance = 1;
+    s.Pack(messenger);
+
+    s.sensorID = 9;
+    s.parameterID = 3;
+    s.sensorInstance = 2;
+    s.SetUint(1, 43);
+    s.Pack(messenger);
+
+    messenger.EndMessage();
 }
 
-void testProcess() {
+void testUnpack() {
+    Sensorgram<32> s;
+
     while (messenger.ReadMessage()) {
-        MessageScanner<64> scanner(messenger.Message());
-
-        while (scanner.ScanDatagram()) {
-            const DatagramInfo &datagram = scanner.Datagram();
-            printf("datagram %d\n", datagram.pluginID);
-
-            while (scanner.ScanSensorgram()) {
-                const SensorgramInfo &sensorgram = scanner.Sensorgram();
-                printf("sensorgram %d %d\n", sensorgram.sensorID, sensorgram.parameterID);
-            }
+        while (s.Unpack(messenger.Message())) {
+            printf("ok %d %d %d %u\n", s.sensorID, s.parameterID, s.Length(), s.GetUint(1));
         }
     }
 }
 
 int main() {
-    testPublish();
-    testProcess();
+    testPack();
+    testUnpack();
 }
