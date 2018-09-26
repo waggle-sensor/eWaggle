@@ -78,13 +78,12 @@ void testPlugin() {
 void testMessageReceiver() {
     printf("--- testMessageReceiver\n");
 
-    byte bytes[256];
-    Buffer buffer(bytes, 256);
-    MessageWriter msgWriter(buffer);
-    MessageReader msgReader(buffer);
+    LoopbackIO<256> loopback;
+    MessageWriter msgWriter(loopback);
+    MessageReader msgReader(loopback);
 
-    msgWriter.WriteMessage((byte *)"hello world", 11);
-    msgWriter.WriteMessage((byte *)"another", 7);
+    msgWriter.WriteMessage((const byte *)"hello world", 11);
+    msgWriter.WriteMessage((const byte *)"another", 7);
 
     byte msgBytes[256];
     Buffer msg(msgBytes, 256);
@@ -101,11 +100,9 @@ void testMessageReceiver() {
 void testEncodeDecodeSensorgram() {
     printf("--- testEncodeDecodeSensorgram\n");
 
-    byte bytes[256];
-    Buffer loopbackBuffer(bytes, 256);
+    LoopbackIO<256> loopback;
 
-    Encoder encoder(loopbackBuffer);
-    Decoder decoder(loopbackBuffer);
+    Encoder encoder(loopback);
 
     SensorgramInfo sensorgram1 = {
         .sensorID = 1,
@@ -124,6 +121,8 @@ void testEncodeDecodeSensorgram() {
     };
 
     encoder.EncodeSensorgram(sensorgram2, (byte *)"data");
+
+    Decoder decoder(loopback);
 
     for (;;) {
         SensorgramInfo info;
@@ -156,9 +155,8 @@ void testWriteMessage() {
 void testMessenger() {
     printf("--- testMessenger\n");
 
-    byte bytes[256];
-    Buffer loopbackBuffer(bytes, 256);
-    Messenger<256> messenger(loopbackBuffer);
+    LoopbackIO<256> loopback;
+    Messenger<256> messenger(loopback);
 
     messenger.WriteMessage((byte *)"first", 5);
     messenger.WriteMessage((byte *)"second", 6);
@@ -176,10 +174,8 @@ void testMessenger() {
 void testComplete() {
     printf("--- testComplete\n");
 
-    // setup loopback messenger
-    byte bytes[256];
-    Buffer loopbackBuffer(bytes, 256);
-    Messenger<256> messenger(loopbackBuffer);
+    LoopbackIO<256> loopback;
+    Messenger<256> messenger(loopback);
 
     // setup plugin
     Plugin<256> plugin(37, 2, 0, 0, 0);

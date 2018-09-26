@@ -79,6 +79,27 @@ private:
     size_t offset;
 };
 
+template<size_t N>
+class LoopbackIO : public ReadWriter {
+public:
+
+    LoopbackIO() : buffer(bytes, N) {
+    }
+
+    size_t Write(const byte *data, size_t size) {
+        return buffer.Write(data, size);
+    }
+
+    size_t Read(byte *data, size_t size) {
+        return buffer.Read(data, size);
+    }
+
+private:
+
+    byte bytes[N];
+    Buffer buffer;
+};
+
 size_t Copy(Reader &r, Writer &w) {
     size_t total = 0;
     byte data[64];

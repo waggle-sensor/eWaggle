@@ -2,10 +2,8 @@
 
 using namespace waggle;
 
-byte loopbackBytes[256];
-Buffer loopbackBuffer(loopbackBytes, sizeof(loopbackBytes));
-
-Messenger<256> messenger(loopbackBuffer);
+LoopbackIO<1024> loopback;
+Messenger<256> messenger(loopback);
 Plugin<256> plugin(37, 2, 0, 0, 0);
 
 void testPublish() {
