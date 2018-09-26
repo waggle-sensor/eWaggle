@@ -1,6 +1,6 @@
 #include "waggle_common.h"
 
-namespace waggle {
+namespace Waggle {
 
 class StreamIO : public ReadWriter {
 public:

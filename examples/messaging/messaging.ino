@@ -1,6 +1,6 @@
 #include <eWaggle.h>
 
-using namespace waggle;
+using namespace Waggle;
 
 StreamIO systemIO(SerialUSB);
 Messenger<256> messenger(systemIO);

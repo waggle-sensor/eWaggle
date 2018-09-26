@@ -1,7 +1,7 @@
 #include "waggle_crc.h"
 #include "waggle_io.h"
 
-namespace waggle {
+namespace Waggle {
 
 const byte startByte = 0x7e;
 const byte endByte = 0x7f;
@@ -282,7 +282,7 @@ public:
             byte b;
             DecodeBytes(&b, 1);
             w.WriteByte(b);
-            crc = waggle::crc8(&b, 1, crc);
+            crc = Waggle::crc8(&b, 1, crc);
         }
 
         info.dataCRC = DecodeUint(1);
@@ -356,7 +356,7 @@ public:
     }
 
     void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
-        unsigned int crc = waggle::crc8(body, size);
+        unsigned int crc = Waggle::crc8(body, size);
 
         EncodeInt(1, 0xaa);
         EncodeInt(3, size);
@@ -543,7 +543,7 @@ struct Datagram {
     bool Pack(Writer &writer) {
         Encoder encoder(writer);
 
-        unsigned int crc = waggle::crc8(buffer.Bytes(), buffer.Length());
+        unsigned int crc = Waggle::crc8(buffer.Bytes(), buffer.Length());
 
         encoder.EncodeInt(1, 0xaa);
         encoder.EncodeInt(3, buffer.Length());

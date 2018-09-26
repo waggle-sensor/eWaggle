@@ -1,6 +1,6 @@
 #include "waggle/waggle_arduino.h"
 
-using namespace waggle;
+using namespace Waggle;
 
 StreamIO systemIO(SerialUSB);
 Messenger<1024> messenger(systemIO);

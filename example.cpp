@@ -1,6 +1,6 @@
 #include "waggle/waggle_native.h"
 
-using namespace waggle;
+using namespace Waggle;
 
 LoopbackIO<512> loopback;
 

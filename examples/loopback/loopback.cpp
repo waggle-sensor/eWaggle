@@ -1,6 +1,6 @@
 #include <eWaggle.h>
 
-using namespace waggle;
+using namespace Waggle;
 
 int main() {
     LoopbackIO<1024> loopback;

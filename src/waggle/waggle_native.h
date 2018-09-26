@@ -1,7 +1,7 @@
 #include "waggle_common.h"
 #include <cstdio>
 
-namespace waggle {
+namespace Waggle {
 
 class PrintfWriter : public Writer {
 public:

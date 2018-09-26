@@ -1,4 +1,4 @@
-namespace waggle {
+namespace Waggle {
 
 typedef unsigned char byte;
 

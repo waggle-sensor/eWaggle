@@ -1,6 +1,6 @@
 #include <eWaggle.h>
 
-using namespace waggle;
+using namespace Waggle;
 
 void testEncodeSensorgram() {
     printf("--- testEncodeSensorgram\n");

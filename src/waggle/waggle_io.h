@@ -1,4 +1,4 @@
-namespace waggle {
+namespace Waggle {
 
 typedef unsigned int size_t;
 
