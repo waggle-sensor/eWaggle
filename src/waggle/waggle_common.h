@@ -463,6 +463,13 @@ public:
         buffer.Write((const byte *)str, strlen(str));
     }
 
+    void SetInt(int value) {
+        valueType = TYPE_INT;
+        Encoder encoder(buffer);
+        buffer.Reset();
+        encoder.EncodeInt(UintSize(value), value);
+    }
+
     void SetUint(unsigned int value) {
         valueType = TYPE_UINT;
         Encoder encoder(buffer);
@@ -486,6 +493,11 @@ public:
 
     const char *GetString() {
         return (const char *)buffer.Bytes();
+    }
+
+    int GetInt() {
+        Decoder decoder(buffer);
+        return decoder.DecodeUint(buffer.Length());
     }
 
     unsigned int GetUint() {

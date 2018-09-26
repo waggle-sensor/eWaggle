@@ -19,7 +19,7 @@ int main() {
     s.sensorID = 3;
     s.parameterID = 0;
     s.sensorInstance = 1;
-    s.SetUint(123);
+    s.SetInt(-12345);
     s.Pack(loopback);
 
     s.sensorID = 4;
@@ -42,6 +42,8 @@ int main() {
             printf("string value: %s\n", s.GetString());
         } else if (s.valueType == TYPE_UINT) {
             printf("uint value: %d\n", s.GetUint());
+        } else if (s.valueType == TYPE_INT) {
+            printf("int value: %d\n", s.GetInt());
         }
 
         printf("\n");
