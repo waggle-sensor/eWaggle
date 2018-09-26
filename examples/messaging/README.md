@@ -1,7 +1,23 @@
-# Example - Messaging
+# Messaging Example
 
-This examples shows how to use the basic messaging API by implementing a mocked
-up request and response system.
+This examples shows how to use the basic messaging API by implementing a basic
+request and response system between an Arduino and another machine over a serial
+port.
+
+```
++--------------+        +---------+
+| Host Machine |        | Arduino |
+|              | Serial | Client  |
+|    [req] >--------------->      |
+|              |        |   v     |
+|   [resp] <---------------<      |
++--------------+        +---------+
+```
+
+## Files
+
+* [messaging.ino](messaging.ino) - Arduino client source code.
+* [messaging.py](messaging.py) - Host machine source code. Uses [pywaggle](https://github.com/waggle-sensor/pywaggle).
 
 ## Setup
 
