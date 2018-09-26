@@ -3,7 +3,7 @@
 This example shows how to to pack and unpack sensorgrams to a loopback IO
 device.
 
-## Organization
+## Files
 
 * [loopback.cpp](loopback.cpp) - Main source file.
 
