@@ -2,8 +2,9 @@
 import argparse
 from serial import Serial
 from waggle.messaging import Messenger
+from waggle.protocol import pack_sensorgram
+from waggle.protocol import unpack_sensorgram
 import time
-import secrets
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--timeout', type=float, default=5.0)
@@ -16,9 +17,24 @@ with Serial(args.device, baudrate=args.baudrate, timeout=args.timeout) as ser:
     messenger = Messenger(ser)
 
     while True:
-        msg = secrets.token_bytes(256)
-        start_time = time.time()
-        messenger.write_message(msg)
-        resp = messenger.read_message()
-        duration = time.time() - start_time
-        print(msg == resp, duration)
+        req = pack_sensorgram({
+            'sensor_id': 1,
+            'parameter_id': 0,
+            'value': b'hello',
+        })
+
+        messenger.write_message(req)
+
+        req = pack_sensorgram({
+            'sensor_id': 2,
+            'parameter_id': 0,
+            'value': b'hello',
+        })
+
+        messenger.write_message(req)
+
+        for resp in messenger.read_messages():
+            print('response')
+            print(unpack_sensorgram(resp))
+
+        time.sleep(1)

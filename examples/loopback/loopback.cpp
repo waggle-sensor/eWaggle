@@ -31,13 +31,19 @@ int main() {
     s.sensorID = 9;
     s.parameterID = 3;
     s.sensorInstance = 2;
-    s.SetUint(43);
+    s.SetString("hello!");
     s.Pack(loopback);
 
     while (s.Unpack(loopback)) {
         printf("sensor id: %d\n", s.sensorID);
         printf("parameter id: %d\n", s.parameterID);
-        printf("uint value: %d\n", s.GetUint());
+
+        if (s.valueType == TYPE_STRING) {
+            printf("string value: %s\n", s.GetString());
+        } else if (s.valueType == TYPE_UINT) {
+            printf("uint value: %d\n", s.GetUint());
+        }
+
         printf("\n");
     }
 

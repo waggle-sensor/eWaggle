@@ -397,6 +397,16 @@ size_t UintSize(unsigned int x) {
     return n;
 }
 
+size_t strlen(const char *s) {
+    size_t n = 0;
+
+    while (s[n]) {
+        n++;
+    }
+
+    return n;
+}
+
 template<waggle::size_t N>
 class Sensorgram {
 public:
@@ -429,6 +439,12 @@ public:
         buffer.Write(data, size);
     }
 
+    void SetString(const char *str) {
+        valueType = TYPE_STRING;
+        buffer.Reset();
+        buffer.Write((const byte *)str, strlen(str));
+    }
+
     void SetUint(unsigned int value) {
         valueType = TYPE_UINT;
         Encoder encoder(buffer);
@@ -441,6 +457,14 @@ public:
         Encoder encoder(buffer);
         buffer.Reset();
         encoder.EncodeInt(1, value);
+    }
+
+    const byte *GetBytes() {
+        return (const byte *)buffer.Bytes();
+    }
+
+    const char *GetString() {
+        return (const char *)buffer.Bytes();
     }
 
     unsigned int GetUint() {
@@ -477,6 +501,10 @@ public:
 
         buffer.Reset();
         decoder.DecodeBuffer(buffer, length);
+
+        if (valueType == TYPE_STRING) {
+            buffer.WriteByte(0);
+        }
 
         return !decoder.Error();
     }
