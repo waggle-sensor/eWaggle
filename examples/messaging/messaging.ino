@@ -1,3 +1,4 @@
+#include <eWaggle.h>
 
 using namespace waggle;
 

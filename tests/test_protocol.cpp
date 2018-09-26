@@ -1,4 +1,4 @@
-#include "waggle/waggle_native.h"
+#include <eWaggle.h>
 
 using namespace waggle;
 

@@ -1,9 +1,9 @@
-#include "waggle/waggle_native.h"
+#include "eWaggle.h"
 
 using namespace waggle;
 
 int main() {
-    LoopbackIO<256> loopback;
+    LoopbackIO<1024> loopback;
     Sensorgram<64> s;
 
     s.sensorID = 1;
