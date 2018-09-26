@@ -24,7 +24,7 @@ class ReadWriter : public Reader, public Writer {
 class Buffer : public ReadWriter {
 public:
 
-    Buffer(byte *buf, int cap) {
+    Buffer(byte *buf, size_t cap) {
         buffer = buf;
         capacity = cap;
         Reset();

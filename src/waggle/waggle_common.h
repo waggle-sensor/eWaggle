@@ -327,7 +327,8 @@ public:
     void EncodeInt(size_t size, T x) {
         byte data[size];
 
-        for (size_t i = size - 1; i >= 0; i--) {
+        // TODO careful about signedness / this was a very bad bug!!!
+        for (int i = size - 1; i >= 0; i--) {
             data[i] = (byte)(x & 0xff);
             x >>= 8;
         }

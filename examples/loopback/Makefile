@@ -3,3 +3,6 @@ loopback: loopback.cpp
 
 test: loopback
 	./loopback
+
+clean:
+	rm -f loopback
