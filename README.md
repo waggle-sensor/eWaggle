@@ -1,12 +1,12 @@
 # eWaggle Module
 
-eWaggle is a module aimed at Arduino-like systems which provides simple interfaces
+`eWaggle` is a module aimed at Arduino-like systems which provides simple interfaces
 for interacting with the Waggle platform.
 
-It provides functionality in a few core area:
+It provides functionality in a few core areas:
 
 * Protocols - Interfaces for working with Waggle data formats such as sensorgrams and datagrams.
-* Messaging - Interfaces for sending and receiving message frames over serial ports.
+* Messaging - Interfaces for sending and receiving message frames over UART links.
 * Development - Helper objects to facilitate testing and debugging. Supports native builds for local testing.
 
 ## Installation
