@@ -7,8 +7,9 @@ eWaggle is a C++ module aimed at Arduino like systems. It provides support in a 
 
 ## Installation
 
-From Github, download this repo as a ZIP from the "Clone or download" button.
-You can install the .ZIP file directly in the Arduino IDE using "Sketch -> Include Library -> Add .ZIP Library".
+1. Download .ZIP of Repo - From Github, download this repo as a ZIP from the "Clone or download" button.
+
+2. Install .ZIP in Arduino IDE - You can install the .ZIP file directly in the Arduino IDE using "Sketch -> Include Library -> Add .ZIP Library".
 
 ## Examples
 
