@@ -78,14 +78,16 @@ void testPlugin() {
 void testMessageReceiver() {
     printf("--- testMessageReceiver\n");
 
-    Buffer<256> buffer;
+    byte bytes[256];
+    Buffer buffer(bytes, 256);
     MessageWriter msgWriter(buffer);
     MessageReader msgReader(buffer);
 
     msgWriter.WriteMessage((byte *)"hello world", 11);
     msgWriter.WriteMessage((byte *)"another", 7);
 
-    Buffer<256> msg;
+    byte msgBytes[256];
+    Buffer msg(msgBytes, 256);
     PrintfWriter printer("%c");
 
     while (msgReader.ReadMessage(msg)) {
@@ -99,7 +101,9 @@ void testMessageReceiver() {
 void testEncodeDecodeSensorgram() {
     printf("--- testEncodeDecodeSensorgram\n");
 
-    Buffer<256> loopbackBuffer;
+    byte bytes[256];
+    Buffer loopbackBuffer(bytes, 256);
+
     Encoder encoder(loopbackBuffer);
     Decoder decoder(loopbackBuffer);
 
@@ -152,7 +156,8 @@ void testWriteMessage() {
 void testMessenger() {
     printf("--- testMessenger\n");
 
-    Buffer<256> loopbackBuffer;
+    byte bytes[256];
+    Buffer loopbackBuffer(bytes, 256);
     Messenger<256> messenger(loopbackBuffer);
 
     messenger.WriteMessage((byte *)"first", 5);
@@ -172,7 +177,8 @@ void testComplete() {
     printf("--- testComplete\n");
 
     // setup loopback messenger
-    Buffer<256> loopbackBuffer;
+    byte bytes[256];
+    Buffer loopbackBuffer(bytes, 256);
     Messenger<256> messenger(loopbackBuffer);
 
     // setup plugin
