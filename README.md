@@ -11,9 +11,20 @@ It provides functionality in a few core area:
 
 ## Installation
 
+### Installation as Arduino Package
+
 1. Download .ZIP of Repo - From Github, download this repo as a ZIP from the "Clone or download" button.
 
 2. Install .ZIP in Arduino IDE - You can install the .ZIP file directly in the Arduino IDE using "Sketch -> Include Library -> Add .ZIP Library".
+
+### Manual Installation
+
+Clone the `eWaggle` repo and add `eWaggle/src` to your project's header include
+path. For example, your build project should have something like:
+
+```make
+CC=c++ -I/path/to/eWaggle/src ...
+```
 
 ## Examples
 
