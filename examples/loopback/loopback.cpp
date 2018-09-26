@@ -8,7 +8,7 @@ int main() {
 
     s.sensorID = 1;
     s.parameterID = 0;
-    s.SetUint(1000);
+    s.SetString("starting!");
     s.Pack(loopback);
 
     s.sensorID = 2;
