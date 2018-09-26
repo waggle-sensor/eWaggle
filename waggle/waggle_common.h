@@ -102,7 +102,7 @@ namespace waggle {
     class Messenger : public Writer {
     public:
 
-        Messenger(ReadWriter &rw) : reader(rw), writer(rw) {
+        Messenger(ReadWriter &rw) : buffer(buf, N), reader(rw), writer(rw) {
             hasMessage = false;
         }
 
@@ -139,7 +139,7 @@ namespace waggle {
             return hasMessage;
         }
 
-        Buffer<N> &Message() {
+        Buffer &Message() {
             return buffer;
         }
 
@@ -147,7 +147,9 @@ namespace waggle {
 
         MessageReader reader;
         MessageWriter writer;
-        Buffer<N> buffer;
+
+        byte buf[N];
+        Buffer buffer;
         bool hasMessage;
     };
 
@@ -346,7 +348,7 @@ template<size_t N>
 class Plugin {
 public:
 
-    Plugin(int id, int majorVersion, int minorVersion, int patchVersion, int instance) {
+    Plugin(int id, int majorVersion, int minorVersion, int patchVersion, int instance) : buffer(buf, N) {
         datagramInfo.protocolVersion = 2;
 
         datagramInfo.pluginID = id;
@@ -406,14 +408,15 @@ public:
 private:
 
     DatagramInfo datagramInfo;
-    Buffer<N> buffer;
+    byte buf[N];
+    Buffer buffer;
 };
 
 template<size_t N>
 class MessageScanner {
 public:
 
-    MessageScanner(Reader &reader) : decoder(reader), sensorgramDecoder(sensorgramBuffer) {
+    MessageScanner(Reader &reader) :sensorgramBuffer(buf, N), decoder(reader), sensorgramDecoder(sensorgramBuffer) {
     }
 
     bool ScanDatagram() {
@@ -445,7 +448,8 @@ public:
 private:
 
     Decoder decoder;
-    Buffer<N> sensorgramBuffer;
+    byte buf[N];
+    Buffer sensorgramBuffer;
     Decoder sensorgramDecoder;
     DatagramInfo datagramInfo;
     SensorgramInfo sensorgramInfo;

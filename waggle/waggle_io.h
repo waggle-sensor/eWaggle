@@ -29,19 +29,13 @@ public:
     virtual size_t Capacity() const = 0;
 };
 
-template<size_t N>
-class Buffer : public ReadWriter, public Array {
+class Buffer : public ReadWriter {
 public:
 
-    Buffer() {
-        capacity = N;
+    Buffer(byte *buf, int cap) {
+        buffer = buf;
+        capacity = cap;
         Reset();
-    }
-
-    Buffer(byte *data, size_t size) {
-        capacity = N;
-        Reset();
-        Write(data, size);
     }
 
     size_t Read(byte *data, size_t size) {
@@ -74,7 +68,7 @@ public:
     }
 
     const byte *Bytes() const {
-        return buffer;
+        return &buffer[offset];
     }
 
     size_t Length() const {
@@ -87,7 +81,7 @@ public:
 
 private:
 
-    byte buffer[N];
+    byte *buffer;
     size_t capacity;
     size_t length;
     size_t offset;
@@ -95,35 +89,18 @@ private:
 
 size_t Copy(Reader &r, Writer &w) {
     size_t total = 0;
-    byte buffer[64];
+    byte data[64];
 
     for (;;) {
-        size_t n = r.Read(buffer, sizeof(buffer));
-        w.Write(buffer, n);
+        size_t n = r.Read(data, sizeof(data));
+        w.Write(data, n);
 
         total += n;
 
-        if (n < sizeof(buffer)) {
+        if (n < sizeof(data)) {
             return total;
         }
     }
 }
-
-// size_t CopyN(Reader &r, Writer &w, size_t size) {
-//     size_t total = 0;
-//     byte buffer[64];
-//
-//     for (;;) {
-//         //...
-//         size_t n = r.Read(buffer, sizeof(data));
-//         w.Write(buffer, n);
-//
-//         total += n;
-//
-//         if (n < sizeof(buffer)) {
-//             return total;
-//         }
-//     }
-// }
 
 };

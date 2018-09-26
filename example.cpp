@@ -2,7 +2,9 @@
 
 using namespace waggle;
 
-Buffer<256> loopbackBuffer;
+byte loopbackBytes[256];
+Buffer loopbackBuffer(loopbackBytes, sizeof(loopbackBytes));
+
 Messenger<256> messenger(loopbackBuffer);
 Plugin<256> plugin(37, 2, 0, 0, 0);
 
