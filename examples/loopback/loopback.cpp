@@ -3,9 +3,17 @@
 using namespace Waggle;
 
 int main() {
-    LoopbackIO<1024> io;
+    // First we define a loopback device with 256 bytes of scratch space on the stack.
+    //
+    // Note: A LoopbackIO device is a helper object which "loops" writes back to
+    // reads. After testing, other IO devices such as SerialIO can be used as a
+    // drop-in replacement.
+    LoopbackIO<256> io;
+
+    // Now, we define a sensorgram with 64 bytes of scratch space on the stack.
     Sensorgram<64> s;
 
+    // In this section, we pack a bunch of test sensorgrams into our loopback device.
     s.sensorID = 1;
     s.parameterID = 0;
     s.SetString("starting!");
@@ -34,6 +42,8 @@ int main() {
     s.SetString("hello!");
     s.Pack(io);
 
+    // Finally, we re-unpack the sensorgrams from our loopback device and print
+    // some basic info about them.
     while (s.Unpack(io)) {
         printf("sensor id: %d\n", s.sensorID);
         printf("parameter id: %d\n", s.parameterID);
