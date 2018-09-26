@@ -1,9 +1,13 @@
 # eWaggle Module
 
-eWaggle is a C++ module aimed at Arduino like systems. It provides support in a few core area:
+eWaggle is a module aimed at Arduino-like systems which provides simple interfaces
+for interacting with the Waggle platform.
 
-* Packing / unpacking Waggle sensorgrams and datagrams.
-* Simple messaging over serial ports.
+It provides functionality in a few core area:
+
+* Protocols - Interfaces for working with Waggle data formats such as sensorgrams and datagrams.
+* Messaging - Interfaces for sending and receiving message frames over serial ports.
+* Development - Helper objects to facilitate testing and debugging.
 
 ## Installation
 
