@@ -7,8 +7,7 @@ It provides functionality in a few core area:
 
 * Protocols - Interfaces for working with Waggle data formats such as sensorgrams and datagrams.
 * Messaging - Interfaces for sending and receiving message frames over serial ports.
-* Development - Helper objects to facilitate testing and debugging. Provides native build target for local
-testing.
+* Development - Helper objects to facilitate testing and debugging. Supports native builds for local testing.
 
 ## Installation
 
