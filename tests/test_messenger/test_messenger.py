@@ -17,10 +17,8 @@ with Serial(args.device, baudrate=args.baudrate, timeout=args.timeout) as ser:
 
     while True:
         msg = secrets.token_bytes(256)
-
-        startTime = time.time()
-        messenger.writeMessage(msg)
-        resp = messenger.readMessage()
-        duration = time.time() - startTime
-
+        start_time = time.time()
+        messenger.write_message(msg)
+        resp = messenger.read_message()
+        duration = time.time() - start_time
         print(msg == resp, duration)
