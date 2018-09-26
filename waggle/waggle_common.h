@@ -110,8 +110,8 @@ namespace waggle {
             return writer.WriteMessage(data, size);
         }
 
-        void WriteMessage(const Array &a) {
-            return writer.WriteMessage(a.Bytes(), a.Length());
+        void WriteMessage(Buffer &b) {
+            return writer.WriteMessage(b.Bytes(), b.Length());
         }
 
         void StartMessage() {
@@ -126,8 +126,8 @@ namespace waggle {
             return writer.Write(data, size);
         }
 
-        size_t Write(const Array &a) {
-            return writer.Write(a.Bytes(), a.Length());
+        size_t Write(Buffer &b) {
+            return writer.Write(b.Bytes(), b.Length());
         }
 
         bool ReadMessage() {

@@ -21,14 +21,6 @@ public:
 class ReadWriter : public Reader, public Writer {
 };
 
-class Array {
-public:
-
-    virtual const byte *Bytes() const = 0;
-    virtual size_t Length() const = 0;
-    virtual size_t Capacity() const = 0;
-};
-
 class Buffer : public ReadWriter {
 public:
 
