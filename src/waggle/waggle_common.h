@@ -15,7 +15,7 @@ public:
     }
 
     size_t Write(const byte *data, size_t size) {
-        for (int i = 0; i < size; i++) {
+        for (size_t i = 0; i < size; i++) {
             if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
                 writer.WriteByte(escapeByte);
                 writer.WriteByte(data[i] ^ escapeMask);
@@ -102,7 +102,7 @@ template<size_t N>
 class Messenger : public Writer {
 public:
 
-    Messenger(ReadWriter &rw) : buffer(buf, N), reader(rw), writer(rw) {
+    Messenger(ReadWriter &rw) : reader(rw), writer(rw), buffer(buf, N) {
         hasMessage = false;
     }
 
@@ -236,7 +236,7 @@ public:
 
         unsigned int r = 0;
 
-        for (int i = 0; i < size; i++) {
+        for (size_t i = 0; i < size; i++) {
             r <<= 8;
             r |= data[i];
         }
@@ -311,7 +311,7 @@ public:
         error = false;
     }
 
-    void EncodeBytes(const byte *data, int size) {
+    void EncodeBytes(const byte *data, size_t size) {
         if (error) {
             return;
         }
@@ -324,10 +324,10 @@ public:
     }
 
     template<typename T>
-    void EncodeInt(int size, T x) {
+    void EncodeInt(size_t size, T x) {
         byte data[size];
 
-        for (int i = size - 1; i >= 0; i--) {
+        for (size_t i = size - 1; i >= 0; i--) {
             data[i] = (byte)(x & 0xff);
             x >>= 8;
         }
@@ -407,7 +407,7 @@ size_t strlen(const char *s) {
     return n;
 }
 
-template<waggle::size_t N>
+template<size_t N>
 class Sensorgram {
 public:
 
