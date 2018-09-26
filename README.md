@@ -19,8 +19,8 @@ It provides functionality in a few core area:
 
 ### Manual Installation
 
-Clone the `eWaggle` repo and add `eWaggle/src` to your project's header include
-path. For example, your build project should have something like:
+Clone the `eWaggle` repo and add `eWaggle/src` to your project's include path.
+For example, your project's build process should have something like:
 
 ```make
 CC=c++ -I/path/to/eWaggle/src ...
