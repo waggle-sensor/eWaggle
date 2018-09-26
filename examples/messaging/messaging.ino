@@ -19,7 +19,7 @@ void loop() {
             if (req.sensorID == 1) {
                 resp.sensorID = 0x81;
                 resp.parameterID = 0;
-                resp.SetUint(1);
+                resp.SetString("alive");
             } else if (req.sensorID == 2) {
                 resp.sensorID = 0x82;
                 resp.parameterID = 0;

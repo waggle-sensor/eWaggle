@@ -1,3 +1,4 @@
-# Test Messenger
+# Example - Messaging
 
-Echos random array bytes to confirm that end-to-end messaging is working.
+This examples shows how to use the basic messaging API by implementing a mocked
+up request and response system.
