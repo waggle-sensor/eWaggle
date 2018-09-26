@@ -1,4 +1,4 @@
-CC=c++ -I..
+CC=c++ -I../src
 
 all: test_protocol
 
