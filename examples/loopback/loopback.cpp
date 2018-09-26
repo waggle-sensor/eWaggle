@@ -5,9 +5,8 @@ using namespace Waggle;
 int main() {
     // First, we define a loopback device with 256 bytes of scratch space on the stack.
     //
-    // Note: A LoopbackIO device is a helper object which "loops" writes back to
-    // reads. After testing, other IO devices such as SerialIO can be used as a
-    // drop-in replacement.
+    // A LoopbackIO device is a helper object which "loops" writes back to reads. After
+    // testing, other IO devices such as SerialIO can be used as a drop-in replacement.
     LoopbackIO<256> io;
 
     // Now, we define a sensorgram with 64 bytes of scratch space on the stack.
