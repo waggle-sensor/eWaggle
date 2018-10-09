@@ -393,14 +393,14 @@ const byte TYPE_INT16 = 11;
 const byte TYPE_INT24 = 12;
 const byte TYPE_INT32 = 13;
 const byte TYPE_INT64 = 14;
-const byte TYPE_INT = 15;
+// const byte TYPE_INT = 15;
 
 const byte TYPE_UINT8 = 20;
 const byte TYPE_UINT16 = 21;
 const byte TYPE_UINT24 = 22;
 const byte TYPE_UINT32 = 23;
 const byte TYPE_UINT64 = 24;
-const byte TYPE_UINT = 25;
+// const byte TYPE_UINT = 25;
 
 const byte TYPE_FLOAT32 = 30;
 
@@ -464,17 +464,43 @@ public:
     }
 
     void SetInt(int value) {
-        valueType = TYPE_INT;
+        size_t size = UintSize(value);
+
+        if (size == 1) {
+            valueType = TYPE_INT8;
+        } else if (size == 2) {
+            valueType = TYPE_INT16;
+        } else if (size == 3) {
+            valueType = TYPE_INT24;
+        } else if (size == 4) {
+            valueType = TYPE_INT32;
+        }
+
+        // TODO Handle errors here...
+
         Encoder encoder(buffer);
         buffer.Reset();
         encoder.EncodeInt(UintSize(value), value);
     }
 
     void SetUint(unsigned int value) {
-        valueType = TYPE_UINT;
+        size_t size = UintSize(value);
+
+        if (size == 1) {
+            valueType = TYPE_UINT8;
+        } else if (size == 2) {
+            valueType = TYPE_UINT16;
+        } else if (size == 3) {
+            valueType = TYPE_UINT24;
+        } else if (size == 4) {
+            valueType = TYPE_UINT32;
+        }
+
+        // TODO Handle errors here...
+
         Encoder encoder(buffer);
         buffer.Reset();
-        encoder.EncodeInt(UintSize(value), value);
+        encoder.EncodeInt(size, value);
     }
 
     void SetBool(bool value) {
