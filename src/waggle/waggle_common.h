@@ -9,700 +9,638 @@ const byte escapeByte = 0x7d;
 const byte escapeMask = 0x20;
 
 class MessageWriter : public Writer {
-public:
+ public:
+  MessageWriter(Writer &writer) : writer(writer) {}
 
-    MessageWriter(Writer &writer) : writer(writer) {
+  size_t Write(const byte *data, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+      if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
+        writer.WriteByte(escapeByte);
+        writer.WriteByte(data[i] ^ escapeMask);
+      } else {
+        writer.WriteByte(data[i]);
+      }
     }
 
-    size_t Write(const byte *data, size_t size) {
-        for (size_t i = 0; i < size; i++) {
-            if (data[i] == startByte || data[i] == endByte || data[i] == escapeByte) {
-                writer.WriteByte(escapeByte);
-                writer.WriteByte(data[i] ^ escapeMask);
-            } else {
-                writer.WriteByte(data[i]);
-            }
-        }
+    return size;
+  }
 
-        return size;
-    }
+  void StartMessage() { writer.WriteByte(startByte); }
 
-    void StartMessage() {
-        writer.WriteByte(startByte);
-    }
+  void EndMessage() { writer.WriteByte(endByte); }
 
-    void EndMessage() {
-        writer.WriteByte(endByte);
-    }
+  void WriteMessage(const byte *data, size_t size) {
+    StartMessage();
+    Write(data, size);
+    EndMessage();
+  }
 
-    void WriteMessage(const byte *data, size_t size) {
-        StartMessage();
-        Write(data, size);
-        EndMessage();
-    }
-
-private:
-
-    Writer &writer;
+ private:
+  Writer &writer;
 };
 
 class MessageReader {
-public:
+ public:
+  MessageReader(Reader &reader) : reader(reader) {
+    start = false;
+    escape = false;
+  }
 
-    MessageReader(Reader &reader) : reader(reader) {
-        start = false;
-        escape = false;
-    }
+  bool ReadMessage(Writer &writer) {
+    byte b;
 
-    bool ReadMessage(Writer &writer) {
-        byte b;
-
-        while (!start) {
-            if (reader.Read(&b, 1) == 0) {
-                return false;
-            }
-
-            if (b == startByte) {
-                start = true;
-                escape = false;
-            }
-        }
-
-        while (start) {
-            if (reader.Read(&b, 1) == 0) {
-                return false;
-            }
-
-            if (b == endByte) {
-                start = false;
-                return true;
-            }
-
-            if (escape) {
-                writer.WriteByte(b ^ escapeMask);
-                escape = false;
-            } else if (b == escapeByte) {
-                escape = true;
-            } else {
-                writer.WriteByte(b);
-            }
-        }
-
+    while (!start) {
+      if (reader.Read(&b, 1) == 0) {
         return false;
+      }
+
+      if (b == startByte) {
+        start = true;
+        escape = false;
+      }
     }
 
-private:
+    while (start) {
+      if (reader.Read(&b, 1) == 0) {
+        return false;
+      }
 
-    Reader &reader;
-    bool start;
-    bool escape;
+      if (b == endByte) {
+        start = false;
+        return true;
+      }
+
+      if (escape) {
+        writer.WriteByte(b ^ escapeMask);
+        escape = false;
+      } else if (b == escapeByte) {
+        escape = true;
+      } else {
+        writer.WriteByte(b);
+      }
+    }
+
+    return false;
+  }
+
+ private:
+  Reader &reader;
+  bool start;
+  bool escape;
 };
 
-template<size_t N>
+template <size_t N>
 class Messenger : public Writer {
-public:
+ public:
+  Messenger(ReadWriter &rw) : reader(rw), writer(rw), buffer(buf, N) {
+    hasMessage = false;
+  }
 
-    Messenger(ReadWriter &rw) : reader(rw), writer(rw), buffer(buf, N) {
-        hasMessage = false;
+  void WriteMessage(const byte *data, size_t size) {
+    return writer.WriteMessage(data, size);
+  }
+
+  void WriteMessage(Buffer &b) {
+    return writer.WriteMessage(b.Bytes(), b.Length());
+  }
+
+  void StartMessage() { writer.StartMessage(); }
+
+  void EndMessage() { writer.EndMessage(); }
+
+  size_t Write(const byte *data, size_t size) {
+    return writer.Write(data, size);
+  }
+
+  size_t Write(Buffer &b) { return writer.Write(b.Bytes(), b.Length()); }
+
+  bool ReadMessage() {
+    if (hasMessage) {
+      buffer.Reset();
     }
 
-    void WriteMessage(const byte *data, size_t size) {
-        return writer.WriteMessage(data, size);
-    }
+    hasMessage = reader.ReadMessage(buffer);
+    return hasMessage;
+  }
 
-    void WriteMessage(Buffer &b) {
-        return writer.WriteMessage(b.Bytes(), b.Length());
-    }
+  Buffer &Message() { return buffer; }
 
-    void StartMessage() {
-        writer.StartMessage();
-    }
+ private:
+  MessageReader reader;
+  MessageWriter writer;
 
-    void EndMessage() {
-        writer.EndMessage();
-    }
-
-    size_t Write(const byte *data, size_t size) {
-        return writer.Write(data, size);
-    }
-
-    size_t Write(Buffer &b) {
-        return writer.Write(b.Bytes(), b.Length());
-    }
-
-    bool ReadMessage() {
-        if (hasMessage) {
-            buffer.Reset();
-        }
-
-        hasMessage = reader.ReadMessage(buffer);
-        return hasMessage;
-    }
-
-    Buffer &Message() {
-        return buffer;
-    }
-
-private:
-
-    MessageReader reader;
-    MessageWriter writer;
-
-    byte buf[N];
-    Buffer buffer;
-    bool hasMessage;
+  byte buf[N];
+  Buffer buffer;
+  bool hasMessage;
 };
 
 struct SensorgramInfo {
-    unsigned int dataSize;
-    unsigned int sensorID;
-    unsigned int sensorInstance;
-    unsigned int parameterID;
-    unsigned int timestamp;
-    unsigned int dataType;
+  unsigned int dataSize;
+  unsigned int sensorID;
+  unsigned int sensorInstance;
+  unsigned int parameterID;
+  unsigned int timestamp;
 };
 
 struct DatagramInfo {
-    unsigned int bodySize;
-    unsigned int protocolVersion;
-    unsigned int timestamp;
-    unsigned int packetSeq;
-    unsigned int packetType;
-    unsigned int pluginID;
-    unsigned int pluginMajorVersion;
-    unsigned int pluginMinorVersion;
-    unsigned int pluginPatchVersion;
-    unsigned int pluginInstance;
-    unsigned int pluginRunID;
-    byte dataCRC;
+  unsigned int bodySize;
+  unsigned int protocolVersion;
+  unsigned int timestamp;
+  unsigned int packetSeq;
+  unsigned int packetType;
+  unsigned int pluginID;
+  unsigned int pluginMajorVersion;
+  unsigned int pluginMinorVersion;
+  unsigned int pluginPatchVersion;
+  unsigned int pluginInstance;
+  unsigned int pluginRunID;
+  byte dataCRC;
 };
 
 class Decoder {
-public:
+ public:
+  Decoder(Reader &r) : reader(r) { error = false; }
 
-    Decoder(Reader &r) : reader(r) {
-        error = false;
+  int Error() const { return error; }
+
+  void DecodeBytes(byte *data, size_t size) {
+    if (error) {
+      return;
     }
 
-    int Error() const {
-        return error;
+    error = reader.Read(data, size) != size;
+  }
+
+  void DecodeBuffer(Buffer &buffer, size_t size) {
+    byte data[size];
+    DecodeBytes(data, size);
+    buffer.Write(data, size);
+  }
+
+  unsigned char DecodeUint8() {
+    byte b[1];
+    DecodeBytes(b, 1);
+    return b[0];
+  }
+
+  unsigned short DecodeUint16() {
+    byte b[2];
+    DecodeBytes(b, 2);
+    return (b[0] << 8) + b[1];
+  }
+
+  unsigned int DecodeUint24() {
+    byte b[3];
+    DecodeBytes(b, 3);
+    return (b[0] << 16) + (b[1] << 8) + b[2];
+  }
+
+  unsigned int DecodeUint32() {
+    byte b[4];
+    DecodeBytes(b, 4);
+    return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
+  }
+
+  unsigned int DecodeUint(unsigned int size) {
+    byte data[size];
+    DecodeBytes(data, size);
+
+    if (error) {
+      return 0;
     }
 
-    void DecodeBytes(byte *data, size_t size) {
-        if (error) {
-            return;
-        }
+    unsigned int r = 0;
 
-        error = reader.Read(data, size) != size;
+    for (size_t i = 0; i < size; i++) {
+      r <<= 8;
+      r |= data[i];
     }
 
-    void DecodeBuffer(Buffer &buffer, size_t size) {
-        byte data[size];
-        DecodeBytes(data, size);
-        buffer.Write(data, size);
+    return r;
+  }
+
+  void DecodeSensorgramInfo(SensorgramInfo &info) {
+    info.dataSize = DecodeUint(2);
+    info.sensorID = DecodeUint(2);
+    info.sensorInstance = DecodeUint(1);
+    info.parameterID = DecodeUint(1);
+    info.timestamp = DecodeUint(4);
+  }
+
+  void DecodeSensorgram(SensorgramInfo &info, byte *data) {
+    DecodeSensorgramInfo(info);
+    DecodeBytes(data, info.dataSize);
+  }
+
+  void DecodeDatagram(DatagramInfo &info, Writer &w) {
+    if (DecodeUint(1) != 0xaa) {
+      error = true;
+      return;
     }
 
-    unsigned char DecodeUint8() {
-        byte b[1];
-        DecodeBytes(b, 1);
-        return b[0];
+    info.bodySize = DecodeUint(3);
+    info.protocolVersion = DecodeUint(1);
+    info.timestamp = DecodeUint(4);
+    info.packetSeq = DecodeUint(2);
+    info.packetType = DecodeUint(1);
+    info.pluginID = DecodeUint(2);
+    info.pluginMajorVersion = DecodeUint(1);
+    info.pluginMinorVersion = DecodeUint(1);
+    info.pluginPatchVersion = DecodeUint(1);
+    info.pluginInstance = DecodeUint(1);
+    info.pluginRunID = DecodeUint(2);
+
+    // fix to CopyN later...
+    byte crc = 0;
+    for (size_t i = 0; i < info.bodySize; i++) {
+      byte b;
+      DecodeBytes(&b, 1);
+      w.WriteByte(b);
+      crc = Waggle::crc8(&b, 1, crc);
     }
 
-    unsigned short DecodeUint16() {
-        byte b[2];
-        DecodeBytes(b, 2);
-        return (b[0] << 8) + b[1];
+    info.dataCRC = DecodeUint(1);
+
+    if (crc != info.dataCRC) {
+      error = true;
+      return;
     }
 
-    unsigned int DecodeUint24() {
-        byte b[3];
-        DecodeBytes(b, 3);
-        return (b[0] << 16) + (b[1] << 8) + b[2];
+    if (DecodeUint(1) != 0x55) {
+      error = true;
+      return;
     }
+  }
 
-    unsigned int DecodeUint32() {
-        byte b[4];
-        DecodeBytes(b, 4);
-        return (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + b[3];
-    }
-
-    unsigned int DecodeUint(unsigned int size) {
-        byte data[size];
-        DecodeBytes(data, size);
-
-        if (error) {
-            return 0;
-        }
-
-        unsigned int r = 0;
-
-        for (size_t i = 0; i < size; i++) {
-            r <<= 8;
-            r |= data[i];
-        }
-
-        return r;
-    }
-
-    void DecodeSensorgramInfo(SensorgramInfo &info) {
-        info.dataSize = DecodeUint(2);
-        info.sensorID = DecodeUint(2);
-        info.sensorInstance = DecodeUint(1);
-        info.parameterID = DecodeUint(1);
-        info.timestamp = DecodeUint(4);
-        info.dataType = DecodeUint(1);
-    }
-
-    void DecodeSensorgram(SensorgramInfo &info, byte *data) {
-        DecodeSensorgramInfo(info);
-        DecodeBytes(data, info.dataSize);
-    }
-
-    void DecodeDatagram(DatagramInfo &info, Writer &w) {
-        if (DecodeUint(1) != 0xaa) {
-            error = true;
-            return;
-        }
-
-        info.bodySize = DecodeUint(3);
-        info.protocolVersion = DecodeUint(1);
-        info.timestamp = DecodeUint(4);
-        info.packetSeq = DecodeUint(2);
-        info.packetType = DecodeUint(1);
-        info.pluginID = DecodeUint(2);
-        info.pluginMajorVersion = DecodeUint(1);
-        info.pluginMinorVersion = DecodeUint(1);
-        info.pluginPatchVersion = DecodeUint(1);
-        info.pluginInstance = DecodeUint(1);
-        info.pluginRunID = DecodeUint(2);
-
-        // fix to CopyN later...
-        byte crc = 0;
-        for (size_t i = 0; i < info.bodySize; i++) {
-            byte b;
-            DecodeBytes(&b, 1);
-            w.WriteByte(b);
-            crc = Waggle::crc8(&b, 1, crc);
-        }
-
-        info.dataCRC = DecodeUint(1);
-
-        if (crc != info.dataCRC) {
-            error = true;
-            return;
-        }
-
-        if (DecodeUint(1) != 0x55) {
-            error = true;
-            return;
-        }
-    }
-
-private:
-
-    Reader &reader;
-    bool error;
+ private:
+  Reader &reader;
+  bool error;
 };
 
 class Encoder {
-public:
+ public:
+  Encoder(Writer &w) : writer(w) { error = false; }
 
-    Encoder(Writer &w) : writer(w) {
-        error = false;
+  void EncodeBytes(const byte *data, size_t size) {
+    if (error) {
+      return;
     }
 
-    void EncodeBytes(const byte *data, size_t size) {
-        if (error) {
-            return;
-        }
+    error = writer.Write(data, size) != size;
+  }
 
-        error = writer.Write(data, size) != size;
+  void EncodeBuffer(Buffer &buffer) {
+    EncodeBytes(buffer.Bytes(), buffer.Length());
+  }
+
+  template <typename T>
+  void EncodeInt(size_t size, T x) {
+    byte data[size];
+
+    // TODO careful about signedness / this was a very bad bug!!!
+    for (int i = size - 1; i >= 0; i--) {
+      data[i] = (byte)(x & 0xff);
+      x >>= 8;
     }
 
-    void EncodeBuffer(Buffer &buffer) {
-        EncodeBytes(buffer.Bytes(), buffer.Length());
-    }
+    EncodeBytes(data, size);
+  }
 
-    template<typename T>
-    void EncodeInt(size_t size, T x) {
-        byte data[size];
+  void EncodeSensorgramInfo(const SensorgramInfo &s) {
+    EncodeInt(2, s.dataSize);
+    EncodeInt(2, s.sensorID);
+    EncodeInt(1, s.sensorInstance);
+    EncodeInt(1, s.parameterID);
+    EncodeInt(4, s.timestamp);
+  }
 
-        // TODO careful about signedness / this was a very bad bug!!!
-        for (int i = size - 1; i >= 0; i--) {
-            data[i] = (byte)(x & 0xff);
-            x >>= 8;
-        }
+  void EncodeSensorgram(const SensorgramInfo &s, const byte *data) {
+    EncodeInt(2, s.dataSize);
+    EncodeInt(2, s.sensorID);
+    EncodeInt(1, s.sensorInstance);
+    EncodeInt(1, s.parameterID);
+    EncodeInt(4, s.timestamp);
+    EncodeBytes(data, s.dataSize);
+  }
 
-        EncodeBytes(data, size);
-    }
+  void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
+    unsigned int crc = Waggle::crc8(body, size);
 
-    void EncodeSensorgramInfo(const SensorgramInfo &s) {
-        EncodeInt(2, s.dataSize);
-        EncodeInt(2, s.sensorID);
-        EncodeInt(1, s.sensorInstance);
-        EncodeInt(1, s.parameterID);
-        EncodeInt(4, s.timestamp);
-        EncodeInt(1, s.dataType);
-    }
+    EncodeInt(1, 0xaa);
+    EncodeInt(3, size);
+    EncodeInt(1, dg.protocolVersion);
+    EncodeInt(4, dg.timestamp);
+    EncodeInt(2, dg.packetSeq);
+    EncodeInt(1, dg.packetType);
+    EncodeInt(2, dg.pluginID);
+    EncodeInt(1, dg.pluginMajorVersion);
+    EncodeInt(1, dg.pluginMinorVersion);
+    EncodeInt(1, dg.pluginPatchVersion);
+    EncodeInt(1, dg.pluginInstance);
+    EncodeInt(2, dg.pluginRunID);
+    EncodeBytes(body, size);
+    EncodeInt(1, crc);
+    EncodeInt(1, 0x55);
+  }
 
-    void EncodeSensorgram(const SensorgramInfo &s, const byte *data) {
-        EncodeInt(2, s.dataSize);
-        EncodeInt(2, s.sensorID);
-        EncodeInt(1, s.sensorInstance);
-        EncodeInt(1, s.parameterID);
-        EncodeInt(4, s.timestamp);
-        EncodeInt(1, s.dataType);
-        EncodeBytes(data, s.dataSize);
-    }
-
-    void EncodeDatagram(const DatagramInfo &dg, const byte *body, int size) {
-        unsigned int crc = Waggle::crc8(body, size);
-
-        EncodeInt(1, 0xaa);
-        EncodeInt(3, size);
-        EncodeInt(1, dg.protocolVersion);
-        EncodeInt(4, dg.timestamp);
-        EncodeInt(2, dg.packetSeq);
-        EncodeInt(1, dg.packetType);
-        EncodeInt(2, dg.pluginID);
-        EncodeInt(1, dg.pluginMajorVersion);
-        EncodeInt(1, dg.pluginMinorVersion);
-        EncodeInt(1, dg.pluginPatchVersion);
-        EncodeInt(1, dg.pluginInstance);
-        EncodeInt(2, dg.pluginRunID);
-        EncodeBytes(body, size);
-        EncodeInt(1, crc);
-        EncodeInt(1, 0x55);
-    }
-
-private:
-
-    Writer &writer;
-    bool error;
+ private:
+  Writer &writer;
+  bool error;
 };
 
 // imported from pywaggle. clean up.
-const byte TYPE_BYTES = 0;
-const byte TYPE_STRING = 1;
-const byte TYPE_NULL = 2;
-const byte TYPE_FALSE = 3;
-const byte TYPE_TRUE = 4;
+const int TYPE_BYTES = 0;
+const int TYPE_STRING = 1;
+const int TYPE_NULL = 2;
+const int TYPE_FALSE = 3;
+const int TYPE_TRUE = 4;
 
-const byte TYPE_INT8 = 10;
-const byte TYPE_INT16 = 11;
-const byte TYPE_INT24 = 12;
-const byte TYPE_INT32 = 13;
-const byte TYPE_INT64 = 14;
+const int TYPE_INT8 = 10;
+const int TYPE_INT16 = 11;
+const int TYPE_INT24 = 12;
+const int TYPE_INT32 = 13;
+const int TYPE_INT64 = 14;
 // const byte TYPE_INT = 15;
 
-const byte TYPE_UINT8 = 20;
-const byte TYPE_UINT16 = 21;
-const byte TYPE_UINT24 = 22;
-const byte TYPE_UINT32 = 23;
-const byte TYPE_UINT64 = 24;
+const int TYPE_UINT8 = 20;
+const int TYPE_UINT16 = 21;
+const int TYPE_UINT24 = 22;
+const int TYPE_UINT32 = 23;
+const int TYPE_UINT64 = 24;
 // const byte TYPE_UINT = 25;
 
-const byte TYPE_FLOAT32 = 30;
+const int TYPE_FLOAT32 = 30;
 
 size_t UintSize(unsigned int x) {
-    size_t n = 0;
+  size_t n = 0;
 
-    do {
-        n++;
-        x >>= 8;
-    } while (x > 0);
+  do {
+    n++;
+    x >>= 8;
+  } while (x > 0);
 
-    return n;
+  return n;
 }
 
 size_t strlen(const char *s) {
-    size_t n = 0;
+  size_t n = 0;
 
-    while (s[n]) {
-        n++;
-    }
+  while (s[n]) {
+    n++;
+  }
 
-    return n;
+  return n;
 }
 
-template<size_t N>
+// should have a pack values / unpack values template function which can match
+// types and let us know if correct.
+
+template <size_t N>
 class Sensorgram {
-public:
+ public:
+  unsigned int sensorID;
+  unsigned int sensorInstance;
+  unsigned int parameterID;
+  unsigned long timestamp;
 
-    unsigned int sensorID;
-    unsigned int sensorInstance;
-    unsigned int parameterID;
-    unsigned int valueType;
-    unsigned long timestamp;
+  Sensorgram() : buffer(body, N) {
+    sensorID = 0;
+    parameterID = 0;
+    sensorInstance = 0;
+    timestamp = 0;
+  }
 
-    Sensorgram() : buffer(body, N) {
-        sensorID = 0;
-        parameterID = 0;
-        sensorInstance = 0;
-        timestamp = 0;
-        valueType = 0;
+  Buffer &Body() { return buffer; }
+
+  size_t Length() const { return buffer.Length(); }
+
+  void PackBytes(const byte *data, size_t size) {
+    Encoder e(buffer);
+    e.EncodeInt(1, TYPE_BYTES);
+    e.EncodeBytes(data, size);
+  }
+
+  void PackString(const char *str) {
+    Encoder e(buffer);
+    e.EncodeInt(1, TYPE_STRING);
+    e.EncodeBytes((const byte *)str, strlen(str));
+  }
+
+  void PackInt(int value) {
+    size_t size = UintSize(value);
+    int valueType;
+
+    if (size == 1) {
+      valueType = TYPE_INT8;
+    } else if (size == 2) {
+      valueType = TYPE_INT16;
+    } else if (size == 3) {
+      valueType = TYPE_INT24;
+    } else if (size == 4) {
+      valueType = TYPE_INT32;
+    } else {
+      // indicate error occured
+      return;
     }
 
-    Buffer &Body() {
-        return buffer;
+    Encoder e(buffer);
+    e.EncodeInt(1, valueType);
+    e.EncodeInt(UintSize(value), value);
+  }
+
+  void PackUint(unsigned int value) {
+    size_t size = UintSize(value);
+    int valueType;
+
+    if (size == 1) {
+      valueType = TYPE_UINT8;
+    } else if (size == 2) {
+      valueType = TYPE_UINT16;
+    } else if (size == 3) {
+      valueType = TYPE_UINT24;
+    } else if (size == 4) {
+      valueType = TYPE_UINT32;
+    } else {
+      // indicate error occured
+      return;
     }
 
-    size_t Length() const {
-        return buffer.Length();
+    Encoder e(buffer);
+    e.EncodeInt(1, valueType);
+    e.EncodeInt(UintSize(value), value);
+  }
+
+  //   const byte *GetBytes() { return (const byte *)buffer.Bytes(); }
+
+  //   const char *GetString() { return (const char *)buffer.Bytes(); }
+
+  int UnpackInt() {
+    Decoder d(buffer);
+
+    int type = d.DecodeUint(1);
+
+    switch (type) {
+      case TYPE_INT8:
+        return d.DecodeUint(1);
+      case TYPE_INT16:
+        return d.DecodeUint(2);
+      case TYPE_INT24:
+        return d.DecodeUint(3);
+      case TYPE_INT32:
+        return d.DecodeUint(4);
     }
 
-    void SetBytes(const byte *data, size_t size) {
-        valueType = TYPE_BYTES;
-        buffer.Reset();
-        buffer.Write(data, size);
-    }
-
-    void SetString(const char *str) {
-        valueType = TYPE_STRING;
-        buffer.Reset();
-        buffer.Write((const byte *)str, strlen(str));
-    }
-
-    void SetInt(int value) {
-        size_t size = UintSize(value);
-
-        if (size == 1) {
-            valueType = TYPE_INT8;
-        } else if (size == 2) {
-            valueType = TYPE_INT16;
-        } else if (size == 3) {
-            valueType = TYPE_INT24;
-        } else if (size == 4) {
-            valueType = TYPE_INT32;
-        }
-
-        // TODO Handle errors here...
-
-        Encoder encoder(buffer);
-        buffer.Reset();
-        encoder.EncodeInt(UintSize(value), value);
-    }
-
-    void SetUint(unsigned int value) {
-        size_t size = UintSize(value);
-
-        if (size == 1) {
-            valueType = TYPE_UINT8;
-        } else if (size == 2) {
-            valueType = TYPE_UINT16;
-        } else if (size == 3) {
-            valueType = TYPE_UINT24;
-        } else if (size == 4) {
-            valueType = TYPE_UINT32;
-        }
-
-        // TODO Handle errors here...
-
-        Encoder encoder(buffer);
-        buffer.Reset();
-        encoder.EncodeInt(size, value);
-    }
-
-    void SetBool(bool value) {
-        if (value) {
-            valueType = TYPE_TRUE;
-        } else {
-            valueType = TYPE_FALSE;
-        }
-
-        buffer.Reset();
-    }
-
-    const byte *GetBytes() {
-        return (const byte *)buffer.Bytes();
-    }
-
-    const char *GetString() {
-        return (const char *)buffer.Bytes();
-    }
-
-    int GetInt() {
-        Decoder decoder(buffer);
-        return decoder.DecodeUint(buffer.Length());
-    }
-
-    unsigned int GetUint() {
-        Decoder decoder(buffer);
-        return decoder.DecodeUint(buffer.Length());
-    }
-
-    bool GetBool() {
-        if (valueType == TYPE_TRUE) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    bool Pack(Writer &writer) {
-        Encoder encoder(writer);
-        encoder.EncodeInt(2, buffer.Length());
-        encoder.EncodeInt(2, sensorID);
-        encoder.EncodeInt(1, sensorInstance);
-        encoder.EncodeInt(1, parameterID);
-        encoder.EncodeInt(4, timestamp);
-        encoder.EncodeInt(1, valueType);
-        encoder.EncodeBuffer(buffer);
-        return true;
-    }
-
-    bool Unpack(Reader &reader) {
-        Decoder decoder(reader);
-
-        unsigned int length = decoder.DecodeUint(2);
-        sensorID = decoder.DecodeUint(2);
-        sensorInstance = decoder.DecodeUint(1);
-        parameterID = decoder.DecodeUint(1);
-        timestamp = decoder.DecodeUint(4);
-        valueType = decoder.DecodeUint(1);
-
-        buffer.Reset();
-        decoder.DecodeBuffer(buffer, length);
-
-        // Add null-terminator for C style strings.
-        if (valueType == TYPE_STRING) {
-            buffer.WriteByte(0);
-        }
-
-        return !decoder.Error();
-    }
-
-private:
-
-    Buffer buffer;
-    byte body[N];
-};
-
-template<size_t N>
-struct Datagram {
-
-    unsigned int protocolVersion;
-    unsigned int timestamp;
-    unsigned int packetSeq;
-    unsigned int packetType;
-    unsigned int pluginID;
-    unsigned int pluginMajorVersion;
-    unsigned int pluginMinorVersion;
-    unsigned int pluginPatchVersion;
-    unsigned int pluginInstance;
-    unsigned int pluginRunID;
-    byte dataCRC;
-    byte body[N];
-    Buffer buffer;
-
-    Datagram() : buffer(body, N) {
-    }
-
-    Buffer &Body() {
-        return buffer;
-    }
-
-    bool Pack(Writer &writer) {
-        Encoder encoder(writer);
-
-        unsigned int crc = Waggle::crc8(buffer.Bytes(), buffer.Length());
-
-        encoder.EncodeInt(1, 0xaa);
-        encoder.EncodeInt(3, buffer.Length());
-        encoder.EncodeInt(1, protocolVersion);
-        encoder.EncodeInt(4, timestamp);
-        encoder.EncodeInt(2, packetSeq);
-        encoder.EncodeInt(1, packetType);
-        encoder.EncodeInt(2, pluginID);
-        encoder.EncodeInt(1, pluginMajorVersion);
-        encoder.EncodeInt(1, pluginMinorVersion);
-        encoder.EncodeInt(1, pluginPatchVersion);
-        encoder.EncodeInt(1, pluginInstance);
-        encoder.EncodeInt(2, pluginRunID);
-        encoder.EncodeBuffer(buffer);
-        encoder.EncodeInt(1, crc);
-        encoder.EncodeInt(1, 0x55);
-
-        buffer.Reset();
-
-        return true;
-    }
-
-    bool Unpack(Reader &reader) {
-        return true;
-    }
-};
-
-unsigned long defaultGetTimestamp() {
+    // error
     return 0;
-}
+  }
 
-template<size_t N>
+  bool Pack(Writer &writer) {
+    Encoder encoder(writer);
+    encoder.EncodeInt(2, buffer.Length());
+    encoder.EncodeInt(2, sensorID);
+    encoder.EncodeInt(1, sensorInstance);
+    encoder.EncodeInt(1, parameterID);
+    encoder.EncodeInt(4, timestamp);
+    encoder.EncodeBuffer(buffer);
+    buffer.Reset();
+    return true;
+  }
+
+  bool Unpack(Reader &reader) {
+    Decoder decoder(reader);
+
+    unsigned int length = decoder.DecodeUint(2);
+    sensorID = decoder.DecodeUint(2);
+    sensorInstance = decoder.DecodeUint(1);
+    parameterID = decoder.DecodeUint(1);
+    timestamp = decoder.DecodeUint(4);
+
+    buffer.Reset();
+    decoder.DecodeBuffer(buffer, length);
+
+    return !decoder.Error();
+  }
+
+ private:
+  Buffer buffer;
+  byte body[N];
+};
+
+template <size_t N>
+struct Datagram {
+  unsigned int protocolVersion;
+  unsigned int timestamp;
+  unsigned int packetSeq;
+  unsigned int packetType;
+  unsigned int pluginID;
+  unsigned int pluginMajorVersion;
+  unsigned int pluginMinorVersion;
+  unsigned int pluginPatchVersion;
+  unsigned int pluginInstance;
+  unsigned int pluginRunID;
+  byte dataCRC;
+  byte body[N];
+  Buffer buffer;
+
+  Datagram() : buffer(body, N) {}
+
+  Buffer &Body() { return buffer; }
+
+  bool Pack(Writer &writer) {
+    Encoder encoder(writer);
+
+    unsigned int crc = Waggle::crc8(buffer.Bytes(), buffer.Length());
+
+    encoder.EncodeInt(1, 0xaa);
+    encoder.EncodeInt(3, buffer.Length());
+    encoder.EncodeInt(1, protocolVersion);
+    encoder.EncodeInt(4, timestamp);
+    encoder.EncodeInt(2, packetSeq);
+    encoder.EncodeInt(1, packetType);
+    encoder.EncodeInt(2, pluginID);
+    encoder.EncodeInt(1, pluginMajorVersion);
+    encoder.EncodeInt(1, pluginMinorVersion);
+    encoder.EncodeInt(1, pluginPatchVersion);
+    encoder.EncodeInt(1, pluginInstance);
+    encoder.EncodeInt(2, pluginRunID);
+    encoder.EncodeBuffer(buffer);
+    encoder.EncodeInt(1, crc);
+    encoder.EncodeInt(1, 0x55);
+
+    buffer.Reset();
+
+    return true;
+  }
+
+  bool Unpack(Reader &reader) { return true; }
+};
+
+unsigned long defaultGetTimestamp() { return 0; }
+
+template <size_t N>
 class Plugin {
-public:
+ public:
+  Plugin(int id, int majorVersion, int minorVersion, int patchVersion,
+         int instance)
+      : buffer(buf, N) {
+    datagramInfo.protocolVersion = 2;
 
-    Plugin(int id, int majorVersion, int minorVersion, int patchVersion, int instance) : buffer(buf, N) {
-        datagramInfo.protocolVersion = 2;
+    datagramInfo.pluginID = id;
+    datagramInfo.pluginMajorVersion = majorVersion;
+    datagramInfo.pluginMinorVersion = minorVersion;
+    datagramInfo.pluginPatchVersion = patchVersion;
+    datagramInfo.pluginInstance = instance;
 
-        datagramInfo.pluginID = id;
-        datagramInfo.pluginMajorVersion = majorVersion;
-        datagramInfo.pluginMinorVersion = minorVersion;
-        datagramInfo.pluginPatchVersion = patchVersion;
-        datagramInfo.pluginInstance = instance;
+    datagramInfo.packetType = 0;
+    datagramInfo.packetSeq = 0;
+    datagramInfo.timestamp = 0;
+    datagramInfo.pluginRunID = 0;
+  }
 
-        datagramInfo.packetType = 0;
-        datagramInfo.packetSeq = 0;
-        datagramInfo.timestamp = 0;
-        datagramInfo.pluginRunID = 0;
-    }
+  void AddMeasurement(int sid, int sinst, int pid, int type, byte *data,
+                      int size) {
+    SensorgramInfo sg;
 
-    void AddMeasurement(int sid, int sinst, int pid, int type, byte *data, int size) {
-        SensorgramInfo sg;
+    sg.sensorID = sid;
+    sg.sensorInstance = sinst;
+    sg.parameterID = pid;
+    sg.timestamp = defaultGetTimestamp();
+    sg.dataSize = size;
 
-        sg.sensorID = sid;
-        sg.sensorInstance = sinst;
-        sg.parameterID = pid;
-        sg.timestamp = defaultGetTimestamp();
-        sg.dataType = type;
-        sg.dataSize = size;
+    Encoder encoder(buffer);
+    encoder.EncodeSensorgram(sg, data);
+  }
 
-        Encoder encoder(buffer);
-        encoder.EncodeSensorgram(sg, data);
-    }
+  void PublishMeasurements(Writer &writer) {
+    datagramInfo.packetType = 0;
 
-    void PublishMeasurements(Writer &writer) {
-        datagramInfo.packetType = 0;
+    Encoder encoder(writer);
+    encoder.EncodeDatagram(datagramInfo, buffer.Bytes(), buffer.Length());
+    buffer.Reset();
 
-        Encoder encoder(writer);
-        encoder.EncodeDatagram(datagramInfo, buffer.Bytes(), buffer.Length());
-        buffer.Reset();
+    datagramInfo.packetSeq++;
+  }
 
-        datagramInfo.packetSeq++;
-    }
+  template <size_t N2>
+  void PublishMeasurements(Messenger<N2> &messenger) {
+    datagramInfo.packetType = 0;
 
-    template<size_t N2>
-    void PublishMeasurements(Messenger<N2> &messenger) {
-        datagramInfo.packetType = 0;
+    Encoder encoder(messenger);
 
-        Encoder encoder(messenger);
+    messenger.StartMessage();
+    encoder.EncodeDatagram(datagramInfo, buffer.Bytes(), buffer.Length());
+    messenger.EndMessage();
+    buffer.Reset();
 
-        messenger.StartMessage();
-        encoder.EncodeDatagram(datagramInfo, buffer.Bytes(), buffer.Length());
-        messenger.EndMessage();
-        buffer.Reset();
+    datagramInfo.packetSeq++;
+  }
 
-        datagramInfo.packetSeq++;
-    }
+  void ClearMeasurements() { buffer.Reset(); }
 
-    void ClearMeasurements() {
-        buffer.Reset();
-    }
-
-private:
-
-    DatagramInfo datagramInfo;
-    byte buf[N];
-    Buffer buffer;
+ private:
+  DatagramInfo datagramInfo;
+  byte buf[N];
+  Buffer buffer;
 };
 
-};
+};  // namespace Waggle
