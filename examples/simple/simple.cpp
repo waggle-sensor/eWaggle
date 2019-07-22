@@ -1,10 +1,14 @@
 #include <cstdio>
 #include "Waggle.h"
 
-Datagram<1024> dg;
+Buffer<1024> loopBuf;
 
 void PackExample() {
-  Sensorgram<256> sg = {
+  Datagram<256> dg = {
+      .Timestamp = 111111,
+  };
+
+  Sensorgram<32> sg = {
       .Timestamp = 123456,
       .ID = 123,
       .Inst = 1,
@@ -17,39 +21,65 @@ void PackExample() {
   PackUintVal(sg.Body, 12345);
   PackUintVal(sg.Body, 1234567);
   PackFloat32(sg.Body, 12.34);
-
   PackSensorgram(dg.Body, sg);
+  PackDatagram(loopBuf, dg);
 }
 
-void UnpackExample() {
-  Sensorgram<256> sg;
+void printHex(const unsigned char *b, int n) {
+  for (int i = 0; i < n; i++) {
+    printf("%02x", b[i]);
+  }
 
-  UnpackSensorgram(dg.Body, sg);
+  printf("\n");
+}
 
-  printf("Timestamp = %lu\n", sg.Timestamp);
-  printf("ID = %u\n", sg.ID);
-  printf("Inst = %u\n", sg.Inst);
-  printf("SubID = %u\n", sg.SubID);
-  printf("SourceID = %u\n", sg.SourceID);
-  printf("SourceInst = %u\n", sg.SourceInst);
+int compareBytes(const unsigned char *a, const unsigned char *b, int n) {
+  for (int i = 0; i < n; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
 
-  printf("%lu\n", UnpackUintVal(sg.Body));
-  printf("%lu\n", UnpackUintVal(sg.Body));
-  printf("%lu\n", UnpackUintVal(sg.Body));
-  printf("%f\n", UnpackFloat32(sg.Body));
+  return true;
+}
+
+void testBuffer() {
+  Buffer<32> b;
+  const unsigned char tmp[] = {1, 2, 3};
+
+  if (b.Write(tmp, 3) != 3) {
+    printf("Buffer.Write failed\n");
+    return;
+  }
+
+  if (b.Len() != 3) {
+    printf("Buffer.Len failed\n");
+    return;
+  }
+
+  if (!compareBytes(tmp, b.Bytes(), b.Len())) {
+    printf("Buffer.Bytes failed\n");
+    return;
+  }
 }
 
 int main() {
+  testBuffer();
+
   PackExample();
-  Buffer<1024> buf;
+  PackExample();
+  PackExample();
 
-  PackDatagram(buf, dg);
+  Datagram<256> dg;
 
-  const unsigned char *b = buf.Bytes();
-  int n = buf.Len();
+  for (int i = 0; i < 10; i++) {
+    printf("--- buffer state %d\n", i);
+    printHex(loopBuf.Bytes(), loopBuf.Len());
 
-  for (int i = 0; i < n; i++) {
-    printf("%02x ", b[i]);
+    if (!UnpackDatagram(loopBuf, dg)) {
+      break;
+    }
+
+    printHex(dg.Body.Bytes(), dg.Body.Len());
   }
-  // UnpackExample();
 }

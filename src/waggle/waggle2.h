@@ -3,22 +3,9 @@ struct Buffer {
   unsigned char buf[cap];
   int pos;
   int len;
-  bool err;  // hack for now... don't have a clean way to handle results
+  bool err;
 
-  const unsigned char *Bytes() {
-    if (pos > 0) {
-      int i = 0;
-
-      while (pos < len) {
-        buf[i++] = buf[pos++];
-      }
-
-      pos = 0;
-      len = i;
-    }
-
-    return buf;
-  }
+  const unsigned char *Bytes() { return &buf[pos]; }
 
   int Len() const { return len - pos; }
   int Cap() const { return cap; }
@@ -59,6 +46,18 @@ struct Buffer {
       return 0;
     }
 
+    // Check if we need to resize.
+    if (pos > 0) {
+      int i = 0;
+
+      while (pos < len) {
+        buf[i++] = buf[pos++];
+      }
+
+      pos = 0;
+      len = i;
+    }
+
     int i = 0;
 
     while (i < n && len < cap) {
@@ -73,6 +72,46 @@ struct Buffer {
   }
 };
 
+struct BytesReader {
+  const unsigned char *buf;
+  int pos;
+  int cap;
+  bool err;
+
+  bool Err() const { return err; }
+
+  BytesReader(const unsigned char *buf, int cap) : buf(buf), cap(cap) {
+    pos = 0;
+    err = false;
+  }
+
+  int Read(unsigned char *b, int n) {
+    if (err) {
+      return 0;
+    }
+
+    int i = 0;
+
+    while (i < n && pos < cap) {
+      b[i++] = buf[pos++];
+    }
+
+    if (i != n) {
+      err = true;
+    }
+
+    return i;
+  }
+};
+
+struct DevNull {
+  int Read(unsigned char *b, int n) { return n; }
+
+  int Write(const unsigned char *b, int n) { return n; }
+};
+
+DevNull devNull;
+
 // could even provide a buffer explicitly here instead of just int...?
 template <int cap>
 struct Sensorgram {
@@ -86,7 +125,7 @@ struct Sensorgram {
 };
 
 template <class R, class W>
-void Copy(R &r, W &w, int n) {
+void CopyN(R &r, W &w, int n) {
   unsigned char tmp[32];
   int copied = 0;
 
@@ -255,7 +294,7 @@ bool UnpackSensorgram(R &r, SG &sg) {
   sg.SourceInst = UnpackUint8(r);
 
   sg.Body.Reset();
-  Copy(r, sg.Body, len - SensorgramHeaderLength);
+  CopyN(r, sg.Body, len - SensorgramHeaderLength);
 
   return !r.Err();
 }
@@ -327,9 +366,11 @@ const unsigned char crcTable[256] = {
     0xd7, 0x89, 0x6b, 0x35,
 };
 
-unsigned char crc8(const unsigned char *data, int size, unsigned char crc = 0) {
-  for (int i = 0; i < size; i++) {
-    crc = crcTable[crc ^ data[i]];
+unsigned char calcCrc8(const unsigned char *b, int n) {
+  unsigned char crc = 0;
+
+  for (int i = 0; i < n; i++) {
+    crc = crcTable[crc ^ b[i]];
   }
 
   return crc;
@@ -353,24 +394,107 @@ struct Datagram {
 // Now, we can use different functions for actually sending / recving
 // datagrams.
 
-const int DatagramHeaderLength = 1+3+1+4+2+1+2+1+1+1+2;
-const int DatagramFooterLength = 1+1;
+const int DatagramHeaderLength = 1 + 4 + 2 + 1 + 2 + 1 + 1 + 1 + 1 + 2;
+const unsigned char DatagramHeaderByte = 0xaa;
+const unsigned char DatagramFooterByte = 0x55;
 
 template <class W, class DG>
 void PackDatagram(W &w, DG &dg) {
-  PackUint8(w, 0xaa); // [Start_Byte (1B)]
-  PackUint24(w, dg.Body.Len() + DatagramHeaderLength + DatagramFooterLength); // [Length (3B)]
-  PackUint8(w, dg.ProtocolVersion); // [Protocol_version (1B)]
-  PackUint32(w, dg.Timestamp); // [time (4B)]
-  PackUint16(w, dg.PacketSeq); // [Packet_Seq (2B)]
-  PackUint8(w, dg.PacketType); // [Packet_type (1B)]
-  PackUint16(w, dg.PluginID); // [Plugin ID (2B)]
-  PackUint8(w, dg.PluginMajorVersion); // [Plugin Maj Ver (1B)]
-  PackUint8(w, dg.PluginMinorVersion); // [Plugin Min Ver (1B)]
-  PackUint8(w, dg.PluginPatchVersion); // [Plugin Build Ver (1B)]
-  PackUint8(w, dg.PluginInstance); // [Plugin Instance (1B)]
-  PackUint16(w, dg.PluginRunID); // [Plugin Run ID (2B)]
+  // framing header
+  PackUint8(w, DatagramHeaderByte);  // [Start_Byte (1B)]
+
+  // content header
+  PackUint24(w, dg.Body.Len() + DatagramHeaderLength);  // [Length (3B)]
+  PackUint8(w, dg.ProtocolVersion);     // [Protocol_version (1B)]
+  PackUint32(w, dg.Timestamp);          // [time (4B)]
+  PackUint16(w, dg.PacketSeq);          // [Packet_Seq (2B)]
+  PackUint8(w, dg.PacketType);          // [Packet_type (1B)]
+  PackUint16(w, dg.PluginID);           // [Plugin ID (2B)]
+  PackUint8(w, dg.PluginMajorVersion);  // [Plugin Maj Ver (1B)]
+  PackUint8(w, dg.PluginMinorVersion);  // [Plugin Min Ver (1B)]
+  PackUint8(w, dg.PluginPatchVersion);  // [Plugin Build Ver (1B)]
+  PackUint8(w, dg.PluginInstance);      // [Plugin Instance (1B)]
+  PackUint16(w, dg.PluginRunID);        // [Plugin Run ID (2B)]
   PackBytes(w, dg.Body.Bytes(), dg.Body.Len());
-  PackUint8(w, crc8(dg.Body.Bytes(), dg.Body.Len())); // [CRC (1B)]
-  PackUint8(w, 0x55); // [End_Byte (1B)]
+
+  // framing footer
+  PackUint8(w, calcCrc8(dg.Body.Bytes(), dg.Body.Len()));  // [CRC (1B)]
+  PackUint8(w, DatagramFooterByte);                        // [End_Byte (1B)]
 }
+
+int findByte(unsigned char x, const unsigned char *b, int n) {
+  for (int i = 0; i < n; i++) {
+    if (b[i] == x) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+// need to have a way of indicating whether a datagram was actually unpacked or
+// not.
+template <class B, class DG>
+bool UnpackDatagram(B &buf, DG &dg) {
+  // align buffer to next possible frame
+  int start = findByte(DatagramHeaderByte, buf.Bytes(), buf.Len());
+
+  if (start == -1) {
+    printf("no header found\n");
+    CopyN(buf, devNull, buf.Len());
+    return false;
+  }
+
+  CopyN(buf, devNull, start);
+
+  BytesReader r(buf.Bytes(), buf.Len());
+
+  if (UnpackUint8(r) != 0xaa) {
+    printf("header failed\n");
+    return false;
+  }
+
+  int len = UnpackUint24(r);               // [Length (3B)]
+  dg.ProtocolVersion = UnpackUint8(r);     // [Protocol_version (1B)]
+  dg.Timestamp = UnpackUint32(r);          // [time (4B)]
+  dg.PacketSeq = UnpackUint16(r);          // [Packet_Seq (2B)]
+  dg.PacketType = UnpackUint8(r);          // [Packet_type (1B)]
+  dg.PluginID = UnpackUint16(r);           // [Plugin ID (2B)]
+  dg.PluginMajorVersion = UnpackUint8(r);  // [Plugin Maj Ver (1B)]
+  dg.PluginMinorVersion = UnpackUint8(r);  // [Plugin Min Ver (1B)]
+  dg.PluginPatchVersion = UnpackUint8(r);  // [Plugin Build Ver (1B)]
+  dg.PluginInstance = UnpackUint8(r);      // [Plugin Instance (1B)]
+  dg.PluginRunID = UnpackUint16(r);        // [Plugin Run ID (2B)]
+
+  // Is this consistent with Pack??
+  dg.Body.Reset();
+  CopyN(r, dg.Body, len - DatagramHeaderLength);
+
+  if (r.Err()) {
+    return false;
+  }
+
+  unsigned char recvCrc = UnpackUint8(r);
+  unsigned char calcCrc = calcCrc8(dg.Body.Bytes(), dg.Body.Len());
+
+  if (recvCrc != calcCrc) {
+    printf("crc failed recv %d != calc %d\n", recvCrc, calcCrc);
+    return false;
+  }
+
+  if (UnpackUint8(r) != 0x55) {
+    printf("footer failed\n");
+    return false;
+  }
+
+  // CopyN(buf, devNull, len + 3);
+  // Drop leading header byte.
+  CopyN(buf, devNull, 1);
+
+  return !r.Err();
+}
+
+// template <int cap>
+// struct BufferedReader {
+//   unsigned char buf[cap];
+// };
