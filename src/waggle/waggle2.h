@@ -440,7 +440,6 @@ bool UnpackDatagram(B &buf, DG &dg) {
   int start = findByte(DatagramHeaderByte, buf.Bytes(), buf.Len());
 
   if (start == -1) {
-    printf("no header found\n");
     CopyN(buf, devNull, buf.Len());
     return false;
   }
@@ -450,7 +449,6 @@ bool UnpackDatagram(B &buf, DG &dg) {
   BytesReader r(buf.Bytes(), buf.Len());
 
   if (UnpackUint8(r) != 0xaa) {
-    printf("header failed\n");
     return false;
   }
 
@@ -478,18 +476,15 @@ bool UnpackDatagram(B &buf, DG &dg) {
   unsigned char calcCrc = calcCrc8(dg.Body.Bytes(), dg.Body.Len());
 
   if (recvCrc != calcCrc) {
-    printf("crc failed recv %d != calc %d\n", recvCrc, calcCrc);
     return false;
   }
 
   if (UnpackUint8(r) != 0x55) {
-    printf("footer failed\n");
     return false;
   }
 
-  // CopyN(buf, devNull, len + 3);
-  // Drop leading header byte.
-  CopyN(buf, devNull, 1);
+  // Drop leading header byte for next sync.
+  CopyN(buf, devNull, len + 3);
 
   return !r.Err();
 }
