@@ -16,12 +16,12 @@ int main() {
 
   // In this section, we pack a bunch of test sensorgrams into our loopback
   // device.
-  s.sensorID = 3;
-  s.parameterID = 1;
-  s.sensorInstance = 1;
-  s.PackInt(100);
-  s.PackInt(200);
-  s.Pack(io);
+  s.ID = 3;
+  s.SubID = 1;
+  s.Inst = 1;
+  PackInt(100);
+  PackInt(200);
+  PackSensorgram(io, s);
 
   s.sensorID = 4;
   s.parameterID = 1;
