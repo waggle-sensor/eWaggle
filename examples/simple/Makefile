@@ -1,7 +1,8 @@
-simple: simple.cpp
+.PHONY : build
+build:
 	c++ -I../../src -o simple simple.cpp
 
-test: simple
+test: build
 	./simple
 
 clean:

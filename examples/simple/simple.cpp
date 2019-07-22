@@ -1,7 +1,7 @@
 #include <cstdio>
 #include "Waggle.h"
 
-Buffer<1024> b;
+Datagram<1024> dg;
 
 void PackExample() {
   Sensorgram<256> sg = {
@@ -18,13 +18,13 @@ void PackExample() {
   PackUintVal(sg.Body, 1234567);
   PackFloat32(sg.Body, 12.34);
 
-  PackSensorgram(b, sg);
+  PackSensorgram(dg.Body, sg);
 }
 
 void UnpackExample() {
   Sensorgram<256> sg;
 
-  UnpackSensorgram(b, sg);
+  UnpackSensorgram(dg.Body, sg);
 
   printf("Timestamp = %lu\n", sg.Timestamp);
   printf("ID = %u\n", sg.ID);
@@ -41,5 +41,15 @@ void UnpackExample() {
 
 int main() {
   PackExample();
-  UnpackExample();
+  Buffer<1024> buf;
+
+  PackDatagram(buf, dg);
+
+  const unsigned char *b = buf.Bytes();
+  int n = buf.Len();
+
+  for (int i = 0; i < n; i++) {
+    printf("%02x ", b[i]);
+  }
+  // UnpackExample();
 }
