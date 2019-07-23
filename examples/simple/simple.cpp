@@ -20,7 +20,7 @@ int main() {
 
     Sensorgram<32> sg = {
         .Timestamp = 123456,
-        .ID = 123,
+        .ID = 1,
         .Inst = 1,
         .SubID = 10,
         .SourceID = 1,
@@ -28,9 +28,7 @@ int main() {
     };
 
     PackUintVal(sg.Body, 123);
-    PackUintVal(sg.Body, 12345);
-    PackUintVal(sg.Body, 1234567);
-    PackFloat32(sg.Body, 12.34);
+    PackFloatVal(sg.Body, 12.34);
     PackSensorgram(dg.Body, sg);
     PackDatagram(loopBuf, dg);
   }
@@ -43,7 +41,7 @@ int main() {
     {
       Sensorgram<32> sg = {
           .Timestamp = 123456,
-          .ID = 123,
+          .ID = 2,
           .Inst = 1,
           .SubID = 10,
           .SourceID = 1,
@@ -52,15 +50,13 @@ int main() {
 
       PackUintVal(sg.Body, 123);
       PackUintVal(sg.Body, 12345);
-      PackUintVal(sg.Body, 1234567);
-      PackFloat32(sg.Body, 12.34);
       PackSensorgram(dg.Body, sg);
     }
 
     {
       Sensorgram<32> sg = {
           .Timestamp = 123456,
-          .ID = 123,
+          .ID = 3,
           .Inst = 1,
           .SubID = 10,
           .SourceID = 1,
@@ -82,7 +78,24 @@ int main() {
       Sensorgram<32> sg;
 
       while (UnpackSensorgram(dg.Body, sg)) {
-        printf(" sensorgram\n");
+        printf(" sensorgram ID %d\n", sg.ID);
+
+        switch (sg.ID) {
+          case 1: {
+            unsigned int x = UnpackUintVal(sg.Body);
+            float y = UnpackFloatVal(sg.Body);
+            printf("  values: %u %f\n", x, y);
+          } break;
+          case 2: {
+            unsigned int x = UnpackUintVal(sg.Body);
+            unsigned int y = UnpackUintVal(sg.Body);
+            printf("  values: %u %u\n", x, y);
+          } break;
+          case 3: {
+            unsigned int x = UnpackUintVal(sg.Body);
+            printf("  values: %u\n", x);
+          } break;
+        }
       }
     }
   }
