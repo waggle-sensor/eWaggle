@@ -1,21 +1,25 @@
 #ifndef __H_WAGGLE__
 #define __H_WAGGLE__
 
-const int TYPE_BYTES = 0;
-const int TYPE_STRING = 1;
+const int TYPE_NULL = 0x00;
+const int TYPE_BYTES = 0x01;
+const int TYPE_STRING = 0x02;
 
-const int TYPE_UINT8 = 10;
-const int TYPE_UINT16 = 11;
-const int TYPE_UINT24 = 12;
-const int TYPE_UINT32 = 13;
+const int TYPE_INT8 = 0x03;
+const int TYPE_UINT8 = 0x04;
 
-const int TYPE_INT8 = 20;
-const int TYPE_INT16 = 21;
-const int TYPE_INT24 = 22;
-const int TYPE_INT32 = 23;
+const int TYPE_INT16 = 0x05;
+const int TYPE_UINT16 = 0x06;
 
-const int TYPE_FLOAT32 = 30;
-const int TYPE_FLOAT64 = 31;
+const int TYPE_INT24 = 0x07;
+const int TYPE_UINT24 = 0x08;
+
+const int TYPE_INT32 = 0x09;
+const int TYPE_UINT32 = 0x0a;
+
+const int TYPE_FLOAT16 = 0x0b;
+const int TYPE_FLOAT32 = 0x0c;
+const int TYPE_FLOAT64 = 0x0d;
 
 template <int cap>
 struct Buffer {
@@ -288,11 +292,9 @@ double UnpackFloat64(R &r) {
   return *(double *)b;
 }
 
-const int SensorgramHeaderLength = 4 + 2 + 1 + 1 + 2 + 2;
-
 template <class W, class SG>
 void PackSensorgram(W &w, SG &sg) {
-  PackUint16(w, sg.Body.Len() + SensorgramHeaderLength);
+  PackUint16(w, sg.Body.Len());
   PackUint32(w, sg.Timestamp);
   PackUint16(w, sg.ID);
   PackUint8(w, sg.Inst);
@@ -313,7 +315,7 @@ bool UnpackSensorgram(R &r, SG &sg) {
   sg.SourceInst = UnpackUint8(r);
 
   sg.Body.Reset();
-  CopyN(r, sg.Body, len - SensorgramHeaderLength);
+  CopyN(r, sg.Body, len);
 
   return !r.Err();
 }
@@ -443,7 +445,6 @@ struct Datagram {
 // Now, we can use different functions for actually sending / recving
 // datagrams.
 
-const int DatagramHeaderLength = 1 + 4 + 2 + 1 + 2 + 1 + 1 + 1 + 1 + 2;
 const unsigned char DatagramHeaderByte = 0xaa;
 const unsigned char DatagramFooterByte = 0x55;
 
@@ -453,7 +454,7 @@ void PackDatagram(W &w, DG &dg) {
   PackUint8(w, DatagramHeaderByte);  // [Start_Byte (1B)]
 
   // content header
-  PackUint24(w, dg.Body.Len() + DatagramHeaderLength);  // [Length (3B)]
+  PackUint24(w, dg.Body.Len());         // [Length (3B)]
   PackUint8(w, dg.ProtocolVersion);     // [Protocol_version (1B)]
   PackUint32(w, dg.Timestamp);          // [time (4B)]
   PackUint16(w, dg.PacketSeq);          // [Packet_Seq (2B)]
@@ -515,7 +516,7 @@ bool UnpackDatagram(B &buf, DG &dg) {
 
   // Is this consistent with Pack??
   dg.Body.Reset();
-  CopyN(r, dg.Body, len - DatagramHeaderLength);
+  CopyN(r, dg.Body, len);
 
   if (r.Err()) {
     return false;
