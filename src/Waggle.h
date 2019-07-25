@@ -188,7 +188,8 @@ int stringLen(const char *s) {
 }
 
 template <class W>
-void PackString(W &w, const char *s) {
+void PackStringVal(W &w, const char *s) {
+  PackUint8(w, TYPE_STRING);
   // we include the null terminator from string.
   w.Write((const unsigned char *)s, stringLen(s) + 1);
 }
@@ -241,9 +242,14 @@ void UnpackBytes(R &r, unsigned char *b, int n) {
 }
 
 template <class R>
-void UnpackString(R &r, char *s) {
-  // warning unsafe
+void UnpackStringVal(R &r, char *s) {
   unsigned char b[1];
+
+  r.Read(b, 1);
+
+  if (b[0] != TYPE_STRING) {
+    return;
+  }
 
   while (r.Read(b, 1) == 1 && b[0] != '\0') {
     *s++ = b[0];
