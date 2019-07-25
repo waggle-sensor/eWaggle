@@ -1,25 +1,25 @@
 #ifndef __H_WAGGLE__
 #define __H_WAGGLE__
 
-const int TYPE_NULL = 0x00;
-const int TYPE_BYTES = 0x01;
-const int TYPE_STRING = 0x02;
+const unsigned char TYPE_NULL = 0x00;
+const unsigned char TYPE_BYTES = 0x01;
+const unsigned char TYPE_STRING = 0x02;
 
-const int TYPE_INT8 = 0x03;
-const int TYPE_UINT8 = 0x04;
+const unsigned char TYPE_INT8 = 0x03;
+const unsigned char TYPE_UINT8 = 0x04;
 
-const int TYPE_INT16 = 0x05;
-const int TYPE_UINT16 = 0x06;
+const unsigned char TYPE_INT16 = 0x05;
+const unsigned char TYPE_UINT16 = 0x06;
 
-const int TYPE_INT24 = 0x07;
-const int TYPE_UINT24 = 0x08;
+const unsigned char TYPE_INT24 = 0x07;
+const unsigned char TYPE_UINT24 = 0x08;
 
-const int TYPE_INT32 = 0x09;
-const int TYPE_UINT32 = 0x0a;
+const unsigned char TYPE_INT32 = 0x09;
+const unsigned char TYPE_UINT32 = 0x0a;
 
-const int TYPE_FLOAT16 = 0x0b;
-const int TYPE_FLOAT32 = 0x0c;
-const int TYPE_FLOAT64 = 0x0d;
+const unsigned char TYPE_FLOAT16 = 0x0b;
+const unsigned char TYPE_FLOAT32 = 0x0c;
+const unsigned char TYPE_FLOAT64 = 0x0d;
 
 template <int cap>
 struct Buffer {
