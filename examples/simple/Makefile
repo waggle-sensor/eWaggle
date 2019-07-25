@@ -1,6 +1,6 @@
 .PHONY : build
 build:
-	c++ -I../../src -o simple simple.cpp
+	c++ -std=c++11 -I../../src -o simple simple.cpp
 
 test: build
 	./simple

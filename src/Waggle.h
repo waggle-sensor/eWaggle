@@ -195,25 +195,27 @@ void PackString(W &w, const char *s) {
 
 template <class W>
 void PackUint8(W &w, unsigned int x) {
-  unsigned char b[] = {x};
+  unsigned char b[] = {(unsigned char)x};
   PackBytes(w, b, 1);
 }
 
 template <class W>
 void PackUint16(W &w, unsigned int x) {
-  unsigned char b[] = {x >> 8, x};
+  unsigned char b[] = {(unsigned char)(x >> 8), (unsigned char)x};
   PackBytes(w, b, 2);
 }
 
 template <class W>
 void PackUint24(W &w, unsigned int x) {
-  unsigned char b[] = {x >> 16, x >> 8, x};
+  unsigned char b[] = {(unsigned char)(x >> 16), (unsigned char)(x >> 8),
+                       (unsigned char)x};
   PackBytes(w, b, 3);
 }
 
 template <class W>
 void PackUint32(W &w, unsigned int x) {
-  unsigned char b[] = {x >> 24, x >> 16, x >> 8, x};
+  unsigned char b[] = {(unsigned char)(x >> 24), (unsigned char)(x >> 16),
+                       (unsigned char)(x >> 8), (unsigned char)x};
   PackBytes(w, b, 4);
 }
 
