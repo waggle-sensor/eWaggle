@@ -15,6 +15,10 @@ int main() {
   // example: appending one sensorgram to a datagram
   {
     Datagram<256> dg;
+    dg.PluginID = 1;
+    dg.PluginMajorVersion = 1;
+    dg.PluginMinorVersion = 0;
+    dg.PluginPatchVersion = 0;
     dg.Timestamp = 111111;
 
     Sensorgram<32> sg;
@@ -37,6 +41,9 @@ int main() {
   // example: appending two sensorgrams to a datagram
   {
     Datagram<256> dg;
+    dg.PluginMajorVersion = 1;
+    dg.PluginMinorVersion = 0;
+    dg.PluginPatchVersion = 0;
     dg.Timestamp = 111111;
 
     {
