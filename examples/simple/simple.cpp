@@ -12,64 +12,67 @@ void printHex(const unsigned char *b, int n) {
 }
 
 int main() {
-  // Test Datagram 1
+  // example: appending one sensorgram to a datagram
   {
-    Datagram<256> dg = {
-        .Timestamp = 111111,
-    };
+    Datagram<256> dg;
+    dg.Timestamp = 111111;
 
-    Sensorgram<32> sg = {
-        .Timestamp = 123456,
-        .ID = 1,
-        .Inst = 1,
-        .SubID = 10,
-        .SourceID = 1,
-        .SourceInst = 2,
-    };
+    Sensorgram<32> sg;
+    sg.Timestamp = 123456;
+    sg.ID = 1;
+    sg.Inst = 1;
+    sg.SubID = 10;
+    sg.SourceID = 1;
+    sg.SourceInst = 2;
 
+    // append sensorgram values
     PackUintVal(sg.Body, 123);
     PackFloatVal(sg.Body, 12.34);
     PackSensorgram(dg.Body, sg);
+
+    // write datagram to loopback buffer
     PackDatagram(loopBuf, dg);
   }
 
+  // example: appending two sensorgrams to a datagram
   {
-    Datagram<256> dg = {
-        .Timestamp = 111111,
-    };
+    Datagram<256> dg;
+    dg.Timestamp = 111111;
 
     {
-      Sensorgram<32> sg = {
-          .Timestamp = 123456,
-          .ID = 2,
-          .Inst = 1,
-          .SubID = 10,
-          .SourceID = 1,
-          .SourceInst = 2,
-      };
+      Sensorgram<32> sg;
+      sg.Timestamp = 123456;
+      sg.ID = 2;
+      sg.Inst = 1;
+      sg.SubID = 10;
+      sg.SourceID = 1;
+      sg.SourceInst = 2;
 
       PackUintVal(sg.Body, 123);
       PackUintVal(sg.Body, 12345);
+
       PackSensorgram(dg.Body, sg);
     }
 
     {
-      Sensorgram<32> sg = {
-          .Timestamp = 123456,
-          .ID = 3,
-          .Inst = 1,
-          .SubID = 10,
-          .SourceID = 1,
-          .SourceInst = 2,
-      };
+      Sensorgram<32> sg;
+      sg.Timestamp = 123456;
+      sg.ID = 3;
+      sg.Inst = 1;
+      sg.SubID = 10;
+      sg.SourceID = 1;
+      sg.SourceInst = 2;
 
       PackUintVal(sg.Body, 1);
+
       PackSensorgram(dg.Body, sg);
     }
 
+    // write datagram to loopback buffer
     PackDatagram(loopBuf, dg);
   }
 
+  // example: unpacking all datagrams in loopback buffer
   {
     Datagram<256> dg;
 
