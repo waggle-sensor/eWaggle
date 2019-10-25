@@ -98,80 +98,6 @@ struct bytebuffer {
   }
 };
 
-template <int cap>
-struct Buffer {
-  unsigned char buf[cap];
-  int pos;
-  int len;
-  bool err;
-
-  const unsigned char *Bytes() { return &buf[pos]; }
-
-  int Len() const { return len - pos; }
-  int Cap() const { return cap; }
-  bool Err() const { return err; }
-
-  void Reset() {
-    pos = 0;
-    len = 0;
-    err = false;
-  }
-
-  Buffer() { Reset(); }
-
-  int Read(unsigned char *b, int n) {
-    if (err) {
-      return 0;
-    }
-
-    int i = 0;
-
-    while (i < n && pos < len) {
-      b[i++] = buf[pos++];
-    }
-
-    // reset buffer here..
-    if (pos == len) {
-    }
-
-    if (i != n) {
-      err = true;
-    }
-
-    return i;
-  }
-
-  int Write(const unsigned char *b, int n) {
-    if (err) {
-      return 0;
-    }
-
-    // Check if we need to resize.
-    if (pos > 0) {
-      int i = 0;
-
-      while (pos < len) {
-        buf[i++] = buf[pos++];
-      }
-
-      pos = 0;
-      len = i;
-    }
-
-    int i = 0;
-
-    while (i < n && len < cap) {
-      buf[len++] = b[i++];
-    }
-
-    if (i != n) {
-      err = true;
-    }
-
-    return i;
-  }
-};
-
 struct BytesReader {
   const unsigned char *buf;
   int pos;
@@ -221,7 +147,7 @@ struct Sensorgram {
   unsigned int SubID;
   unsigned int SourceID;
   unsigned int SourceInst;
-  Buffer<cap> Body;
+  bytebuffer<cap> Body;
 };
 
 template <class R, class W>
@@ -524,7 +450,7 @@ struct Datagram {
   unsigned int PluginPatchVersion;
   unsigned int PluginInstance;
   unsigned int PluginRunID;
-  Buffer<cap> Body;
+  bytebuffer<cap> Body;
 };
 
 // Now, we can use different functions for actually sending / recving
