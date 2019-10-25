@@ -2,7 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-void test_encode(std::string input, std::string expect) {
+void test_base64_encode(std::string input, std::string expect) {
   std::stringstream s;
 
   base64encoder<std::stringstream> e(s);
@@ -16,12 +16,6 @@ void test_encode(std::string input, std::string expect) {
     std::cout << "FAIL encode(\"" << input << "\") -> \"" << s.str()
               << "\" != " << expect << std::endl;
   }
-}
-
-void test_simple() {
-  base64encoder<typeof(std::cout)> e(std::cout);
-  e.write("1234", 4);
-  e.close();
 }
 
 std::string wiki_input =
@@ -41,10 +35,10 @@ std::string wiki_expect =
     "Vhc3VyZS4";
 
 int main() {
-  test_encode("", "");
-  test_encode("A", "QQ");
-  test_encode("AZ", "QVo");
-  test_encode("AZQ", "QVpR");
-  test_encode("1234", "MTIzNA");
-  test_encode(wiki_input, wiki_expect);
+  test_base64_encode("", "");
+  test_base64_encode("A", "QQ");
+  test_base64_encode("AZ", "QVo");
+  test_base64_encode("AZQ", "QVpR");
+  test_base64_encode("1234", "MTIzNA");
+  test_base64_encode(wiki_input, wiki_expect);
 }
