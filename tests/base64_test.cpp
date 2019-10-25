@@ -9,9 +9,12 @@ void test_encode(std::string input, std::string expect) {
   e.write(input.c_str(), input.length());
   e.close();
 
-  if (s.str() != expect) {
-    std::cout << "error: encode(" << input << ") -> " << s.str()
-              << " != " << expect << std::endl;
+  if (s.str() == expect) {
+    std::cout << "PASS encode(\"" << input << "\") = \"" << expect << "\""
+              << std::endl;
+  } else {
+    std::cout << "FAIL encode(\"" << input << "\") -> \"" << s.str()
+              << "\" != " << expect << std::endl;
   }
 }
 
