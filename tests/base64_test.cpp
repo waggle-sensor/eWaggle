@@ -1,6 +1,6 @@
 #include <iostream>
 #include <sstream>
-#include "Waggle.h"
+#include "waggle.h"
 
 void test_encode(std::string input, std::string expect) {
   std::stringstream s;
