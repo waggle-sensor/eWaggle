@@ -2,20 +2,22 @@
 #include <iostream>
 #include <sstream>
 
-void test_base64_encode(std::string input, std::string expect) {
+void check_test(std::string name, bool passed) {
+  if (passed) {
+    std::cout << "\033[1;32m[PASS]\033[0m " << name << std::endl;
+  } else {
+    std::cout << "\033[1;31m[FAIL]\033[0m " << name << std::endl;
+  }
+}
+
+bool test_base64_encode(std::string input, std::string expect) {
   std::stringstream s;
 
   base64encoder<std::stringstream> e(s);
   e.write(input.c_str(), input.length());
   e.close();
 
-  if (s.str() == expect) {
-    std::cout << "PASS encode(\"" << input << "\") = \"" << expect << "\""
-              << std::endl;
-  } else {
-    std::cout << "FAIL encode(\"" << input << "\") -> \"" << s.str()
-              << "\" != " << expect << std::endl;
-  }
+  return s.str() == expect;
 }
 
 std::string wiki_input =
@@ -35,10 +37,10 @@ std::string wiki_expect =
     "Vhc3VyZS4";
 
 int main() {
-  test_base64_encode("", "");
-  test_base64_encode("A", "QQ");
-  test_base64_encode("AZ", "QVo");
-  test_base64_encode("AZQ", "QVpR");
-  test_base64_encode("1234", "MTIzNA");
-  test_base64_encode(wiki_input, wiki_expect);
+  check_test("base64 empty", test_base64_encode("", ""));
+  check_test("base64 1", test_base64_encode("A", "QQ"));
+  check_test("base64 2", test_base64_encode("AZ", "QVo"));
+  check_test("base64 3", test_base64_encode("AZQ", "QVpR"));
+  check_test("base64 4", test_base64_encode("1234", "MTIzNA"));
+  check_test("base64 wiki", test_base64_encode(wiki_input, wiki_expect));
 }
