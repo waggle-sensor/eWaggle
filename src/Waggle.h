@@ -21,6 +21,83 @@ const unsigned char TYPE_FLOAT16 = 0x0b;
 const unsigned char TYPE_FLOAT32 = 0x0c;
 const unsigned char TYPE_FLOAT64 = 0x0d;
 
+template <int N>
+struct bytebuffer {
+  char arr[N];
+  int front;
+  int back;
+  bool err;
+
+  const char *bytes() { return arr; }
+
+  int size() const { return back - front; }
+  int max_size() const { return N; }
+  bool error() const { return err; }
+
+  void clear() {
+    front = 0;
+    back = 0;
+    err = false;
+  }
+
+  bytebuffer() { clear(); }
+
+  int read(char *s, int n) {
+    if (err) {
+      return 0;
+    }
+
+    int i = 0;
+
+    while (i < n && front < back) {
+      s[i++] = arr[front++];
+    }
+
+    if (i != n) {
+      err = true;
+    }
+
+    realign();
+
+    return i;
+  }
+
+  void realign() {
+    if (front == 0) {
+      return;
+    }
+
+    int n = back - front;
+
+    for (int i = 0; i < n; i++) {
+      arr[i] = arr[front + i];
+    }
+
+    front = 0;
+    back = n;
+  }
+
+  int write(const char *s, int n) {
+    if (err) {
+      return 0;
+    }
+
+    realign();
+
+    int i = 0;
+
+    while (i < n && back < N) {
+      arr[back++] = s[i++];
+    }
+
+    if (i != n) {
+      err = true;
+    }
+
+    return i;
+  }
+};
+
 template <int cap>
 struct Buffer {
   unsigned char buf[cap];
