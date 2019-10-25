@@ -86,7 +86,7 @@ struct bytebuffer {
 
     int i = 0;
 
-    while (i < n && back < N) {
+    while (i < n && back < max_size()) {
       arr[back++] = s[i++];
     }
 
