@@ -10,6 +10,26 @@ void check_test(std::string name, bool passed) {
   }
 }
 
+bool test_bytebuffer() {
+  bytebuffer<64> b;
+  b.write("testing", 7);
+
+  return b.size() == 7;
+}
+
+bool test_sensorgram() {
+  bytebuffer<64> b;
+
+  sensorgram<32> s;
+  s.timestamp = 1;
+  s.id = 2;
+  s.sub_id = 3;
+  s.source_id = 4;
+  s.source_inst = 5;
+
+  pack_sensorgram(b, s);
+}
+
 bool test_base64_encode(std::string input, std::string expect) {
   std::stringstream s;
 
@@ -37,6 +57,8 @@ std::string wiki_expect =
     "Vhc3VyZS4";
 
 int main() {
+  check_test("bytebuffer", test_bytebuffer());
+
   check_test("base64 empty", test_base64_encode("", ""));
   check_test("base64 1", test_base64_encode("A", "QQ"));
   check_test("base64 2", test_base64_encode("AZ", "QVo"));
