@@ -33,13 +33,21 @@ char calc_crc8(const char *b, int n) {
   return crc;
 }
 
+char update_crc(char sum, const char table[], const char s[], int n) {
+  for (int i = 0; i < n; i++) {
+    sum = crc8_table[sum ^ s[i]];
+  }
+
+  return sum;
+}
+
 template <class writerT>
 struct crc8writer {
   writerT &w;
   bool closed;
-  int crc;
+  int sum;
 
-  crc8writer(writerT &w) : w(w), closed(false), crc(0) {}
+  crc8writer(writerT &w) : w(w), closed(false), sum(0) {}
 
   void close() {
     if (closed) {
@@ -47,6 +55,8 @@ struct crc8writer {
     }
 
     closed = true;
+
+    pack_uint(w, sum, 1);
   }
 
   int write(const char *s, int n) {
@@ -54,10 +64,21 @@ struct crc8writer {
       return 0;
     }
 
-    for (int i = 0; i < n; i++) {
-      crc = crc8_table[crc ^ s[i]];
-    }
-
+    sum = update_crc(sum, crc8_table, s, n);
     return w.write(s, n);
+  }
+};
+
+template <class readerT>
+struct crc8reader {
+  readerT &r;
+  int sum;
+
+  crc8reader(readerT &r) : r(r), sum(0) {}
+
+  int read(char *s, int n) {
+    n = r.read(s, n);  // check for error?
+    sum = update_crc(sum, crc8_table, s, n);
+    return n;
   }
 };

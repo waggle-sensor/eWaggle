@@ -278,7 +278,10 @@ double unpack_float64(readerT &r) {
 }
 
 template <class writerT, class SG>
-void pack_sensorgram(writerT &w, SG &sg) {
+void pack_sensorgram(writerT &writer, SG &sg) {
+  crc8writer<writerT> w(writer);
+
+  // write sensorgram content
   pack_uint(w, sg.body.size(), 2);
   pack_uint(w, sg.timestamp, 4);
   pack_uint(w, sg.id, 2);
@@ -287,10 +290,16 @@ void pack_sensorgram(writerT &w, SG &sg) {
   pack_uint(w, sg.source_id, 2);
   pack_uint(w, sg.source_inst, 1);
   pack_bytes(w, sg.body.bytes(), sg.body.size());
+
+  // write crc sum
+  w.close();
 }
 
 template <class readerT, class SG>
-bool unpack_sensorgram(readerT &r, SG &sg) {
+bool unpack_sensorgram(readerT &reader, SG &sg) {
+  crc8reader<readerT> r(reader);
+
+  // read sensorgram content
   int len = unpack_uint(r, 2);
   sg.timestamp = unpack_uint(r, 4);
   sg.id = unpack_uint(r, 2);
@@ -298,11 +307,12 @@ bool unpack_sensorgram(readerT &r, SG &sg) {
   sg.sub_id = unpack_uint(r, 1);
   sg.source_id = unpack_uint(r, 2);
   sg.source_inst = unpack_uint(r, 1);
-
   sg.body.clear();
   copyn(r, sg.body, len);
 
-  return !r.error();
+  // read trailing crc byte and check
+  copyn(r, devnull, 1);
+  return r.sum == 0;
 }
 
 template <class writerT>
