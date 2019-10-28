@@ -182,18 +182,18 @@ void copyn(R &r, W &w, int n) {
   }
 }
 
-template <class W>
-void pack_bytes(W &w, const char *s, int n) {
+template <class writerT>
+void pack_bytes(writerT &w, const char *s, int n) {
   w.write(s, n);
 }
 
-template <class R>
-void unpack_bytes(R &r, char *s, int n) {
+template <class readerT>
+void unpack_bytes(readerT &r, char *s, int n) {
   r.read(s, n);
 }
 
-template <class W>
-void pack_uint(W &w, unsigned int x, int size) {
+template <class writerT>
+void pack_uint(writerT &w, unsigned int x, int size) {
   char s[8];
 
   for (int i = size - 1; i >= 0; i--) {
@@ -204,8 +204,8 @@ void pack_uint(W &w, unsigned int x, int size) {
   pack_bytes(w, s, size);
 }
 
-template <class R>
-unsigned int unpack_uint(R &r, int size) {
+template <class readerT>
+unsigned int unpack_uint(readerT &r, int size) {
   unsigned int x = 0;
   char s[8];
 
@@ -220,16 +220,16 @@ unsigned int unpack_uint(R &r, int size) {
 }
 
 // template as array type handler?
-template <class W>
-void pack_string_val(W &w, const char *s) {
+template <class writerT>
+void pack_string_val(writerT &w, const char *s) {
   int size = string_size(s, 1024);
   pack_uint(w, TYPE_STRING, 1);
   pack_uint(w, size, 2);
   w.write(s, size);
 }
 
-template <class R>
-void unpack_string_val(R &r, char *s) {
+template <class readerT>
+void unpack_string_val(readerT &r, char *s) {
   char b[1];
 
   r.read(b, 1);
@@ -245,38 +245,38 @@ void unpack_string_val(R &r, char *s) {
   *s = '\0';
 }
 
-template <class W>
-void pack_float32(W &w, float x) {
+template <class writerT>
+void pack_float32(writerT &w, float x) {
   // WARNING Possibly unsafe and unreliable across platforms. Check this
   // carefully!
   const char *b = (const char *)&x;
   pack_bytes(w, b, 4);
 }
 
-template <class W>
-void pack_float64(W &w, double x) {
+template <class readerT>
+float unpack_float32(readerT &r) {
+  char b[4];
+  unpack_bytes(r, b, 4);
+  return *(const float *)b;
+}
+
+template <class writerT>
+void pack_float64(writerT &w, double x) {
   // WARNING Possibly unsafe and unreliable across platforms. Check this
   // carefully!
   const char *b = (const char *)&x;
   pack_bytes(w, b, 8);
 }
 
-template <class R>
-float unpack_float32(R &r) {
-  char b[4];
-  unpack_bytes(r, b, 4);
-  return *(const float *)b;
-}
-
-template <class R>
-double unpack_float64(R &r) {
+template <class readerT>
+double unpack_float64(readerT &r) {
   char b[8];
   unpack_bytes(r, b, 8);
   return *(const double *)b;
 }
 
-template <class W, class SG>
-void pack_sensorgram(W &w, SG &sg) {
+template <class writerT, class SG>
+void pack_sensorgram(writerT &w, SG &sg) {
   pack_uint(w, sg.body.size(), 2);
   pack_uint(w, sg.timestamp, 4);
   pack_uint(w, sg.id, 2);
@@ -287,8 +287,8 @@ void pack_sensorgram(W &w, SG &sg) {
   pack_bytes(w, sg.body.bytes(), sg.body.size());
 }
 
-template <class R, class SG>
-bool unpack_sensorgram(R &r, SG &sg) {
+template <class readerT, class SG>
+bool unpack_sensorgram(readerT &r, SG &sg) {
   int len = unpack_uint(r, 2);
   sg.timestamp = unpack_uint(r, 4);
   sg.id = unpack_uint(r, 2);
