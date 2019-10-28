@@ -46,7 +46,8 @@ bool unpack_sensorgram(readerT &reader, SG &sg) {
   copyn(r, sg.body, len);
 
   // read trailing crc byte and check
-  copyn(r, devnull, 1);
+  char scratch[1];
+  r.read(scratch, 1);
   return r.sum == 0;
 }
 
