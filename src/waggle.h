@@ -129,26 +129,6 @@ struct {
   int write(const char *s, int n) { return n; }
 } devnull;
 
-const char TYPE_NULL = 0x00;
-const char TYPE_BYTES = 0x01;
-const char TYPE_STRING = 0x02;
-
-const char TYPE_INT8 = 0x03;
-const char TYPE_UINT8 = 0x04;
-
-const char TYPE_INT16 = 0x05;
-const char TYPE_UINT16 = 0x06;
-
-const char TYPE_INT24 = 0x07;
-const char TYPE_UINT24 = 0x08;
-
-const char TYPE_INT32 = 0x09;
-const char TYPE_UINT32 = 0x0a;
-
-const char TYPE_FLOAT16 = 0x0b;
-const char TYPE_FLOAT32 = 0x0c;
-const char TYPE_FLOAT64 = 0x0d;
-
 template <class readerT, class writerT>
 void copyn(readerT &r, writerT &w, int n) {
   char tmp[32];
@@ -173,42 +153,106 @@ void copyn(readerT &r, writerT &w, int n) {
   }
 }
 
+const char TYPE_NULL = 0x00;
+const char TYPE_BYTES = 0x01;
+const char TYPE_STRING = 0x02;
+
+const char TYPE_INT8 = 0x03;
+const char TYPE_UINT8 = 0x04;
+
+const char TYPE_INT16 = 0x05;
+const char TYPE_UINT16 = 0x06;
+
+const char TYPE_INT24 = 0x07;
+const char TYPE_UINT24 = 0x08;
+
+const char TYPE_INT32 = 0x09;
+const char TYPE_UINT32 = 0x0a;
+
+const char TYPE_FLOAT16 = 0x0b;
+const char TYPE_FLOAT32 = 0x0c;
+const char TYPE_FLOAT64 = 0x0d;
+
 template <class writerT>
-void pack_bytes(writerT &w, const char *s, int n) {
-  w.write(s, n);
-}
+struct protocol_encoder {
+  writerT &w;
+  bool err;
 
-template <class readerT>
-void unpack_bytes(readerT &r, char *s, int n) {
-  r.read(s, n);
-}
+  protocol_encoder(writerT &w) : w(w), err(false) {}
 
-template <class writerT>
-void pack_uint(writerT &w, unsigned int x, int size) {
-  char s[8];
+  void encode_bytes(const char *s, int n) {
+    if (err) {
+      return;
+    }
 
-  for (int i = size - 1; i >= 0; i--) {
-    s[i] = (char)x;
-    x >>= 8;
+    if (w.write(s, n) != n) {
+      err = true;
+    }
   }
 
-  pack_bytes(w, s, size);
-}
+  void encode_uint(unsigned int x, int size) {
+    if (err) {
+      return;
+    }
+
+    // check if valid size
+    if (size < 0 || size >= 8) {
+      err = true;
+      return;
+    }
+
+    char s[8];
+
+    for (int i = size - 1; i >= 0; i--) {
+      s[i] = (char)x;
+      x >>= 8;
+    }
+
+    encode_bytes(s, size);
+  }
+};
 
 template <class readerT>
-unsigned int unpack_uint(readerT &r, int size) {
-  unsigned int x = 0;
-  char s[8];
+struct protocol_decoder {
+  readerT &r;
+  bool err;
 
-  unpack_bytes(r, s, size);
+  protocol_decoder(readerT &r) : r(r), err(false) {}
 
-  for (int i = 0; i < size; i++) {
-    x <<= 8;
-    x |= (s[i] & 0xff);
+  void decode_bytes(char *s, int n) {
+    if (err) {
+      return;
+    }
+
+    if (r.read(s, n) != n) {
+      err = true;
+    }
   }
 
-  return x;
-}
+  unsigned int decode_uint(int size) {
+    if (err) {
+      return 0;
+    }
+
+    // check if valid size
+    if (size < 0 || size >= 8) {
+      err = true;
+      return 0;
+    }
+
+    unsigned int x = 0;
+    char s[8];
+
+    unpack_bytes(r, s, size);
+
+    for (int i = 0; i < size; i++) {
+      x <<= 8;
+      x |= (s[i] & 0xff);
+    }
+
+    return x;
+  }
+};
 
 // TODO fix includes so order doesn't matter
 #include "datagram.h"

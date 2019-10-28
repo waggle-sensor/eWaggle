@@ -15,16 +15,17 @@ struct sensorgram {
 template <class writerT, class SG>
 void pack_sensorgram(writerT &writer, SG &sg) {
   crc8writer<writerT> w(writer);
+  protocol_encoder<crc8writer<writerT> > e(w);
 
   // write sensorgram content
-  pack_uint(w, sg.body.size(), 2);
-  pack_uint(w, sg.timestamp, 4);
-  pack_uint(w, sg.id, 2);
-  pack_uint(w, sg.inst, 1);
-  pack_uint(w, sg.sub_id, 1);
-  pack_uint(w, sg.source_id, 2);
-  pack_uint(w, sg.source_inst, 1);
-  pack_bytes(w, sg.body.bytes(), sg.body.size());
+  e.encode_uint(sg.body.size(), 2);
+  e.encode_uint(sg.timestamp, 4);
+  e.encode_uint(sg.id, 2);
+  e.encode_uint(sg.inst, 1);
+  e.encode_uint(sg.sub_id, 1);
+  e.encode_uint(sg.source_id, 2);
+  e.encode_uint(sg.source_inst, 1);
+  e.encode_bytes(sg.body.bytes(), sg.body.size());
 
   // write crc sum
   w.close();
@@ -33,48 +34,58 @@ void pack_sensorgram(writerT &writer, SG &sg) {
 template <class readerT, class SG>
 bool unpack_sensorgram(readerT &reader, SG &sg) {
   crc8reader<readerT> r(reader);
+  protocol_decoder<crc8reader<readerT> > d(r);
 
   // read sensorgram content
-  int len = unpack_uint(r, 2);
-  sg.timestamp = unpack_uint(r, 4);
-  sg.id = unpack_uint(r, 2);
-  sg.inst = unpack_uint(r, 1);
-  sg.sub_id = unpack_uint(r, 1);
-  sg.source_id = unpack_uint(r, 2);
-  sg.source_inst = unpack_uint(r, 1);
+  int len = d.decode_uint(2);
+  sg.timestamp = d.decode_uint(4);
+  sg.id = d.decode_uint(2);
+  sg.inst = d.decode_uint(1);
+  sg.sub_id = d.decode_uint(1);
+  sg.source_id = d.decode_uint(2);
+  sg.source_inst = d.decode_uint(1);
+
+  // this is weird...?
   sg.body.clear();
   copyn(r, sg.body, len);
 
   // throw away trailing crc byte and check sum
-  char scratch[1];
-  r.read(scratch, 1);
+  d.read_uint(1);
   return r.sum == 0;
 }
 
 template <class writerT>
-void pack_string_val(writerT &w, const char *s) {
-  int size = string_size(s, 1024);
-  pack_uint(w, TYPE_STRING, 1);
-  pack_uint(w, size, 2);
-  w.write(s, size);
+void pack_bytes_val(writerT &w, const char *s, int n) {
+  pack_uint(w, TYPE_BYTES, 1);
+  pack_uint(w, n, 2);
+  w.write(s, n);
 }
 
-template <class readerT>
-void unpack_string_val(readerT &r, char *s) {
-  char b[1];
+// template <class writerT>
+// void pack_string_val(writerT &w, const char *s) {
+//   int size = string_size(s, 1024);
+//   pack_uint(w, TYPE_STRING, 1);
+//   pack_uint(w, size, 2);
+//   w.write(s, size);
+// }
 
-  r.read(b, 1);
+// need a value reader / writer too to manage error handling...
 
-  if (b[0] != TYPE_STRING) {
-    return;
-  }
+// template <class readerT>
+// void unpack_string_val(readerT &r, char *s) {
+//   int type = unpack_uint(r, 1);
 
-  while (r.read(b, 1) == 1 && b[0] != '\0') {
-    *s++ = b[0];
-  }
+//   // need a way to signal error
+//   if (type != TYPE_STRING) {
+//     return;
+//   }
 
-  *s = '\0';
-}
+//   while (r.read(b, 1) == 1 && b[0] != '\0') {
+//     *s++ = b[0];
+//   }
+
+//   *s = '\0';
+// }
 
 template <class writerT>
 void pack_float32(writerT &w, float x) {
