@@ -196,7 +196,7 @@ void PackStringVal(W &w, const char *s) {
 
 template <class W>
 void pack_uint8(W &w, unsigned int x) {
-  char b[] = {(char)(x & 0xff)};
+  char b[] = {(char)x};
   pack_bytes(w, b, 1);
 }
 
@@ -237,8 +237,8 @@ void pack_float64(W &w, double x) {
 }
 
 template <class R>
-void unpack_bytes(R &r, unsigned char *b, int n) {
-  r.Read(b, n);
+void unpack_bytes(R &r, char *b, int n) {
+  r.read(b, n);
 }
 
 template <class R>

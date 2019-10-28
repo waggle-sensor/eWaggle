@@ -21,7 +21,19 @@ bool test_pack() {
   {
     bytebuffer<64> b;
     pack_bytes(b, "hello", 5);
-    if (b.size() != 5) {
+
+    if (b.error() || b.size() != 5) {
+      return false;
+    }
+
+    char s[5];
+    unpack_bytes(b, s, 5);
+
+    if (b.error()) {
+      return false;
+    }
+
+    if (memcmp("hello", s, 5) != 0) {
       return false;
     }
   }
