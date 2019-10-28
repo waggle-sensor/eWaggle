@@ -45,12 +45,12 @@ char update_crc(char sum, const char table[], const char s[], int n) {
 }
 
 template <class writerT>
-struct crc8writer {
+struct crc8_writer {
   writerT &w;
   bool closed;
   int sum;
 
-  crc8writer(writerT &w) : w(w), closed(false), sum(0) {}
+  crc8_writer(writerT &w) : w(w), closed(false), sum(0) {}
 
   void close() {
     if (closed) {
@@ -74,11 +74,11 @@ struct crc8writer {
 };
 
 template <class readerT>
-struct crc8reader {
+struct crc8_reader {
   readerT &r;
   int sum;
 
-  crc8reader(readerT &r) : r(r), sum(0) {}
+  crc8_reader(readerT &r) : r(r), sum(0) {}
 
   int read(char *s, int n) {
     n = r.read(s, n);  // check for error?

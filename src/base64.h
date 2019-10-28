@@ -7,19 +7,17 @@ const char base64[] =
      "0123456789+/");
 
 template <typename writerT>
-struct base64encoder {
+struct base64_encoder {
   writerT &w;
 
   bool closed;
   int remain;
   char b3[3];
 
-  base64encoder(writerT &w) : w(w) {
+  base64_encoder(writerT &w) : w(w) {
     remain = 0;
     closed = false;
   }
-
-  ~base64encoder() { close(); }
 
   void close() {
     if (closed) {

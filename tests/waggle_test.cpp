@@ -112,7 +112,7 @@ bool test_sensorgram() {
 bool test_base64_encode(std::string input, std::string expect) {
   std::stringstream s;
 
-  base64encoder<std::stringstream> e(s);
+  base64_encoder<std::stringstream> e(s);
   e.write(input.c_str(), input.length());
   e.close();
 

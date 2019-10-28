@@ -22,7 +22,7 @@ struct sensorgram {
 
 template <class writerT, class SG>
 void pack_sensorgram(writerT &writer, SG &sg) {
-  crc8writer<writerT> w(writer);
+  crc8_writer<writerT> w(writer);
   basic_encoder<typeof(w)> e(w);
 
   // write sensorgram content
@@ -41,7 +41,7 @@ void pack_sensorgram(writerT &writer, SG &sg) {
 
 template <class readerT, class SG>
 bool unpack_sensorgram(readerT &reader, SG &sg) {
-  crc8reader<readerT> r(reader);
+  crc8_reader<readerT> r(reader);
   basic_decoder<typeof(r)> d(r);
 
   // read sensorgram content
