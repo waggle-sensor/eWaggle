@@ -4,5 +4,5 @@ CC=c++ -I../src
 test: waggle_test
 	./waggle_test
 
-waggle_test: waggle_test.cpp ../src/waggle.h
+waggle_test: waggle_test.cpp ../src/*
 	$(CC) -o waggle_test waggle_test.cpp
