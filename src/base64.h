@@ -1,3 +1,6 @@
+#ifndef __H_WAGGLE_BASE64__
+#define __H_WAGGLE_BASE64__
+
 const char base64[] =
     ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
      "abcdefghijklmnopqrstuvwxyz"
@@ -63,3 +66,5 @@ struct base64encoder {
     }
   }
 };
+
+#endif
