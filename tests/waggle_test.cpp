@@ -14,6 +14,17 @@ bool assert_equal(const T &a, const T &b) {
   return equal;
 }
 
+template <class T>
+bool assert_equal_bytes(const T &a, const T &b, int n) {
+  bool equal = memcmp(a, b, n) == 0;
+
+  if (!equal) {
+    std::cout << "assert_equal_bytes: " << a << " != " << b << std::endl;
+  }
+
+  return equal;
+}
+
 void check_test(std::string name, bool passed) {
   if (passed) {
     std::cout << "\033[1;32m[PASS]\033[0m " << name << std::endl;
@@ -53,9 +64,19 @@ bool test_pack() {
   return true;
 }
 
+bool test_pack_uint8(const char s[], unsigned int x) {
+  bytebuffer<32> b;
+  pack_uint8(b, x);
+  return assert_equal(b.size(), 1) && assert_equal_bytes(b.bytes(), s, 1);
+}
+
 bool test_unpack_uint8(const char s[], unsigned int x) {
   bytereader r(s, 1);
   return assert_equal(unpack_uint8(r), x);
+}
+
+bool test_uint8(const char s[], unsigned int x) {
+  return test_pack_uint8(s, x) && test_unpack_uint8(s, x);
 }
 
 bool test_unpack_uint16(const char s[], unsigned int x) {
@@ -117,9 +138,9 @@ int main() {
 
   check_test("test pack", test_pack());
 
-  check_test("test uint8 0", test_unpack_uint8((const char[]){0x00}, 0x00));
-  check_test("test uint8 100", test_unpack_uint8((const char[]){0x12}, 0x12));
-  check_test("test uint8 255", test_unpack_uint8((const char[]){0xff}, 0xff));
+  check_test("test uint8 1", test_uint8((const char[]){0x00}, 0x00));
+  check_test("test uint8 2", test_uint8((const char[]){0x12}, 0x12));
+  check_test("test uint8 3", test_uint8((const char[]){0xff}, 0xff));
 
   check_test("test uint16 1",
              test_unpack_uint16((const char[]){0x00, 0x00}, 0x0000));
