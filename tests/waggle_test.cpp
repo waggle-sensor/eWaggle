@@ -89,14 +89,19 @@ bool test_sensorgram() {
     s.sub_id = 3;
     s.source_id = 4;
     s.source_inst = 5;
+    pack_uint(s.body, 12, 1);
+    pack_uint(s.body, 3456, 2);
     pack_sensorgram(b, s);
   }
 
   {
     sensorgram<32> s;
     unpack_sensorgram(b, s);
+    int a = unpack_uint(s.body, 1);
+    int b = unpack_uint(s.body, 2);
     return (s.timestamp == 1) && (s.id == 2) && (s.sub_id == 3) &&
-           (s.source_id == 4) && (s.source_inst == 5);
+           (s.source_id == 4) && (s.source_inst == 5) && (a == 12) &&
+           (b == 3456);
   }
 }
 
