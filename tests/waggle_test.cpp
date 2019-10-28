@@ -2,6 +2,17 @@
 #include <iostream>
 #include <sstream>
 
+template <class T>
+bool assert_equal(const T &a, const T &b) {
+  bool equal = a == b;
+
+  if (!equal) {
+    std::cout << "assert_equal: " << a << " != " << b << std::endl;
+  }
+
+  return equal;
+}
+
 void check_test(std::string name, bool passed) {
   if (passed) {
     std::cout << "\033[1;32m[PASS]\033[0m " << name << std::endl;
@@ -39,6 +50,16 @@ bool test_pack() {
   }
 
   return true;
+}
+
+bool test_unpack_uint8(const char *s, unsigned int x) {
+  bytereader r(s, 1);
+  return assert_equal(unpack_uint8(r), x);
+}
+
+bool test_unpack_uint16(const char *s, unsigned int x) {
+  bytereader r(s, 2);
+  return assert_equal(unpack_uint16(r), x);
 }
 
 bool test_sensorgram() {
@@ -84,6 +105,17 @@ int main() {
   check_test("bytebuffer", test_bytebuffer());
 
   check_test("test pack", test_pack());
+
+  check_test("test uint8 0", test_unpack_uint8((const char[]){0x00}, 0x00));
+  check_test("test uint8 100", test_unpack_uint8((const char[]){0x12}, 0x12));
+  check_test("test uint8 255", test_unpack_uint8((const char[]){0xff}, 0xff));
+
+  check_test("test uint16 1",
+             test_unpack_uint16((const char[]){0x00, 0x00}, 0x00));
+  check_test("test uint16 2",
+             test_unpack_uint16((const char[]){0x12, 0x34}, 0x1234));
+  check_test("test uint16 3",
+             test_unpack_uint16((const char[]){0xff, 0xff}, 0xffff));
 
   check_test("base64 empty", test_base64_encode("", ""));
   check_test("base64 1", test_base64_encode("A", "QQ"));

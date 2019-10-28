@@ -89,19 +89,19 @@ struct bytebuffer {
 };
 
 struct bytereader {
-  const unsigned char *buf;
+  const char *buf;
   int pos;
   int cap;
   bool err;
 
   bool error() const { return err; }
 
-  bytereader(const unsigned char *buf, int cap) : buf(buf), cap(cap) {
+  bytereader(const char *buf, int cap) : buf(buf), cap(cap) {
     pos = 0;
     err = false;
   }
 
-  int read(unsigned char *b, int n) {
+  int read(char *b, int n) {
     if (err) {
       return 0;
     }
@@ -237,8 +237,8 @@ void pack_float64(W &w, double x) {
 }
 
 template <class R>
-void unpack_bytes(R &r, char *b, int n) {
-  r.read(b, n);
+void unpack_bytes(R &r, char *s, int n) {
+  r.read(s, n);
 }
 
 template <class R>
@@ -260,30 +260,30 @@ void unpackStringVal(R &r, char *s) {
 
 template <class R>
 unsigned int unpack_uint8(R &r) {
-  unsigned char b[1];
+  char b[1];
   unpack_bytes(r, b, 1);
-  return b[0];
+  return (b[0]) & 0xff;
 }
 
 template <class R>
 unsigned int unpack_uint16(R &r) {
-  unsigned char b[2];
+  char b[2];
   unpack_bytes(r, b, 2);
-  return (b[0] << 8) | b[1];
+  return ((b[0] << 8) | b[1]) & 0xffff;
 }
 
 template <class R>
 unsigned int unpack_uint24(R &r) {
-  unsigned char b[3];
+  char b[3];
   unpack_bytes(r, b, 3);
-  return (b[0] << 16) | (b[1] << 8) | b[2];
+  return ((b[0] << 16) | (b[1] << 8) | b[2]) & 0xffffff;
 }
 
 template <class R>
 unsigned int unpack_uint32(R &r) {
-  unsigned char b[4];
+  char b[4];
   unpack_bytes(r, b, 4);
-  return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+  return ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) & 0xffffffff;
 }
 
 template <class R>
