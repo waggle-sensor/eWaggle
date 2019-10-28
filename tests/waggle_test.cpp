@@ -17,17 +17,29 @@ bool test_bytebuffer() {
   return b.size() == 7;
 }
 
+bool test_pack() {
+  {
+    bytebuffer<64> b;
+    pack_bytes(b, "hello", 5);
+    if (b.size() != 5) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool test_sensorgram() {
   bytebuffer<64> b;
+  // sensorgram<32> s;
+  // s.timestamp = 1;
+  // s.id = 2;
+  // s.sub_id = 3;
+  // s.source_id = 4;
+  // s.source_inst = 5;
+  // pack_sensorgram(b, s);
 
-  sensorgram<32> s;
-  s.timestamp = 1;
-  s.id = 2;
-  s.sub_id = 3;
-  s.source_id = 4;
-  s.source_inst = 5;
-
-  pack_sensorgram(b, s);
+  return false;
 }
 
 bool test_base64_encode(std::string input, std::string expect) {
@@ -58,6 +70,8 @@ std::string wiki_expect =
 
 int main() {
   check_test("bytebuffer", test_bytebuffer());
+
+  check_test("test pack", test_pack());
 
   check_test("base64 empty", test_base64_encode("", ""));
   check_test("base64 1", test_base64_encode("A", "QQ"));
