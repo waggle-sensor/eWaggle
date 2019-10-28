@@ -1,6 +1,7 @@
 #ifndef __H_WAGGLE_DATAGRAM__
 #define __H_WAGGLE_DATAGRAM__
 
+/*
 template <int N>
 struct datagram {
   unsigned int protocol_version;
@@ -21,23 +22,24 @@ struct datagram {
 
 template <class writerT, class DG>
 void pack_datagram(writerT &w, DG &dg) {
-  pack_uint(w, dg.body.size(), 3);         // [Length (3B)]
-  pack_uint(w, dg.ProtocolVersion, 1);     // [Protocol_version (1B)]
-  pack_uint(w, dg.Timestamp, 4);           // [time (4B)]
-  pack_uint(w, dg.PacketSeq, 2);           // [Packet_Seq (2B)]
-  pack_uint(w, dg.PacketType, 1);          // [Packet_type (1B)]
-  pack_uint(w, dg.PluginID, 2);            // [Plugin ID (2B)]
-  pack_uint(w, dg.PluginMajorVersion, 1);  // [Plugin Maj Ver (1B)]
-  pack_uint(w, dg.PluginMinorVersion, 1);  // [Plugin Min Ver (1B)]
-  pack_uint(w, dg.PluginPatchVersion, 1);  // [Plugin Build Ver (1B)]
-  pack_uint(w, dg.PluginInstance, 1);      // [Plugin Instance (1B)]
-  pack_uint(w, dg.PluginRunID, 2);         // [Plugin Run ID (2B)]
-  pack_bytes(w, dg.body.bytes(), dg.body.size());
+  basic_encoder<writerT> e(w);
+  e.encode_uint(dg.body.size(), 3);           // [Length (3B)]
+  e.encode_uint(dg.protocol_version, 1);      // [Protocol_version (1B)]
+  e.encode_uint(dg.timestamp, 4);             // [time (4B)]
+  e.encode_uint(dg.packet_seq, 2);            // [Packet_Seq (2B)]
+  e.encode_uint(dg.packet_type, 1);           // [Packet_type (1B)]
+  e.encode_uint(dg.plugin_id, 2);             // [Plugin ID (2B)]
+  e.encode_uint(dg.plugin_major_version, 1);  // [Plugin Maj Ver (1B)]
+  e.encode_uint(dg.plugin_minor_version, 1);  // [Plugin Min Ver (1B)]
+  e.encode_uint(dg.plugin_patch_version, 1);  // [Plugin Build Ver (1B)]
+  e.encode_uint(dg.plugin_instance, 1);       // [Plugin Instance (1B)]
+  e.encode_uint(dg.plugin_run_id, 2);         // [Plugin Run ID (2B)]
+  e.encode_bytes(dg.body.bytes(), dg.body.size());
 
   // framing footer
-  pack_uint(w, calc_crc8(dg.body.bytes(), dg.body.size()), 1);  // [CRC (1B)]
+  e.encode_uint(calc_crc8(dg.body.bytes(), dg.body.size()),
+                1);  // [CRC (1B) -> (2B)]
   // TODO make crc16 instead of 8. and computed against header + body...
-  // length should be length all the way until the end...
 }
 
 int find_byte(char x, const char *b, int n) {
@@ -85,5 +87,6 @@ bool unpack_datagram(B &buf, DG &dg) {
 
   return !r.error();
 }
+*/
 
 #endif

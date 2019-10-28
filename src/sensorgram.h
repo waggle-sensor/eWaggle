@@ -12,10 +12,18 @@ struct sensorgram {
   bytebuffer<N> body;
 };
 
+// sure, we could move the crc out of this too since it's primarily used for
+// transmission. that would clean up the abstraction a bit.
+//
+// of course, we can just move to a sensorgram_encoder / decoder
+// that's just a composition of these two.
+//
+// these could also track the various errors we run into.
+
 template <class writerT, class SG>
 void pack_sensorgram(writerT &writer, SG &sg) {
   crc8writer<writerT> w(writer);
-  protocol_encoder<crc8writer<writerT> > e(w);
+  basic_encoder<typeof(w)> e(w);
 
   // write sensorgram content
   e.encode_uint(sg.body.size(), 2);
@@ -34,7 +42,7 @@ void pack_sensorgram(writerT &writer, SG &sg) {
 template <class readerT, class SG>
 bool unpack_sensorgram(readerT &reader, SG &sg) {
   crc8reader<readerT> r(reader);
-  protocol_decoder<crc8reader<readerT> > d(r);
+  basic_decoder<typeof(r)> d(r);
 
   // read sensorgram content
   int len = d.decode_uint(2);
@@ -49,9 +57,9 @@ bool unpack_sensorgram(readerT &reader, SG &sg) {
   sg.body.clear();
   copyn(r, sg.body, len);
 
-  // throw away trailing crc byte and check sum
-  d.read_uint(1);
-  return r.sum == 0;
+  // throw away trailing crc byte and check for errors
+  d.decode_uint(1);
+  return !d.err && r.sum == 0;
 }
 
 template <class writerT>

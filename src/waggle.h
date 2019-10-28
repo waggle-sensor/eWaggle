@@ -2,7 +2,6 @@
 #define __H_WAGGLE__
 
 #include "base64.h"
-#include "crc.h"
 
 int string_size(const char *s, int max_size) {
   for (int i = 0; i < max_size; i++) {
@@ -173,12 +172,14 @@ const char TYPE_FLOAT16 = 0x0b;
 const char TYPE_FLOAT32 = 0x0c;
 const char TYPE_FLOAT64 = 0x0d;
 
+// basic_encoder encodes basic types like bytes and numeric types. It is a
+// building block for higher level encoders.
 template <class writerT>
-struct protocol_encoder {
+struct basic_encoder {
   writerT &w;
   bool err;
 
-  protocol_encoder(writerT &w) : w(w), err(false) {}
+  basic_encoder(writerT &w) : w(w), err(false) {}
 
   void encode_bytes(const char *s, int n) {
     if (err) {
@@ -203,6 +204,7 @@ struct protocol_encoder {
 
     char s[8];
 
+    // encode x in network byte order
     for (int i = size - 1; i >= 0; i--) {
       s[i] = (char)x;
       x >>= 8;
@@ -212,12 +214,14 @@ struct protocol_encoder {
   }
 };
 
+// basic_decoder decodes basic types like bytes and numeric types. It is a
+// building block for higher level decoders.
 template <class readerT>
-struct protocol_decoder {
+struct basic_decoder {
   readerT &r;
   bool err;
 
-  protocol_decoder(readerT &r) : r(r), err(false) {}
+  basic_decoder(readerT &r) : r(r), err(false) {}
 
   void decode_bytes(char *s, int n) {
     if (err) {
@@ -243,7 +247,11 @@ struct protocol_decoder {
     unsigned int x = 0;
     char s[8];
 
-    unpack_bytes(r, s, size);
+    decode_bytes(s, size);
+
+    if (err) {
+      return 0;
+    }
 
     for (int i = 0; i < size; i++) {
       x <<= 8;
@@ -255,6 +263,7 @@ struct protocol_decoder {
 };
 
 // TODO fix includes so order doesn't matter
+#include "crc.h"
 #include "datagram.h"
 #include "sensorgram.h"
 

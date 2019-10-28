@@ -59,7 +59,8 @@ struct crc8writer {
 
     closed = true;
 
-    pack_uint(w, sum, 1);
+    basic_encoder<typeof(w)> e(w);
+    e.encode_uint(sum, 1);
   }
 
   int write(const char *s, int n) {
