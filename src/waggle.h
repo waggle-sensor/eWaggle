@@ -1,7 +1,7 @@
 #ifndef __H_WAGGLE__
 #define __H_WAGGLE__
 
-int strsize(const char *s, int max_size) {
+int string_size(const char *s, int max_size) {
   for (int i = 0; i < max_size; i++) {
     if (s[i] == '\0') {
       return i;
@@ -187,37 +187,43 @@ void pack_bytes(W &w, const char *s, int n) {
   w.write(s, n);
 }
 
+template <class R>
+void unpack_bytes(R &r, char *s, int n) {
+  r.read(s, n);
+}
+
 template <class W>
-void PackStringVal(W &w, const char *s) {
-  pack_uint8(w, TYPE_STRING);
+void pack_uint(W &w, unsigned int x, int size) {
+  char s[size];
+
+  for (int i = size - 1; i >= 0; i--) {
+    s[i] = (char)x;
+    x >>= 8;
+  }
+
+  pack_bytes(w, s, size);
+}
+
+template <class R>
+unsigned int unpack_uint(R &r, int size) {
+  unsigned int x = 0;
+  char s[size];
+
+  unpack_bytes(r, s, size);
+
+  for (int i = 0; i < size; i++) {
+    x <<= 8;
+    x |= (s[i] & 0xff);
+  }
+
+  return x;
+}
+
+template <class W>
+void pack_string_val(W &w, const char *s) {
+  pack_uint(1, w, TYPE_STRING);
   // we include the null terminator from string.
-  w.write(s, strsize(s, 1024) + 1);
-}
-
-template <class W>
-void pack_uint8(W &w, unsigned int x) {
-  char b[] = {(char)x};
-  pack_bytes(w, b, 1);
-}
-
-template <class W>
-void pack_uint16(W &w, unsigned int x) {
-  unsigned char b[] = {(unsigned char)(x >> 8), (unsigned char)x};
-  pack_bytes(w, b, 2);
-}
-
-template <class W>
-void pack_uint24(W &w, unsigned int x) {
-  unsigned char b[] = {(unsigned char)(x >> 16), (unsigned char)(x >> 8),
-                       (unsigned char)x};
-  pack_bytes(w, b, 3);
-}
-
-template <class W>
-void pack_uint32(W &w, unsigned int x) {
-  unsigned char b[] = {(unsigned char)(x >> 24), (unsigned char)(x >> 16),
-                       (unsigned char)(x >> 8), (unsigned char)x};
-  pack_bytes(w, b, 4);
+  w.write(s, string_size(s, 1024) + 1);
 }
 
 template <class W>
@@ -237,11 +243,6 @@ void pack_float64(W &w, double x) {
 }
 
 template <class R>
-void unpack_bytes(R &r, char *s, int n) {
-  r.read(s, n);
-}
-
-template <class R>
 void unpack_string_val(R &r, char *s) {
   unsigned char b[1];
 
@@ -256,34 +257,6 @@ void unpack_string_val(R &r, char *s) {
   }
 
   *s = '\0';
-}
-
-template <class R>
-unsigned int unpack_uint8(R &r) {
-  char b[1];
-  unpack_bytes(r, b, 1);
-  return (b[0]) & 0xff;
-}
-
-template <class R>
-unsigned int unpack_uint16(R &r) {
-  char b[2];
-  unpack_bytes(r, b, 2);
-  return ((b[0] << 8) | b[1]) & 0xffff;
-}
-
-template <class R>
-unsigned int unpack_uint24(R &r) {
-  char b[3];
-  unpack_bytes(r, b, 3);
-  return ((b[0] << 16) | (b[1] << 8) | b[2]) & 0xffffff;
-}
-
-template <class R>
-unsigned int unpack_uint32(R &r) {
-  char b[4];
-  unpack_bytes(r, b, 4);
-  return ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) & 0xffffffff;
 }
 
 template <class R>
@@ -314,13 +287,13 @@ void pack_sensorgram(W &w, SG &sg) {
 
 template <class R, class SG>
 bool unpack_sensorgram(R &r, SG &sg) {
-  int len = unpack_uint16(r);
-  sg.timestamp = unpack_uint32(r);
-  sg.id = unpack_uint16(r);
-  sg.inst = unpack_uint8(r);
-  sg.sub_id = unpack_uint8(r);
-  sg.source_id = unpack_uint16(r);
-  sg.source_inst = unpack_uint8(r);
+  int len = unpack_uint(r, 2);
+  sg.timestamp = unpack_uint(r, 4);
+  sg.id = unpack_uint(r, 2);
+  sg.inst = unpack_uint(r, 1);
+  sg.sub_id = unpack_uint(r, 1);
+  sg.source_id = unpack_uint(r, 2);
+  sg.source_inst = unpack_uint(r, 1);
 
   sg.body.reset();
   copyn(r, sg.body, len);
@@ -331,36 +304,36 @@ bool unpack_sensorgram(R &r, SG &sg) {
 template <class W>
 void pack_uint_val(W &w, unsigned long x) {
   if (x <= 0xff) {
-    pack_uint8(w, TYPE_UINT8);
-    pack_uint8(w, x);
+    pack_uint(w, TYPE_UINT8, 1);
+    pack_uint(w, x, 1);
     return;
   }
 
   if (x <= 0xffff) {
-    pack_uint8(w, TYPE_UINT16);
-    pack_uint16(w, x);
+    pack_uint(w, TYPE_UINT16, 1);
+    pack_uint(w, x, 2);
     return;
   }
 
   if (x <= 0xffffff) {
-    pack_uint8(w, TYPE_UINT24);
-    pack_uint24(w, x);
+    pack_uint(w, TYPE_UINT24, 1);
+    pack_uint(w, x, 3);
     return;
   }
 
-  pack_uint8(w, TYPE_UINT32);
-  pack_uint32(w, x);
+  pack_uint(w, TYPE_UINT32, 1);
+  pack_uint(w, x, 4);
 }
 
 template <class W>
 void pack_float_val(W &w, float x) {
-  pack_uint8(w, TYPE_FLOAT32);
+  pack_uint(w, TYPE_FLOAT32, 1);
   pack_float32(w, x);
 }
 
 template <class W>
 void pack_double_val(W &w, double x) {
-  pack_uint8(w, TYPE_FLOAT64);
+  pack_uint(w, TYPE_FLOAT64, 1);
   pack_float64(w, x);
 }
 
@@ -370,13 +343,13 @@ unsigned long unpack_uint_val(R &r) {
 
   switch (type) {
     case TYPE_UINT8:
-      return unpack_uint8(r);
+      return unpack_uint(r, 1);
     case TYPE_UINT16:
-      return unpack_uint16(r);
+      return unpack_uint(r, 2);
     case TYPE_UINT24:
-      return unpack_uint24(r);
+      return unpack_uint(r, 3);
     case TYPE_UINT32:
-      return unpack_uint32(r);
+      return unpack_uint(r, 4);
   }
 
   return 0;
@@ -384,7 +357,7 @@ unsigned long unpack_uint_val(R &r) {
 
 template <class R>
 float unpack_float_val(R &r) {
-  if (unpack_uint8(r) != TYPE_FLOAT32) {
+  if (unpack_uint(r, 1) != TYPE_FLOAT32) {
     return 0;
   }
 
@@ -393,7 +366,7 @@ float unpack_float_val(R &r) {
 
 template <class R>
 float unpack_double_val(R &r) {
-  if (unpack_uint8(r) != TYPE_FLOAT64) {
+  if (unpack_uint(r, 1) != TYPE_FLOAT64) {
     return 0;
   }
 
@@ -455,21 +428,21 @@ struct datagram {
 
 template <class W, class DG>
 void pack_datagram(W &w, DG &dg) {
-  pack_uint24(w, dg.body.size());        // [Length (3B)]
-  pack_uint8(w, dg.ProtocolVersion);     // [Protocol_version (1B)]
-  pack_uint32(w, dg.Timestamp);          // [time (4B)]
-  pack_uint16(w, dg.PacketSeq);          // [Packet_Seq (2B)]
-  pack_uint8(w, dg.PacketType);          // [Packet_type (1B)]
-  pack_uint16(w, dg.PluginID);           // [Plugin ID (2B)]
-  pack_uint8(w, dg.PluginMajorVersion);  // [Plugin Maj Ver (1B)]
-  pack_uint8(w, dg.PluginMinorVersion);  // [Plugin Min Ver (1B)]
-  pack_uint8(w, dg.PluginPatchVersion);  // [Plugin Build Ver (1B)]
-  pack_uint8(w, dg.PluginInstance);      // [Plugin Instance (1B)]
-  pack_uint16(w, dg.PluginRunID);        // [Plugin Run ID (2B)]
+  pack_uint(w, dg.body.size(), 3);         // [Length (3B)]
+  pack_uint(w, dg.ProtocolVersion, 1);     // [Protocol_version (1B)]
+  pack_uint(w, dg.Timestamp, 4);           // [time (4B)]
+  pack_uint(w, dg.PacketSeq, 2);           // [Packet_Seq (2B)]
+  pack_uint(w, dg.PacketType, 1);          // [Packet_type (1B)]
+  pack_uint(w, dg.PluginID, 2);            // [Plugin ID (2B)]
+  pack_uint(w, dg.PluginMajorVersion, 1);  // [Plugin Maj Ver (1B)]
+  pack_uint(w, dg.PluginMinorVersion, 1);  // [Plugin Min Ver (1B)]
+  pack_uint(w, dg.PluginPatchVersion, 1);  // [Plugin Build Ver (1B)]
+  pack_uint(w, dg.PluginInstance, 1);      // [Plugin Instance (1B)]
+  pack_uint(w, dg.PluginRunID, 2);         // [Plugin Run ID (2B)]
   pack_bytes(w, dg.body.bytes(), dg.body.size());
 
   // framing footer
-  pack_uint8(w, calc_crc8(dg.body.bytes(), dg.body.size()));  // [CRC (1B)]
+  pack_uint(w, calc_crc8(dg.body.bytes(), dg.body.size()), 1);  // [CRC (1B)]
   // TODO make crc16 instead of 8. and computed against header + body...
   // length should be length all the way until the end...
 }
@@ -490,17 +463,17 @@ template <class B, class DG>
 bool unpack_datagram(B &buf, DG &dg) {
   bytereader r(buf.bytes(), buf.size());
 
-  int len = unpack_uint24(r);                 // [Length (3B)]
-  dg.protocol_version = unpack_uint8(r);      // [Protocol_version (1B)]
-  dg.timestamp = unpack_uint32(r);            // [time (4B)]
-  dg.packet_seq = unpack_uint16(r);           // [Packet_Seq (2B)]
-  dg.packet_type = unpack_uint8(r);           // [Packet_type (1B)]
-  dg.plugin_id = unpack_uint16(r);            // [Plugin ID (2B)]
-  dg.plugin_major_version = unpack_uint8(r);  // [Plugin Maj Ver (1B)]
-  dg.plugin_minor_version = unpack_uint8(r);  // [Plugin Min Ver (1B)]
-  dg.plugin_patch_version = unpack_uint8(r);  // [Plugin Build Ver (1B)]
-  dg.plugin_instance = unpack_uint8(r);       // [Plugin Instance (1B)]
-  dg.plugin_run_id = unpack_uint16(r);        // [Plugin Run ID (2B)]
+  int len = unpack_uint(r, 3);                  // [Length (3B)]
+  dg.protocol_version = unpack_uint(r, 1);      // [Protocol_version (1B)]
+  dg.timestamp = unpack_uint(r, 4);             // [time (4B)]
+  dg.packet_seq = unpack_uint(r, 2);            // [Packet_Seq (2B)]
+  dg.packet_type = unpack_uint(r, 1);           // [Packet_type (1B)]
+  dg.plugin_id = unpack_uint(r, 2);             // [Plugin ID (2B)]
+  dg.plugin_major_version = unpack_uint(r, 1);  // [Plugin Maj Ver (1B)]
+  dg.plugin_minor_version = unpack_uint(r, 1);  // [Plugin Min Ver (1B)]
+  dg.plugin_patch_version = unpack_uint(r, 1);  // [Plugin Build Ver (1B)]
+  dg.plugin_instance = unpack_uint(r, 1);       // [Plugin Instance (1B)]
+  dg.plugin_run_id = unpack_uint(r, 2);         // [Plugin Run ID (2B)]
 
   // Is this consistent with Pack??
   dg.body.reset();
@@ -510,7 +483,7 @@ bool unpack_datagram(B &buf, DG &dg) {
     return false;
   }
 
-  unsigned char recv_crc = unpack_uint8(r);
+  unsigned char recv_crc = unpack_uint(r, 1);
   unsigned char calc_crc = calc_crc8(dg.body.bytes(), dg.body.size());
 
   if (recv_crc != calc_crc) {
