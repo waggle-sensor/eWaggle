@@ -122,29 +122,29 @@ struct bytereader {
 
 // devnull is a "byte sink" used drop segments of data.
 struct {
-  int read(unsigned char *b, int n) { return 0; }
-  int write(const unsigned char *b, int n) { return n; }
+  int read(char *s, int n) { return 0; }
+  int write(const char *s, int n) { return n; }
 } devnull;
 
-const unsigned char TYPE_NULL = 0x00;
-const unsigned char TYPE_BYTES = 0x01;
-const unsigned char TYPE_STRING = 0x02;
+const char TYPE_NULL = 0x00;
+const char TYPE_BYTES = 0x01;
+const char TYPE_STRING = 0x02;
 
-const unsigned char TYPE_INT8 = 0x03;
-const unsigned char TYPE_UINT8 = 0x04;
+const char TYPE_INT8 = 0x03;
+const char TYPE_UINT8 = 0x04;
 
-const unsigned char TYPE_INT16 = 0x05;
-const unsigned char TYPE_UINT16 = 0x06;
+const char TYPE_INT16 = 0x05;
+const char TYPE_UINT16 = 0x06;
 
-const unsigned char TYPE_INT24 = 0x07;
-const unsigned char TYPE_UINT24 = 0x08;
+const char TYPE_INT24 = 0x07;
+const char TYPE_UINT24 = 0x08;
 
-const unsigned char TYPE_INT32 = 0x09;
-const unsigned char TYPE_UINT32 = 0x0a;
+const char TYPE_INT32 = 0x09;
+const char TYPE_UINT32 = 0x0a;
 
-const unsigned char TYPE_FLOAT16 = 0x0b;
-const unsigned char TYPE_FLOAT32 = 0x0c;
-const unsigned char TYPE_FLOAT64 = 0x0d;
+const char TYPE_FLOAT16 = 0x0b;
+const char TYPE_FLOAT32 = 0x0c;
+const char TYPE_FLOAT64 = 0x0d;
 
 // could even provide a buffer explicitly here instead of just int...?
 template <int N>
@@ -160,7 +160,7 @@ struct sensorgram {
 
 template <class R, class W>
 void copyn(R &r, W &w, int n) {
-  unsigned char tmp[32];
+  char tmp[32];
   int copied = 0;
 
   while (copied < n) {
@@ -230,7 +230,7 @@ void pack_string_val(W &w, const char *s) {
 
 template <class R>
 void unpack_string_val(R &r, char *s) {
-  unsigned char b[1];
+  char b[1];
 
   r.read(b, 1);
 
@@ -249,7 +249,7 @@ template <class W>
 void pack_float32(W &w, float x) {
   // WARNING Possibly unsafe and unreliable across platforms. Check this
   // carefully!
-  unsigned char *b = (unsigned char *)&x;
+  const char *b = (const char *)&x;
   pack_bytes(w, b, 4);
 }
 
@@ -257,22 +257,22 @@ template <class W>
 void pack_float64(W &w, double x) {
   // WARNING Possibly unsafe and unreliable across platforms. Check this
   // carefully!
-  unsigned char *b = (unsigned char *)&x;
+  const char *b = (const char *)&x;
   pack_bytes(w, b, 8);
 }
 
 template <class R>
 float unpack_float32(R &r) {
-  unsigned char b[4];
+  char b[4];
   unpack_bytes(r, b, 4);
-  return *(float *)b;
+  return *(const float *)b;
 }
 
 template <class R>
 double unpack_float64(R &r) {
-  unsigned char b[8];
+  char b[8];
   unpack_bytes(r, b, 8);
-  return *(double *)b;
+  return *(const double *)b;
 }
 
 template <class W, class SG>
@@ -375,7 +375,7 @@ float unpack_double_val(R &r) {
   return unpack_float64(r);
 }
 
-const unsigned char crc8_table[256] = {
+const char crc8_table[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20,
     0xa3, 0xfd, 0x1f, 0x41, 0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
     0x5f, 0x01, 0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc, 0x23, 0x7d, 0x9f, 0xc1,
@@ -400,8 +400,8 @@ const unsigned char crc8_table[256] = {
     0xd7, 0x89, 0x6b, 0x35,
 };
 
-unsigned char calc_crc8(const unsigned char *b, int n) {
-  unsigned char crc = 0;
+char calc_crc8(const char *b, int n) {
+  char crc = 0;
 
   for (int i = 0; i < n; i++) {
     crc = crc8_table[crc ^ b[i]];
@@ -449,7 +449,7 @@ void pack_datagram(W &w, DG &dg) {
   // length should be length all the way until the end...
 }
 
-int find_byte(unsigned char x, const unsigned char *b, int n) {
+int find_byte(char x, const char *b, int n) {
   for (int i = 0; i < n; i++) {
     if (b[i] == x) {
       return i;
@@ -485,8 +485,8 @@ bool unpack_datagram(B &buf, DG &dg) {
     return false;
   }
 
-  unsigned char recv_crc = unpack_uint(r, 1);
-  unsigned char calc_crc = calc_crc8(dg.body.bytes(), dg.body.size());
+  char recv_crc = unpack_uint(r, 1);
+  char calc_crc = calc_crc8(dg.body.bytes(), dg.body.size());
 
   if (recv_crc != calc_crc) {
     return false;
