@@ -123,38 +123,27 @@ int main() {
 
   check_test("test pack", test_pack());
 
-  check_test("test uint 1", test_uint((const char[]){0x00}, 0x00, 1));
-  check_test("test uint 2", test_uint((const char[]){0x12}, 0x12, 1));
-  check_test("test uint 3", test_uint((const char[]){0xff}, 0xff, 1));
+  check_test("test uint 1 1", test_uint((const char[]){0x00}, 0x00, 1));
+  check_test("test uint 1 2", test_uint((const char[]){0x12}, 0x12, 1));
+  check_test("test uint 1 3", test_uint((const char[]){0xff}, 0xff, 1));
 
-  // check_test("test uint16 1",
-  //            test_unpack_uint16((const char[]){0x00, 0x00}, 0x0000));
-  // check_test("test uint16 2",
-  //            test_unpack_uint16((const char[]){0x12, 0x34}, 0x1234));
-  // check_test("test uint16 3",
-  //            test_unpack_uint16((const char[]){0xff, 0xff}, 0xffff));
+  check_test("test uint 2 1", test_uint((const char[]){0x00, 0x00}, 0x0000, 2));
+  check_test("test uint 2 2", test_uint((const char[]){0x12, 0x34}, 0x1234, 2));
+  check_test("test uint 2 3", test_uint((const char[]){0xff, 0xff}, 0xffff, 2));
 
-  // check_test("test uint24 1",
-  //            test_unpack_uint24((const char[]){0x00, 0x00, 0x00}, 0x000000));
-  // check_test("test uint24 2",
-  //            test_unpack_uint24((const char[]){0x12, 0x34, 0x56}, 0x123456));
-  // check_test("test uint24 3",
-  //            test_unpack_uint24((const char[]){0xff, 0xff, 0xff}, 0xffffff));
+  check_test("test uint 3 1",
+             test_uint((const char[]){0x00, 0x00, 0x00}, 0x000000, 3));
+  check_test("test uint 3 2",
+             test_uint((const char[]){0x12, 0x34, 0x56}, 0x123456, 3));
+  check_test("test uint 3 3",
+             test_uint((const char[]){0xff, 0xff, 0xff}, 0xffffff, 3));
 
-  // check_test(
-  //     "test uint32 1",
-  //     test_unpack_uint32((const char[]){0x00, 0x00, 0x00, 0x00},
-  //     0x00000000));
-
-  // check_test(
-  //     "test uint32 2",
-  //     test_unpack_uint32((const char[]){0x12, 0x34, 0x56, 0x78},
-  //     0x12345678));
-
-  // check_test(
-  //     "test uint32 3",
-  //     test_unpack_uint32((const char[]){0xff, 0xff, 0xff, 0xff},
-  //     0xffffffff));
+  check_test("test uint 4 1",
+             test_uint((const char[]){0x00, 0x00, 0x00, 0x00}, 0x00000000, 4));
+  check_test("test uint 4 2",
+             test_uint((const char[]){0x12, 0x34, 0x56, 0x78}, 0x12345678, 4));
+  check_test("test uint 4 3",
+             test_uint((const char[]){0xff, 0xff, 0xff, 0xff}, 0xffffffff, 4));
 
   check_test("base64 empty", test_base64_encode("", ""));
   check_test("base64 1", test_base64_encode("A", "QQ"));
