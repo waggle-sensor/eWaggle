@@ -194,7 +194,7 @@ void unpack_bytes(R &r, char *s, int n) {
 
 template <class W>
 void pack_uint(W &w, unsigned int x, int size) {
-  char s[size];
+  char s[8];
 
   for (int i = size - 1; i >= 0; i--) {
     s[i] = (char)x;
@@ -207,7 +207,7 @@ void pack_uint(W &w, unsigned int x, int size) {
 template <class R>
 unsigned int unpack_uint(R &r, int size) {
   unsigned int x = 0;
-  char s[size];
+  char s[8];
 
   unpack_bytes(r, s, size);
 
@@ -219,27 +219,13 @@ unsigned int unpack_uint(R &r, int size) {
   return x;
 }
 
+// template as array type handler?
 template <class W>
 void pack_string_val(W &w, const char *s) {
-  pack_uint(1, w, TYPE_STRING);
-  // we include the null terminator from string.
-  w.write(s, string_size(s, 1024) + 1);
-}
-
-template <class W>
-void pack_float32(W &w, float x) {
-  // WARNING Possibly unsafe and unreliable across platforms. Check this
-  // carefully!
-  unsigned char *b = (unsigned char *)&x;
-  pack_bytes(w, b, 4);
-}
-
-template <class W>
-void pack_float64(W &w, double x) {
-  // WARNING Possibly unsafe and unreliable across platforms. Check this
-  // carefully!
-  unsigned char *b = (unsigned char *)&x;
-  pack_bytes(w, b, 8);
+  int size = string_size(s, 1024);
+  pack_uint(w, TYPE_STRING, 1);
+  pack_uint(w, size, 2);
+  w.write(s, size);
 }
 
 template <class R>
@@ -257,6 +243,22 @@ void unpack_string_val(R &r, char *s) {
   }
 
   *s = '\0';
+}
+
+template <class W>
+void pack_float32(W &w, float x) {
+  // WARNING Possibly unsafe and unreliable across platforms. Check this
+  // carefully!
+  unsigned char *b = (unsigned char *)&x;
+  pack_bytes(w, b, 4);
+}
+
+template <class W>
+void pack_float64(W &w, double x) {
+  // WARNING Possibly unsafe and unreliable across platforms. Check this
+  // carefully!
+  unsigned char *b = (unsigned char *)&x;
+  pack_bytes(w, b, 8);
 }
 
 template <class R>
@@ -295,7 +297,7 @@ bool unpack_sensorgram(R &r, SG &sg) {
   sg.source_id = unpack_uint(r, 2);
   sg.source_inst = unpack_uint(r, 1);
 
-  sg.body.reset();
+  sg.body.clear();
   copyn(r, sg.body, len);
 
   return !r.error();
@@ -476,7 +478,7 @@ bool unpack_datagram(B &buf, DG &dg) {
   dg.plugin_run_id = unpack_uint(r, 2);         // [Plugin Run ID (2B)]
 
   // Is this consistent with Pack??
-  dg.body.reset();
+  dg.body.clear();
   copyn(r, dg.body, len);
 
   if (r.error()) {

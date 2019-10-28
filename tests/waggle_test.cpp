@@ -81,15 +81,23 @@ bool test_uint(const char s[], unsigned int x, int size) {
 
 bool test_sensorgram() {
   bytebuffer<64> b;
-  // sensorgram<32> s;
-  // s.timestamp = 1;
-  // s.id = 2;
-  // s.sub_id = 3;
-  // s.source_id = 4;
-  // s.source_inst = 5;
-  // pack_sensorgram(b, s);
 
-  return false;
+  {
+    sensorgram<32> s;
+    s.timestamp = 1;
+    s.id = 2;
+    s.sub_id = 3;
+    s.source_id = 4;
+    s.source_inst = 5;
+    pack_sensorgram(b, s);
+  }
+
+  {
+    sensorgram<32> s;
+    unpack_sensorgram(b, s);
+    return (s.timestamp == 1) && (s.id == 2) && (s.sub_id == 3) &&
+           (s.source_id == 4) && (s.source_inst == 5);
+  }
 }
 
 bool test_base64_encode(std::string input, std::string expect) {
@@ -144,6 +152,8 @@ int main() {
              test_uint((const char[]){0x12, 0x34, 0x56, 0x78}, 0x12345678, 4));
   check_test("test uint 4 3",
              test_uint((const char[]){0xff, 0xff, 0xff, 0xff}, 0xffffffff, 4));
+
+  check_test("test sensorgram", test_sensorgram());
 
   check_test("base64 empty", test_base64_encode("", ""));
   check_test("base64 1", test_base64_encode("A", "QQ"));
