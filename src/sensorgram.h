@@ -51,4 +51,131 @@ bool unpack_sensorgram(readerT &reader, SG &sg) {
   return r.sum == 0;
 }
 
+template <class writerT>
+void pack_string_val(writerT &w, const char *s) {
+  int size = string_size(s, 1024);
+  pack_uint(w, TYPE_STRING, 1);
+  pack_uint(w, size, 2);
+  w.write(s, size);
+}
+
+template <class readerT>
+void unpack_string_val(readerT &r, char *s) {
+  char b[1];
+
+  r.read(b, 1);
+
+  if (b[0] != TYPE_STRING) {
+    return;
+  }
+
+  while (r.read(b, 1) == 1 && b[0] != '\0') {
+    *s++ = b[0];
+  }
+
+  *s = '\0';
+}
+
+template <class writerT>
+void pack_float32(writerT &w, float x) {
+  // WARNING Possibly unsafe and unreliable across platforms. Check this
+  // carefully!
+  const char *b = (const char *)&x;
+  pack_bytes(w, b, 4);
+}
+
+template <class readerT>
+float unpack_float32(readerT &r) {
+  char b[4];
+  unpack_bytes(r, b, 4);
+  return *(const float *)b;
+}
+
+template <class writerT>
+void pack_float64(writerT &w, double x) {
+  // WARNING Possibly unsafe and unreliable across platforms. Check this
+  // carefully!
+  const char *b = (const char *)&x;
+  pack_bytes(w, b, 8);
+}
+
+template <class readerT>
+double unpack_float64(readerT &r) {
+  char b[8];
+  unpack_bytes(r, b, 8);
+  return *(const double *)b;
+}
+
+template <class writerT>
+void pack_uint_val(writerT &w, unsigned long x) {
+  if (x <= 0xff) {
+    pack_uint(w, TYPE_UINT8, 1);
+    pack_uint(w, x, 1);
+    return;
+  }
+
+  if (x <= 0xffff) {
+    pack_uint(w, TYPE_UINT16, 1);
+    pack_uint(w, x, 2);
+    return;
+  }
+
+  if (x <= 0xffffff) {
+    pack_uint(w, TYPE_UINT24, 1);
+    pack_uint(w, x, 3);
+    return;
+  }
+
+  pack_uint(w, TYPE_UINT32, 1);
+  pack_uint(w, x, 4);
+}
+
+template <class writerT>
+void pack_float_val(writerT &w, float x) {
+  pack_uint(w, TYPE_FLOAT32, 1);
+  pack_float32(w, x);
+}
+
+template <class writerT>
+void pack_double_val(writerT &w, double x) {
+  pack_uint(w, TYPE_FLOAT64, 1);
+  pack_float64(w, x);
+}
+
+template <class readerT>
+unsigned long unpack_uint_val(readerT &r) {
+  unsigned int type = unpack_uint(r, 1);
+
+  switch (type) {
+    case TYPE_UINT8:
+      return unpack_uint(r, 1);
+    case TYPE_UINT16:
+      return unpack_uint(r, 2);
+    case TYPE_UINT24:
+      return unpack_uint(r, 3);
+    case TYPE_UINT32:
+      return unpack_uint(r, 4);
+  }
+
+  return 0;
+}
+
+template <class readerT>
+float unpack_float_val(readerT &r) {
+  if (unpack_uint(r, 1) != TYPE_FLOAT32) {
+    return 0;
+  }
+
+  return unpack_float32(r);
+}
+
+template <class readerT>
+float unpack_double_val(readerT &r) {
+  if (unpack_uint(r, 1) != TYPE_FLOAT64) {
+    return 0;
+  }
+
+  return unpack_float64(r);
+}
+
 #endif
