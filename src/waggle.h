@@ -275,13 +275,13 @@ double unpack_float64(R &r) {
 
 template <class W, class SG>
 void pack_sensorgram(W &w, SG &sg) {
-  pack_uint16(w, sg.body.size());
-  pack_uint32(w, sg.timestamp);
-  pack_uint16(w, sg.id);
-  pack_uint8(w, sg.inst);
-  pack_uint8(w, sg.sub_id);
-  pack_uint16(w, sg.source_id);
-  pack_uint8(w, sg.source_inst);
+  pack_uint(w, sg.body.size(), 2);
+  pack_uint(w, sg.timestamp, 4);
+  pack_uint(w, sg.id, 2);
+  pack_uint(w, sg.inst, 1);
+  pack_uint(w, sg.sub_id, 1);
+  pack_uint(w, sg.source_id, 2);
+  pack_uint(w, sg.source_inst, 1);
   pack_bytes(w, sg.body.bytes(), sg.body.size());
 }
 
@@ -339,7 +339,7 @@ void pack_double_val(W &w, double x) {
 
 template <class R>
 unsigned long unpack_uint_val(R &r) {
-  unsigned int type = unpack_uint8(r);
+  unsigned int type = unpack_uint(r, 1);
 
   switch (type) {
     case TYPE_UINT8:
