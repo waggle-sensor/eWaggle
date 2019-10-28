@@ -1,6 +1,7 @@
 #include "waggle.h"
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 template <class T>
 bool assert_equal(const T &a, const T &b) {
@@ -52,14 +53,24 @@ bool test_pack() {
   return true;
 }
 
-bool test_unpack_uint8(const char *s, unsigned int x) {
+bool test_unpack_uint8(const char s[], unsigned int x) {
   bytereader r(s, 1);
   return assert_equal(unpack_uint8(r), x);
 }
 
-bool test_unpack_uint16(const char *s, unsigned int x) {
+bool test_unpack_uint16(const char s[], unsigned int x) {
   bytereader r(s, 2);
   return assert_equal(unpack_uint16(r), x);
+}
+
+bool test_unpack_uint24(const char s[], unsigned int x) {
+  bytereader r(s, 3);
+  return assert_equal(unpack_uint24(r), x);
+}
+
+bool test_unpack_uint32(const char s[], unsigned int x) {
+  bytereader r(s, 4);
+  return assert_equal(unpack_uint32(r), x);
 }
 
 bool test_sensorgram() {
@@ -111,11 +122,30 @@ int main() {
   check_test("test uint8 255", test_unpack_uint8((const char[]){0xff}, 0xff));
 
   check_test("test uint16 1",
-             test_unpack_uint16((const char[]){0x00, 0x00}, 0x00));
+             test_unpack_uint16((const char[]){0x00, 0x00}, 0x0000));
   check_test("test uint16 2",
              test_unpack_uint16((const char[]){0x12, 0x34}, 0x1234));
   check_test("test uint16 3",
              test_unpack_uint16((const char[]){0xff, 0xff}, 0xffff));
+
+  check_test("test uint24 1",
+             test_unpack_uint24((const char[]){0x00, 0x00, 0x00}, 0x000000));
+  check_test("test uint24 2",
+             test_unpack_uint24((const char[]){0x12, 0x34, 0x56}, 0x123456));
+  check_test("test uint24 3",
+             test_unpack_uint24((const char[]){0xff, 0xff, 0xff}, 0xffffff));
+
+  check_test(
+      "test uint32 1",
+      test_unpack_uint32((const char[]){0x00, 0x00, 0x00, 0x00}, 0x00000000));
+
+  check_test(
+      "test uint32 2",
+      test_unpack_uint32((const char[]){0x12, 0x34, 0x56, 0x78}, 0x12345678));
+
+  check_test(
+      "test uint32 3",
+      test_unpack_uint32((const char[]){0xff, 0xff, 0xff, 0xff}, 0xffffffff));
 
   check_test("base64 empty", test_base64_encode("", ""));
   check_test("base64 1", test_base64_encode("A", "QQ"));

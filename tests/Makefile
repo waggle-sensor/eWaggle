@@ -1,3 +1,4 @@
+# CC=c++ -std=c++11 -I../src
 CC=c++ -I../src
 
 test: waggle_test

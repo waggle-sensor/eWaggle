@@ -242,16 +242,16 @@ void unpack_bytes(R &r, char *s, int n) {
 }
 
 template <class R>
-void unpackStringVal(R &r, char *s) {
+void unpack_string_val(R &r, char *s) {
   unsigned char b[1];
 
-  r.Read(b, 1);
+  r.read(b, 1);
 
   if (b[0] != TYPE_STRING) {
     return;
   }
 
-  while (r.Read(b, 1) == 1 && b[0] != '\0') {
+  while (r.read(b, 1) == 1 && b[0] != '\0') {
     *s++ = b[0];
   }
 
@@ -315,21 +315,21 @@ void pack_sensorgram(W &w, SG &sg) {
 template <class R, class SG>
 bool unpack_sensorgram(R &r, SG &sg) {
   int len = unpack_uint16(r);
-  sg.Timestamp = unpack_uint32(r);
-  sg.ID = unpack_uint16(r);
-  sg.Inst = unpack_uint8(r);
-  sg.SubID = unpack_uint8(r);
-  sg.SourceID = unpack_uint16(r);
-  sg.SourceInst = unpack_uint8(r);
+  sg.timestamp = unpack_uint32(r);
+  sg.id = unpack_uint16(r);
+  sg.inst = unpack_uint8(r);
+  sg.sub_id = unpack_uint8(r);
+  sg.source_id = unpack_uint16(r);
+  sg.source_inst = unpack_uint8(r);
 
-  sg.body.Reset();
-  CopyN(r, sg.body, len);
+  sg.body.reset();
+  copyn(r, sg.body, len);
 
   return !r.error();
 }
 
 template <class W>
-void PackUintVal(W &w, unsigned long x) {
+void pack_uint_val(W &w, unsigned long x) {
   if (x <= 0xff) {
     pack_uint8(w, TYPE_UINT8);
     pack_uint8(w, x);
@@ -353,19 +353,19 @@ void PackUintVal(W &w, unsigned long x) {
 }
 
 template <class W>
-void pack_floatVal(W &w, float x) {
+void pack_float_val(W &w, float x) {
   pack_uint8(w, TYPE_FLOAT32);
   pack_float32(w, x);
 }
 
 template <class W>
-void PackDoubleVal(W &w, double x) {
+void pack_double_val(W &w, double x) {
   pack_uint8(w, TYPE_FLOAT64);
   pack_float64(w, x);
 }
 
 template <class R>
-unsigned long unpackUintVal(R &r) {
+unsigned long unpack_uint_val(R &r) {
   unsigned int type = unpack_uint8(r);
 
   switch (type) {
@@ -383,7 +383,7 @@ unsigned long unpackUintVal(R &r) {
 }
 
 template <class R>
-float unpack_floatVal(R &r) {
+float unpack_float_val(R &r) {
   if (unpack_uint8(r) != TYPE_FLOAT32) {
     return 0;
   }
@@ -392,7 +392,7 @@ float unpack_floatVal(R &r) {
 }
 
 template <class R>
-float unpackDoubleVal(R &r) {
+float unpack_double_val(R &r) {
   if (unpack_uint8(r) != TYPE_FLOAT64) {
     return 0;
   }
@@ -400,7 +400,7 @@ float unpackDoubleVal(R &r) {
   return unpack_float64(r);
 }
 
-const unsigned char crcTable[256] = {
+const unsigned char crc8_table[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20,
     0xa3, 0xfd, 0x1f, 0x41, 0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
     0x5f, 0x01, 0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc, 0x23, 0x7d, 0x9f, 0xc1,
@@ -425,18 +425,18 @@ const unsigned char crcTable[256] = {
     0xd7, 0x89, 0x6b, 0x35,
 };
 
-unsigned char calcCrc8(const unsigned char *b, int n) {
+unsigned char calc_crc8(const unsigned char *b, int n) {
   unsigned char crc = 0;
 
   for (int i = 0; i < n; i++) {
-    crc = crcTable[crc ^ b[i]];
+    crc = crc8_table[crc ^ b[i]];
   }
 
   return crc;
 }
 
 template <int N>
-struct Datagram {
+struct datagram {
   unsigned int protocol_version;
   unsigned int timestamp;
   unsigned int packet_seq;
@@ -453,15 +453,8 @@ struct Datagram {
 // Now, we can use different functions for actually sending / recving
 // datagrams.
 
-const unsigned char DatagramHeaderByte = 0xaa;
-const unsigned char DatagramFooterByte = 0x55;
-
 template <class W, class DG>
 void pack_datagram(W &w, DG &dg) {
-  // framing header
-  pack_uint8(w, DatagramHeaderByte);  // [Start_Byte (1B)]
-
-  // content header
   pack_uint24(w, dg.body.size());        // [Length (3B)]
   pack_uint8(w, dg.ProtocolVersion);     // [Protocol_version (1B)]
   pack_uint32(w, dg.Timestamp);          // [time (4B)]
@@ -476,11 +469,12 @@ void pack_datagram(W &w, DG &dg) {
   pack_bytes(w, dg.body.bytes(), dg.body.size());
 
   // framing footer
-  pack_uint8(w, calcCrc8(dg.body.bytes(), dg.body.size()));  // [CRC (1B)]
-  pack_uint8(w, DatagramFooterByte);                         // [End_Byte (1B)]
+  pack_uint8(w, calc_crc8(dg.body.bytes(), dg.body.size()));  // [CRC (1B)]
+  // TODO make crc16 instead of 8. and computed against header + body...
+  // length should be length all the way until the end...
 }
 
-int findByte(unsigned char x, const unsigned char *b, int n) {
+int find_byte(unsigned char x, const unsigned char *b, int n) {
   for (int i = 0; i < n; i++) {
     if (b[i] == x) {
       return i;
@@ -494,55 +488,34 @@ int findByte(unsigned char x, const unsigned char *b, int n) {
 // not.
 template <class B, class DG>
 bool unpack_datagram(B &buf, DG &dg) {
-  // align buffer to next possible frame
-  int start = findByte(DatagramHeaderByte, buf.bytes(), buf.size());
-
-  if (start == -1) {
-    CopyN(buf, devnull, buf.size());
-    return false;
-  }
-
-  CopyN(buf, devnull, start);
-
   bytereader r(buf.bytes(), buf.size());
 
-  if (unpack_uint8(r) != 0xaa) {
-    return false;
-  }
-
-  int len = unpack_uint24(r);               // [Length (3B)]
-  dg.ProtocolVersion = unpack_uint8(r);     // [Protocol_version (1B)]
-  dg.Timestamp = unpack_uint32(r);          // [time (4B)]
-  dg.PacketSeq = unpack_uint16(r);          // [Packet_Seq (2B)]
-  dg.PacketType = unpack_uint8(r);          // [Packet_type (1B)]
-  dg.PluginID = unpack_uint16(r);           // [Plugin ID (2B)]
-  dg.PluginMajorVersion = unpack_uint8(r);  // [Plugin Maj Ver (1B)]
-  dg.PluginMinorVersion = unpack_uint8(r);  // [Plugin Min Ver (1B)]
-  dg.PluginPatchVersion = unpack_uint8(r);  // [Plugin Build Ver (1B)]
-  dg.PluginInstance = unpack_uint8(r);      // [Plugin Instance (1B)]
-  dg.PluginRunID = unpack_uint16(r);        // [Plugin Run ID (2B)]
+  int len = unpack_uint24(r);                 // [Length (3B)]
+  dg.protocol_version = unpack_uint8(r);      // [Protocol_version (1B)]
+  dg.timestamp = unpack_uint32(r);            // [time (4B)]
+  dg.packet_seq = unpack_uint16(r);           // [Packet_Seq (2B)]
+  dg.packet_type = unpack_uint8(r);           // [Packet_type (1B)]
+  dg.plugin_id = unpack_uint16(r);            // [Plugin ID (2B)]
+  dg.plugin_major_version = unpack_uint8(r);  // [Plugin Maj Ver (1B)]
+  dg.plugin_minor_version = unpack_uint8(r);  // [Plugin Min Ver (1B)]
+  dg.plugin_patch_version = unpack_uint8(r);  // [Plugin Build Ver (1B)]
+  dg.plugin_instance = unpack_uint8(r);       // [Plugin Instance (1B)]
+  dg.plugin_run_id = unpack_uint16(r);        // [Plugin Run ID (2B)]
 
   // Is this consistent with Pack??
-  dg.body.Reset();
-  CopyN(r, dg.body, len);
+  dg.body.reset();
+  copyn(r, dg.body, len);
 
   if (r.error()) {
     return false;
   }
 
-  unsigned char recvCrc = unpack_uint8(r);
-  unsigned char calcCrc = calcCrc8(dg.body.bytes(), dg.body.size());
+  unsigned char recv_crc = unpack_uint8(r);
+  unsigned char calc_crc = calc_crc8(dg.body.bytes(), dg.body.size());
 
-  if (recvCrc != calcCrc) {
+  if (recv_crc != calc_crc) {
     return false;
   }
-
-  if (unpack_uint8(r) != 0x55) {
-    return false;
-  }
-
-  // Drop leading header byte for next sync.
-  CopyN(buf, devnull, len + 3);
 
   return !r.error();
 }
