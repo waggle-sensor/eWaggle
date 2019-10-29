@@ -3,6 +3,15 @@
 #include <sstream>
 #include <vector>
 
+struct : public writer {
+
+  int write(const char *s, int n) {
+    std::cout << std::string(s, n);
+    return n;
+  }
+
+} cout_writer;
+
 // string_writer implements a write buffer on top of the well tested std::string
 // to aid our own testing
 struct string_buffer : public writer, public reader {
@@ -173,4 +182,19 @@ int main() {
   check_test("base64 wiki", test_base64_encode(wiki_input, wiki_expect));
 
   check_test("crc", test_crc("hello"));
+
+  {
+    base64_encoder b64(cout_writer);
+    sensorgram_encoder<256> e(b64);
+    e.info.timestamp = 1572368498;
+    e.info.id = 2;
+    e.info.sub_id = 1;
+    e.info.source_id = 0;
+    e.info.source_inst = 0;
+    e.encode_uint(6);
+    e.encode_uint(700);
+    e.encode_uint(80000);
+    e.close();
+    b64.close();
+  }
 }
