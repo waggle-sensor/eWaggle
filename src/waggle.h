@@ -1,22 +1,24 @@
 #ifndef __H_WAGGLE__
 #define __H_WAGGLE__
 
+typedef unsigned char byte;
+
 // reader is the interface providing the basic read method.
 struct reader {
-  virtual int read(char *s, int n) = 0;
+  virtual int read(byte *s, int n) = 0;
 
-  char readbyte() {
-    char c;
-    read(&c, 1);
-    return c;
+  byte readbyte() {
+    byte b;
+    read(&b, 1);
+    return b;
   }
 };
 
 // writer is the interface providing the basic write method.
 struct writer {
-  virtual int write(const char *s, int n) = 0;
+  virtual int write(const byte *s, int n) = 0;
 
-  void writebyte(char c) { write(&c, 1); }
+  void writebyte(byte b) { write(&b, 1); }
 };
 
 // closer is the interface providing the basic close method.
@@ -24,24 +26,14 @@ struct closer {
   virtual void close() = 0;
 };
 
-int string_size(const char *s, int max_size) {
-  for (int i = 0; i < max_size; i++) {
-    if (s[i] == '\0') {
-      return i;
-    }
-  }
-
-  return max_size;
-}
-
 template <int N>
 struct bytebuffer : public reader, public writer {
-  char arr[N];
+  byte arr[N];
   int front;
   int back;
   bool err;
 
-  const char *bytes() { return arr; }
+  const byte *bytes() { return arr; }
 
   int size() const { return back - front; }
   int max_size() const { return N; }
@@ -55,7 +47,12 @@ struct bytebuffer : public reader, public writer {
 
   bytebuffer() { clear(); }
 
-  int read(char *s, int n) {
+  bytebuffer(const byte *s, int n) {
+    clear();
+    write(s, n);
+  }
+
+  int read(byte *s, int n) {
     if (err) {
       return 0;
     }
@@ -76,7 +73,7 @@ struct bytebuffer : public reader, public writer {
   }
 
   int readfrom(reader &r, int n) {
-    char block[64];
+    byte block[64];
     int numblocks = n / 64;
     int bytes_read = 0;
 
@@ -107,7 +104,7 @@ struct bytebuffer : public reader, public writer {
     back = n;
   }
 
-  int write(const char *s, int n) {
+  int write(const byte *s, int n) {
     if (err) {
       return 0;
     }
@@ -128,38 +125,6 @@ struct bytebuffer : public reader, public writer {
   }
 };
 
-struct bytereader : public reader {
-  const char *buf;
-  int pos;
-  int cap;
-  bool err;
-
-  bool error() const { return err; }
-
-  bytereader(const char *buf, int cap) : buf(buf), cap(cap) {
-    pos = 0;
-    err = false;
-  }
-
-  int read(char *b, int n) {
-    if (err) {
-      return 0;
-    }
-
-    int i = 0;
-
-    while (i < n && pos < cap) {
-      b[i++] = buf[pos++];
-    }
-
-    if (i != n) {
-      err = true;
-    }
-
-    return i;
-  }
-};
-
 // basic_encoder encodes basic types like bytes and numeric types. It is a
 // building block for higher level encoders.
 struct basic_encoder {
@@ -170,7 +135,7 @@ struct basic_encoder {
 
   basic_encoder(writer &w) : w(w), err(false) {}
 
-  void encode_bytes(const char *s, int n) {
+  void encode_bytes(const byte *s, int n) {
     if (err) {
       return;
     }
@@ -191,11 +156,11 @@ struct basic_encoder {
       return;
     }
 
-    char s[8];
+    byte s[size];
 
     // encode x in network byte order
     for (int i = size - 1; i >= 0; i--) {
-      s[i] = (char)x;
+      s[i] = (byte)x;
       x >>= 8;
     }
 
@@ -213,7 +178,7 @@ struct basic_decoder {
 
   basic_decoder(reader &r) : r(r), err(false) {}
 
-  int decode_bytes(char *s, int n) {
+  int decode_bytes(byte *s, int n) {
     if (err) {
       return 0;
     }
@@ -232,14 +197,8 @@ struct basic_decoder {
       return 0;
     }
 
-    // check if valid size
-    if (size < 0 || size >= 8) {
-      err = true;
-      return 0;
-    }
-
     unsigned int x = 0;
-    char s[8];
+    byte s[size];
 
     decode_bytes(s, size);
 

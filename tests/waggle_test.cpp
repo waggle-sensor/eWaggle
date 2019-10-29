@@ -4,8 +4,8 @@
 #include <vector>
 
 struct : public writer {
-  int write(const char *s, int n) {
-    std::cout << std::string(s, n);
+  int write(const byte *s, int n) {
+    std::cout << std::string((const char *)s, n);
     return n;
   }
 
@@ -16,20 +16,15 @@ struct : public writer {
 struct string_buffer : public writer, public reader {
   std::string str;
 
-  int write(const char *s, int n) {
-    str += std::string(s, n);
+  int write(const byte *s, int n) {
+    str.append((const char *)s, n);
     return n;
   }
 
-  int read(char *s, int n) {
-    std::string front = str.substr(0, n);
-    str = str.substr(n);
-
-    for (int i = 0; i < front.size(); i++) {
-      s[i] = front[i];
-    }
-
-    return front.size();
+  int read(byte *s, int n) {
+    int nread = str.copy((char *)s, n);
+    str = str.substr(nread);
+    return nread;
   }
 };
 
@@ -43,24 +38,24 @@ void check_test(std::string name, bool passed) {
 
 bool test_bytebuffer() {
   bytebuffer<64> b;
-  b.write("testing", 7);
+  b.write((const byte *)"testing", 7);
   return b.size() == 7;
 }
 
-bool test_pack_uint(const char s[], unsigned int x, int size) {
+bool test_pack_uint(const byte s[], unsigned int x, int size) {
   string_buffer w;
   basic_encoder e(w);
   e.encode_uint(x, size);
-  return w.str == std::string(s, size);
+  return w.str == std::string((const char *)s, size);
 }
 
-bool test_unpack_uint(const char s[], unsigned int x, int size) {
-  bytereader r(s, size);
+bool test_unpack_uint(const byte s[], unsigned int x, int size) {
+  bytebuffer<64> r(s, size);
   basic_decoder d(r);
   return d.decode_uint(size) == x;
 }
 
-bool test_uint(const char s[], unsigned int x, int size) {
+bool test_uint(const byte s[], unsigned int x, int size) {
   return test_pack_uint(s, x, size) && test_unpack_uint(s, x, size);
 }
 
@@ -101,7 +96,7 @@ bool test_sensorgram() {
 bool test_base64_encode(std::string input, std::string expect) {
   string_buffer w;
   base64_encoder e(w);
-  e.write(input.c_str(), input.length());
+  e.write((const byte *)input.c_str(), input.length());
   e.close();
   return w.str == expect;
 }
@@ -110,7 +105,7 @@ bool test_crc(std::string input) {
   string_buffer b;
 
   crc8_writer w(b);
-  w.write(input.c_str(), input.length());
+  w.write((const byte *)input.c_str(), input.length());
   b.writebyte(w.sum);
 
   if (b.str.length() != input.length() + 1) {
@@ -119,7 +114,7 @@ bool test_crc(std::string input) {
   }
 
   crc8_reader r(b);
-  char tmp[256];
+  byte tmp[256];
   r.read(tmp, input.length());
 
   if (r.sum != b.readbyte()) {
@@ -149,27 +144,27 @@ std::string wiki_expect =
 int main() {
   check_test("bytebuffer", test_bytebuffer());
 
-  check_test("test uint 1 1", test_uint((const char[]){0x00}, 0x00, 1));
-  check_test("test uint 1 2", test_uint((const char[]){0x12}, 0x12, 1));
-  check_test("test uint 1 3", test_uint((const char[]){0xff}, 0xff, 1));
+  check_test("test uint 1 1", test_uint((const byte[]){0x00}, 0x00, 1));
+  check_test("test uint 1 2", test_uint((const byte[]){0x12}, 0x12, 1));
+  check_test("test uint 1 3", test_uint((const byte[]){0xff}, 0xff, 1));
 
-  check_test("test uint 2 1", test_uint((const char[]){0x00, 0x00}, 0x0000, 2));
-  check_test("test uint 2 2", test_uint((const char[]){0x12, 0x34}, 0x1234, 2));
-  check_test("test uint 2 3", test_uint((const char[]){0xff, 0xff}, 0xffff, 2));
+  check_test("test uint 2 1", test_uint((const byte[]){0x00, 0x00}, 0x0000, 2));
+  check_test("test uint 2 2", test_uint((const byte[]){0x12, 0x34}, 0x1234, 2));
+  check_test("test uint 2 3", test_uint((const byte[]){0xff, 0xff}, 0xffff, 2));
 
   check_test("test uint 3 1",
-             test_uint((const char[]){0x00, 0x00, 0x00}, 0x000000, 3));
+             test_uint((const byte[]){0x00, 0x00, 0x00}, 0x000000, 3));
   check_test("test uint 3 2",
-             test_uint((const char[]){0x12, 0x34, 0x56}, 0x123456, 3));
+             test_uint((const byte[]){0x12, 0x34, 0x56}, 0x123456, 3));
   check_test("test uint 3 3",
-             test_uint((const char[]){0xff, 0xff, 0xff}, 0xffffff, 3));
+             test_uint((const byte[]){0xff, 0xff, 0xff}, 0xffffff, 3));
 
   check_test("test uint 4 1",
-             test_uint((const char[]){0x00, 0x00, 0x00, 0x00}, 0x00000000, 4));
+             test_uint((const byte[]){0x00, 0x00, 0x00, 0x00}, 0x00000000, 4));
   check_test("test uint 4 2",
-             test_uint((const char[]){0x12, 0x34, 0x56, 0x78}, 0x12345678, 4));
+             test_uint((const byte[]){0x12, 0x34, 0x56, 0x78}, 0x12345678, 4));
   check_test("test uint 4 3",
-             test_uint((const char[]){0xff, 0xff, 0xff, 0xff}, 0xffffffff, 4));
+             test_uint((const byte[]){0xff, 0xff, 0xff, 0xff}, 0xffffffff, 4));
 
   check_test("test sensorgram", test_sensorgram());
 
@@ -182,20 +177,46 @@ int main() {
 
   check_test("crc", test_crc("hello"));
 
-  {
-    hex_encoder b64(cout_writer);
+  // {
+  //   hex_encoder hexw(cout_writer);
 
-    sensorgram_encoder<256> e(b64);
-    e.info.timestamp = 1572368498;
-    e.info.id = 2;
-    e.info.sub_id = 1;
-    e.info.source_id = 0;
-    e.info.source_inst = 0;
-    // e.encode_uint(6);
-    // e.encode_uint(700);
-    // e.encode_uint(80000);
-    e.close();
+  //   hexw.write("01", 2);
+  //   std::cout << std::endl;
 
-    // b64.close();
-  }
+  //   basic_encoder be(hexw);
+  //   be.encode_bytes("hello", 5);
+  //   std::cout << std::endl;
+  //   be.encode_uint(0x00, 1);
+  //   std::cout << std::endl;
+  //   be.encode_uint(0x12, 1);
+  //   std::cout << std::endl;
+  //   be.encode_uint(0x1234, 2);
+  //   std::cout << std::endl;
+  //   be.encode_uint(0x123456, 3);
+  //   std::cout << std::endl;
+  //   be.encode_uint(0x12345678, 4);
+  //   std::cout << std::endl;
+
+  //   sensorgram_encoder<256> e(hexw);
+  //   e.info.timestamp = 0x11111111;
+  //   e.info.id = 0x2222;
+  //   e.info.inst = 0x33;
+  //   e.info.sub_id = 0x44;
+  //   e.info.source_id = 0x5555;
+  //   e.info.source_inst = 0x66;
+  //   // e.encode_uint(0x99);
+  //   // e.encode_uint(700);
+  //   // e.encode_uint(80000);
+  //   e.close();
+  //   std::cout << std::endl;
+
+  //   // b64.close();
+  // }
+
+  // {
+  //   string_buffer b;
+  //   crc8_writer w(b);
+  //   w.write("hello", 5);
+  //   std::cout << (int)w.sum << std::endl;
+  // }
 }

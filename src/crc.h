@@ -1,7 +1,7 @@
 #ifndef __H_WAGGLE_CRC__
 #define __H_WAGGLE_CRC__
 
-const char crc8_table[256] = {
+const byte crc8_table[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20,
     0xa3, 0xfd, 0x1f, 0x41, 0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
     0x5f, 0x01, 0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc, 0x23, 0x7d, 0x9f, 0xc1,
@@ -26,17 +26,7 @@ const char crc8_table[256] = {
     0xd7, 0x89, 0x6b, 0x35,
 };
 
-char calc_crc8(const char *b, int n) {
-  char crc = 0;
-
-  for (int i = 0; i < n; i++) {
-    crc = crc8_table[crc ^ b[i]];
-  }
-
-  return crc;
-}
-
-char update_crc(char sum, const char table[], const char s[], int n) {
+byte update_crc(byte sum, const byte table[], const byte *s, int n) {
   for (int i = 0; i < n; i++) {
     sum = crc8_table[sum ^ s[i]];
   }
@@ -46,11 +36,11 @@ char update_crc(char sum, const char table[], const char s[], int n) {
 
 struct crc8_writer : public writer {
   writer &w;
-  char sum;
+  byte sum;
 
   crc8_writer(writer &w) : w(w), sum(0) {}
 
-  int write(const char *s, int n) {
+  int write(const byte *s, int n) {
     sum = update_crc(sum, crc8_table, s, n);
     return w.write(s, n);
   }
@@ -59,11 +49,11 @@ struct crc8_writer : public writer {
 // crc8_reader allows a reader
 struct crc8_reader : public reader {
   reader &r;
-  char sum;
+  byte sum;
 
   crc8_reader(reader &r) : r(r), sum(0) {}
 
-  int read(char *s, int n) {
+  int read(byte *s, int n) {
     n = r.read(s, n);  // check for error?
     sum = update_crc(sum, crc8_table, s, n);
     return n;

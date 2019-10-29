@@ -1,35 +1,35 @@
 #ifndef __H_WAGGLE_SENSORGRAM__
 #define __H_WAGGLE_SENSORGRAM__
 
-const char TYPE_NULL = 0x00;
+const byte TYPE_NULL = 0x00;
 
-const char TYPE_BYTE = 0x01;
-const char TYPE_CHAR = 0x02;
-const char TYPE_INT8 = 0x03;
-const char TYPE_UINT8 = 0x04;
-const char TYPE_INT16 = 0x05;
-const char TYPE_UINT16 = 0x06;
-const char TYPE_INT24 = 0x07;
-const char TYPE_UINT24 = 0x08;
-const char TYPE_INT32 = 0x09;
-const char TYPE_UINT32 = 0x0a;
-const char TYPE_FLOAT16 = 0x0b;
-const char TYPE_FLOAT32 = 0x0c;
-const char TYPE_FLOAT64 = 0x0d;
+const byte TYPE_BYTE = 0x01;
+const byte TYPE_CHAR = 0x02;
+const byte TYPE_INT8 = 0x03;
+const byte TYPE_UINT8 = 0x04;
+const byte TYPE_INT16 = 0x05;
+const byte TYPE_UINT16 = 0x06;
+const byte TYPE_INT24 = 0x07;
+const byte TYPE_UINT24 = 0x08;
+const byte TYPE_INT32 = 0x09;
+const byte TYPE_UINT32 = 0x0a;
+const byte TYPE_FLOAT16 = 0x0b;
+const byte TYPE_FLOAT32 = 0x0c;
+const byte TYPE_FLOAT64 = 0x0d;
 
-const char TYPE_BYTE_ARRAY = 0x71;
-const char TYPE_STRING = 0x72;
-const char TYPE_INT8_ARRAY = 0x73;
-const char TYPE_UINT8_ARRAY = 0x74;
-const char TYPE_INT16_ARRAY = 0x75;
-const char TYPE_UINT16_ARRAY = 0x76;
-const char TYPE_INT24_ARRAY = 0x77;
-const char TYPE_UINT24_ARRAY = 0x78;
-const char TYPE_INT32_ARRAY = 0x79;
-const char TYPE_UINT32_ARRAY = 0x7a;
-const char TYPE_FLOAT16_ARRAY = 0x7b;
-const char TYPE_FLOAT32_ARRAY = 0x7c;
-const char TYPE_FLOAT64_ARRAY = 0x7d;
+const byte TYPE_BYTE_ARRAY = 0x71;
+const byte TYPE_STRING = 0x72;
+const byte TYPE_INT8_ARRAY = 0x73;
+const byte TYPE_UINT8_ARRAY = 0x74;
+const byte TYPE_INT16_ARRAY = 0x75;
+const byte TYPE_UINT16_ARRAY = 0x76;
+const byte TYPE_INT24_ARRAY = 0x77;
+const byte TYPE_UINT24_ARRAY = 0x78;
+const byte TYPE_INT32_ARRAY = 0x79;
+const byte TYPE_UINT32_ARRAY = 0x7a;
+const byte TYPE_FLOAT16_ARRAY = 0x7b;
+const byte TYPE_FLOAT32_ARRAY = 0x7c;
+const byte TYPE_FLOAT64_ARRAY = 0x7d;
 
 struct sensorgram_info {
   unsigned long timestamp;
@@ -72,7 +72,7 @@ struct sensorgram_encoder {
     e.encode_bytes(body.bytes(), body.size());
   }
 
-  void encode_bytes(const char *s, int n) {
+  void encode_bytes(const byte *s, int n) {
     basic_encoder e(body);
     e.encode_uint(TYPE_BYTE_ARRAY, 1);
     e.encode_uint(n, 2);
@@ -108,7 +108,7 @@ struct sensorgram_encoder {
   // carefully!
   void encode_float32(float x) {
     basic_encoder e(body);
-    const char *b = (const char *)&x;
+    const byte *b = (const byte *)&x;
     e.encode_bytes(b, 4);
   }
 
@@ -116,7 +116,7 @@ struct sensorgram_encoder {
   // carefully!
   void encode_float64(double x) {
     basic_encoder e(body);
-    const char *b = (const char *)&x;
+    const byte *b = (const byte *)&x;
     e.encode_bytes(b, 8);
   }
 };
@@ -131,8 +131,8 @@ struct sensorgram_decoder {
   sensorgram_decoder(reader &r) : r(r) {
     crc8_reader crcr(r);
     decode_content(crcr);
-    char crc = r.readbyte();
-    err = crcr.sum != crc;
+
+    err = (crcr.sum != r.readbyte());
   }
 
   void decode_content(crc8_reader &crcr) {
@@ -147,7 +147,7 @@ struct sensorgram_decoder {
     body.readfrom(crcr, len);
   }
 
-  int decode_bytes(char *s, int max_size) {
+  int decode_bytes(byte *s, int max_size) {
     if (err) {
       return 0;
     }
@@ -218,7 +218,7 @@ struct sensorgram_decoder {
     }
 
     basic_decoder d(body);
-    char b[4];
+    byte b[4];
     d.decode_bytes(b, 4);
     return *(const float *)b;
   }
@@ -229,7 +229,7 @@ struct sensorgram_decoder {
     }
 
     basic_decoder d(body);
-    char b[8];
+    byte b[8];
     d.decode_bytes(b, 8);
     return *(const double *)b;
   }
