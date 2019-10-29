@@ -3,6 +3,8 @@
 #include <sstream>
 #include <vector>
 
+// string_writer implements a write buffer on top of the well tested std::string
+// to aid our own testing
 struct string_writer : public writer {
   std::string str;
   int write(const char *s, int n) {

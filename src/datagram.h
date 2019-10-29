@@ -1,7 +1,6 @@
 #ifndef __H_WAGGLE_DATAGRAM__
 #define __H_WAGGLE_DATAGRAM__
 
-/*
 template <int N>
 struct datagram {
   unsigned int protocol_version;
@@ -17,12 +16,9 @@ struct datagram {
   bytebuffer<N> body;
 };
 
-// Now, we can use different functions for actually sending / recving
-// datagrams.
-
-template <class writerT, class DG>
-void pack_datagram(writerT &w, DG &dg) {
-  basic_encoder<writerT> e(w);
+template <class DG>
+void pack_datagram(writer &w, DG &dg) {
+  basic_encoder e(w);
   e.encode_uint(dg.body.size(), 3);           // [Length (3B)]
   e.encode_uint(dg.protocol_version, 1);      // [Protocol_version (1B)]
   e.encode_uint(dg.timestamp, 4);             // [time (4B)]
@@ -53,40 +49,40 @@ int find_byte(char x, const char *b, int n) {
 }
 
 // need to have a way of indicating whether a datagram was actually unpacked or
-// not.
-template <class B, class DG>
-bool unpack_datagram(B &buf, DG &dg) {
-  bytereader r(buf.bytes(), buf.size());
+// not. yep...this is a little ugly here... reading / writing should be managed
+// at a higher level
+// template <class DG>
+// bool unpack_datagram(reader &r, DG &dg) {
+//   bytereader r(buf.bytes(), buf.size());
 
-  int len = unpack_uint(r, 3);                  // [Length (3B)]
-  dg.protocol_version = unpack_uint(r, 1);      // [Protocol_version (1B)]
-  dg.timestamp = unpack_uint(r, 4);             // [time (4B)]
-  dg.packet_seq = unpack_uint(r, 2);            // [Packet_Seq (2B)]
-  dg.packet_type = unpack_uint(r, 1);           // [Packet_type (1B)]
-  dg.plugin_id = unpack_uint(r, 2);             // [Plugin ID (2B)]
-  dg.plugin_major_version = unpack_uint(r, 1);  // [Plugin Maj Ver (1B)]
-  dg.plugin_minor_version = unpack_uint(r, 1);  // [Plugin Min Ver (1B)]
-  dg.plugin_patch_version = unpack_uint(r, 1);  // [Plugin Build Ver (1B)]
-  dg.plugin_instance = unpack_uint(r, 1);       // [Plugin Instance (1B)]
-  dg.plugin_run_id = unpack_uint(r, 2);         // [Plugin Run ID (2B)]
+//   int len = unpack_uint(r, 3);                  // [Length (3B)]
+//   dg.protocol_version = unpack_uint(r, 1);      // [Protocol_version (1B)]
+//   dg.timestamp = unpack_uint(r, 4);             // [time (4B)]
+//   dg.packet_seq = unpack_uint(r, 2);            // [Packet_Seq (2B)]
+//   dg.packet_type = unpack_uint(r, 1);           // [Packet_type (1B)]
+//   dg.plugin_id = unpack_uint(r, 2);             // [Plugin ID (2B)]
+//   dg.plugin_major_version = unpack_uint(r, 1);  // [Plugin Maj Ver (1B)]
+//   dg.plugin_minor_version = unpack_uint(r, 1);  // [Plugin Min Ver (1B)]
+//   dg.plugin_patch_version = unpack_uint(r, 1);  // [Plugin Build Ver (1B)]
+//   dg.plugin_instance = unpack_uint(r, 1);       // [Plugin Instance (1B)]
+//   dg.plugin_run_id = unpack_uint(r, 2);         // [Plugin Run ID (2B)]
 
-  // Is this consistent with Pack??
-  dg.body.clear();
-  copyn(r, dg.body, len);
+//   // Is this consistent with Pack??
+//   dg.body.clear();
+//   copyn(r, dg.body, len);
 
-  if (r.error()) {
-    return false;
-  }
+//   if (r.error()) {
+//     return false;
+//   }
 
-  char recv_crc = unpack_uint(r, 1);
-  char calc_crc = calc_crc8(dg.body.bytes(), dg.body.size());
+//   char recv_crc = unpack_uint(r, 1);
+//   char calc_crc = calc_crc8(dg.body.bytes(), dg.body.size());
 
-  if (recv_crc != calc_crc) {
-    return false;
-  }
+//   if (recv_crc != calc_crc) {
+//     return false;
+//   }
 
-  return !r.error();
-}
-*/
+//   return !r.error();
+// }
 
 #endif

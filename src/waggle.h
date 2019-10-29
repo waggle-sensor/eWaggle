@@ -141,8 +141,7 @@ struct : public reader, public writer {
   int write(const char *s, int n) { return n; }
 } devnull;
 
-template <class readerT, class writerT>
-void copyn(readerT &r, writerT &w, int n) {
+void copyn(reader &r, writer &w, int n) {
   char tmp[32];
   int copied = 0;
 
