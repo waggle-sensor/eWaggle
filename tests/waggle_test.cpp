@@ -101,6 +101,13 @@ bool test_base64_encode(std::string input, std::string expect) {
   return w.str == expect;
 }
 
+bool test_crc_value() {
+  string_buffer b;
+  crc8_writer w(b);
+  w.write((const byte[]){1, 2, 3, 4, 5}, 5);
+  return w.sum == (byte)42;
+}
+
 bool test_crc(std::string input) {
   string_buffer b;
 
@@ -175,27 +182,12 @@ int main() {
   check_test("base64 4", test_base64_encode("1234", "MTIzNA=="));
   check_test("base64 wiki", test_base64_encode(wiki_input, wiki_expect));
 
+  check_test("crc value", test_crc_value());
   check_test("crc", test_crc("hello"));
 
   {
-    hex_encoder hexw(cout_writer);
-
-    hexw.write((const byte[]){1, 2}, 2);
-    std::cout << std::endl;
-
-    basic_encoder be(hexw);
-    be.encode_uint(0x00, 1);
-    std::cout << std::endl;
-    be.encode_uint(0x12, 1);
-    std::cout << std::endl;
-    be.encode_uint(0x1234, 2);
-    std::cout << std::endl;
-    be.encode_uint(0x123456, 3);
-    std::cout << std::endl;
-    be.encode_uint(0x12345678, 4);
-    std::cout << std::endl;
-
-    sensorgram_encoder<256> e(hexw);
+    base64_encoder textw(cout_writer);
+    sensorgram_encoder<256> e(textw);
     e.info.timestamp = 0x11111111;
     e.info.id = 0x2222;
     e.info.inst = 0x33;
@@ -206,15 +198,6 @@ int main() {
     // e.encode_uint(700);
     // e.encode_uint(80000);
     e.close();
-    std::cout << std::endl;
-
-    // b64.close();
-  }
-
-  {
-    string_buffer b;
-    crc8_writer w(b);
-    w.write((const byte[]){1, 2, 3, 4, 5}, 5);
-    std::cout << (int)w.sum << std::endl;
+    textw.close();
   }
 }
