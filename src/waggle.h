@@ -186,6 +186,8 @@ struct basic_encoder {
   writer &w;
   bool err;
 
+  bool error() const { return err; }
+
   basic_encoder(writer &w) : w(w), err(false) {}
 
   void encode_bytes(const char *s, int n) {
@@ -227,16 +229,22 @@ struct basic_decoder {
   reader &r;
   bool err;
 
+  bool error() const { return err; }
+
   basic_decoder(reader &r) : r(r), err(false) {}
 
-  void decode_bytes(char *s, int n) {
+  int decode_bytes(char *s, int n) {
     if (err) {
-      return;
+      return 0;
     }
 
-    if (r.read(s, n) != n) {
+    int n2 = r.read(s, n);
+
+    if (n2 != n) {
       err = true;
     }
+
+    return n2;
   }
 
   unsigned int decode_uint(int size) {

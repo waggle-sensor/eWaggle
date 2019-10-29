@@ -137,6 +137,11 @@ struct sensorgram_decoder {
     }
 
     d.decode_bytes(s, size);
+
+    if (d.err) {
+      err = true;
+    }
+
     return size;
   }
 
@@ -146,20 +151,35 @@ struct sensorgram_decoder {
     }
 
     basic_decoder d(body);
+    unsigned int x;
 
     switch (d.decode_uint(1)) {
       case TYPE_UINT8:
-        return d.decode_uint(1);
+        x = d.decode_uint(1);
+        break;
       case TYPE_UINT16:
-        return d.decode_uint(2);
+        x = d.decode_uint(2);
+        break;
       case TYPE_UINT24:
-        return d.decode_uint(3);
+        x = d.decode_uint(3);
+        break;
       case TYPE_UINT32:
-        return d.decode_uint(4);
+        x = d.decode_uint(4);
+        break;
+      default:
+        err = true;
+        break;
     }
 
-    err = true;
-    return 0;
+    if (d.err) {
+      err = true;
+    }
+
+    if (err) {
+      return 0;
+    }
+
+    return x;
   }
 
   float decode_float32() {
