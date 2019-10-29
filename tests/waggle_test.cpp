@@ -65,16 +65,29 @@ bool test_sensorgram() {
   e.info.sub_id = 3;
   e.info.source_id = 4;
   e.info.source_inst = 5;
-  // e.encode_uint(1);
-  e.encode_bytes("hello", 5);
+  e.encode_uint(6);
+  e.encode_uint(700);
+  e.encode_uint(80000);
   e.close();
 
   sensorgram_decoder<64> d(b);
 
-  return (e.info.timestamp == d.info.timestamp) && (e.info.id == d.info.id) &&
-         (e.info.sub_id == d.info.sub_id) &&
+  if (d.decode_uint() != 6) {
+    return false;
+  }
+
+  if (d.decode_uint() != 700) {
+    return false;
+  }
+
+  if (d.decode_uint() != 80000) {
+    return false;
+  }
+
+  return (d.err == false) && (e.info.timestamp == d.info.timestamp) &&
+         (e.info.id == d.info.id) && (e.info.sub_id == d.info.sub_id) &&
          (e.info.source_id == d.info.source_id) &&
-         (e.info.source_inst == d.info.source_inst) && (d.err == false);
+         (e.info.source_inst == d.info.source_inst);
 }
 
 bool test_base64_encode(std::string input, std::string expect) {

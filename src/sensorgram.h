@@ -49,7 +49,7 @@ struct sensorgram_encoder {
     e.encode_bytes(s, n);
   }
 
-  void encode_uint(unsigned long x) {
+  void encode_uint(unsigned int x) {
     basic_encoder e(body);
 
     if (x <= 0xff) {
@@ -84,7 +84,7 @@ struct sensorgram_encoder {
 
   // WARNING Possibly unsafe and unreliable across platforms. Check this
   // carefully!
-  void pack_float64(double x) {
+  void encode_float64(double x) {
     basic_encoder e(body);
     const char *b = (const char *)&x;
     e.encode_bytes(b, 8);
@@ -116,56 +116,73 @@ struct sensorgram_decoder {
     info.source_inst = d.decode_uint(1);
     body.readfrom(crcr, len);
   }
+
+  int decode_bytes(char *s, int max_size) {
+    if (err) {
+      return 0;
+    }
+
+    basic_decoder d(body);
+
+    if (d.decode_uint(1) != TYPE_BYTES) {
+      err = true;
+      return 0;
+    }
+
+    int size = d.decode_uint(2);
+
+    if (size > max_size) {
+      err = true;
+      size = max_size;
+    }
+
+    d.decode_bytes(s, size);
+    return size;
+  }
+
+  unsigned int decode_uint() {
+    if (err) {
+      return 0;
+    }
+
+    basic_decoder d(body);
+
+    switch (d.decode_uint(1)) {
+      case TYPE_UINT8:
+        return d.decode_uint(1);
+      case TYPE_UINT16:
+        return d.decode_uint(2);
+      case TYPE_UINT24:
+        return d.decode_uint(3);
+      case TYPE_UINT32:
+        return d.decode_uint(4);
+    }
+
+    err = true;
+    return 0;
+  }
+
+  float decode_float32() {
+    if (err) {
+      return 0;
+    }
+
+    basic_decoder d(body);
+    char b[4];
+    d.decode_bytes(b, 4);
+    return *(const float *)b;
+  }
+
+  double decode_float64() {
+    if (err) {
+      return 0;
+    }
+
+    basic_decoder d(body);
+    char b[8];
+    d.decode_bytes(b, 8);
+    return *(const double *)b;
+  }
 };
-
-template <class readerT>
-float unpack_float32(readerT &r) {
-  char b[4];
-  unpack_bytes(r, b, 4);
-  return *(const float *)b;
-}
-
-template <class readerT>
-double unpack_float64(readerT &r) {
-  char b[8];
-  unpack_bytes(r, b, 8);
-  return *(const double *)b;
-}
-
-template <class readerT>
-unsigned long unpack_uint_val(readerT &r) {
-  unsigned int type = unpack_uint(r, 1);
-
-  switch (type) {
-    case TYPE_UINT8:
-      return unpack_uint(r, 1);
-    case TYPE_UINT16:
-      return unpack_uint(r, 2);
-    case TYPE_UINT24:
-      return unpack_uint(r, 3);
-    case TYPE_UINT32:
-      return unpack_uint(r, 4);
-  }
-
-  return 0;
-}
-
-template <class readerT>
-float unpack_float_val(readerT &r) {
-  if (unpack_uint(r, 1) != TYPE_FLOAT32) {
-    return 0;
-  }
-
-  return unpack_float32(r);
-}
-
-template <class readerT>
-float unpack_double_val(readerT &r) {
-  if (unpack_uint(r, 1) != TYPE_FLOAT64) {
-    return 0;
-  }
-
-  return unpack_float64(r);
-}
 
 #endif
