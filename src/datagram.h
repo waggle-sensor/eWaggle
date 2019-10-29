@@ -69,7 +69,7 @@ int find_byte(char x, const char *b, int n) {
 
 //   // Is this consistent with Pack??
 //   dg.body.clear();
-//   copyn(r, dg.body, len);
+//   dg.body.readfrom(r, len);
 
 //   if (r.error()) {
 //     return false;

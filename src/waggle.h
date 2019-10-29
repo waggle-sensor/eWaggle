@@ -67,6 +67,23 @@ struct bytebuffer : public reader, public writer {
     return i;
   }
 
+  int readfrom(reader &r, int n) {
+    char block[64];
+    int numblocks = n / 64;
+    int bytes_read = 0;
+
+    for (int i = 0; i < numblocks; i++) {
+      r.read(block, 64);
+      write(block, 64);
+    }
+
+    r.read(block, n);
+    write(block, n);
+
+    // TODO check for errors on this
+    return n;
+  }
+
   void realign() {
     if (front == 0) {
       return;
@@ -134,35 +151,6 @@ struct bytereader : public reader {
     return i;
   }
 };
-
-// devnull is a "byte sink" used drop segments of data.
-struct : public reader, public writer {
-  int read(char *s, int n) { return 0; }
-  int write(const char *s, int n) { return n; }
-} devnull;
-
-void copyn(reader &r, writer &w, int n) {
-  char tmp[32];
-  int copied = 0;
-
-  while (copied < n) {
-    int blocksize = n - copied;
-
-    if (blocksize > sizeof(tmp)) {
-      blocksize = sizeof(tmp);
-    }
-
-    if (r.read(tmp, blocksize) != blocksize) {
-      return;
-    }
-
-    if (w.write(tmp, blocksize) != blocksize) {
-      return;
-    }
-
-    copied += blocksize;
-  }
-}
 
 const char TYPE_NULL = 0x00;
 const char TYPE_BYTES = 0x01;

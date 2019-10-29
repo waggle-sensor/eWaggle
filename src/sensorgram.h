@@ -53,9 +53,8 @@ bool unpack_sensorgram(reader &r, SG &sg) {
   sg.source_id = d.decode_uint(2);
   sg.source_inst = d.decode_uint(1);
 
-  // this is weird...
   sg.body.clear();
-  copyn(crcr, sg.body, len);
+  sg.body.readfrom(crcr, len);
 
   // throw away trailing crc byte and check for errors
   d.decode_uint(1);
