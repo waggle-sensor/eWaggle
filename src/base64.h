@@ -31,13 +31,16 @@ struct base64_encoder : public writer, public closer {
       int x = (b3[0] << 16);
       b4[0] = base64[(x >> 18) & 63];
       b4[1] = base64[(x >> 12) & 63];
-      w.write(b4, 2);
+      b4[2] = '=';
+      b4[3] = '=';
+      w.write(b4, 4);
     } else if (remain == 2) {
       int x = (b3[0] << 16) | (b3[1] << 8);
       b4[0] = base64[(x >> 18) & 63];
       b4[1] = base64[(x >> 12) & 63];
       b4[2] = base64[(x >> 6) & 63];
-      w.write(b4, 3);
+      b4[3] = '=';
+      w.write(b4, 4);
     }
   }
 

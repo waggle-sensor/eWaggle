@@ -145,7 +145,7 @@ std::string wiki_expect =
     "IGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodC"
     "BpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25v"
     "d2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbG"
-    "Vhc3VyZS4";
+    "Vhc3VyZS4=";
 
 int main() {
   check_test("bytebuffer", test_bytebuffer());
@@ -175,10 +175,10 @@ int main() {
   check_test("test sensorgram", test_sensorgram());
 
   check_test("base64 empty", test_base64_encode("", ""));
-  check_test("base64 1", test_base64_encode("A", "QQ"));
-  check_test("base64 2", test_base64_encode("AZ", "QVo"));
+  check_test("base64 1", test_base64_encode("A", "QQ=="));
+  check_test("base64 2", test_base64_encode("AZ", "QVo="));
   check_test("base64 3", test_base64_encode("AZQ", "QVpR"));
-  check_test("base64 4", test_base64_encode("1234", "MTIzNA"));
+  check_test("base64 4", test_base64_encode("1234", "MTIzNA=="));
   check_test("base64 wiki", test_base64_encode(wiki_input, wiki_expect));
 
   check_test("crc", test_crc("hello"));
