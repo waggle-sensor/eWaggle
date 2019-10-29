@@ -6,15 +6,14 @@ const char base64[] =
      "abcdefghijklmnopqrstuvwxyz"
      "0123456789+/");
 
-template <typename writerT>
-struct base64_encoder {
-  writerT &w;
+struct base64_encoder : public writer, public closer {
+  writer &w;
 
   bool closed;
   int remain;
   char b3[3];
 
-  base64_encoder(writerT &w) : w(w) {
+  base64_encoder(writer &w) : w(w) {
     remain = 0;
     closed = false;
   }
@@ -42,9 +41,9 @@ struct base64_encoder {
     }
   }
 
-  void write(const char *b, int n) {
+  int write(const char *b, int n) {
     if (closed) {
-      return;
+      return 0;
     }
 
     for (int i = 0; i < n; i++) {
@@ -62,6 +61,9 @@ struct base64_encoder {
         w.write(b4, 4);
       }
     }
+
+    // ah...we'll have to compute an estimate somewhere..
+    return n;
   }
 };
 

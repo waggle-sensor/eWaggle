@@ -1,7 +1,20 @@
 #ifndef __H_WAGGLE__
 #define __H_WAGGLE__
 
-#include "base64.h"
+// reader is the interface providing the basic read method.
+struct reader {
+  virtual int read(char *s, int n) = 0;
+};
+
+// writer is the interface providing the basic write method.
+struct writer {
+  virtual int write(const char *s, int n) = 0;
+};
+
+// closer is the interface providing the basic close method.
+struct closer {
+  virtual void close() = 0;
+};
 
 int string_size(const char *s, int max_size) {
   for (int i = 0; i < max_size; i++) {
@@ -14,7 +27,7 @@ int string_size(const char *s, int max_size) {
 }
 
 template <int N>
-struct bytebuffer {
+struct bytebuffer : public reader, public writer {
   char arr[N];
   int front;
   int back;
@@ -90,7 +103,7 @@ struct bytebuffer {
   }
 };
 
-struct bytereader {
+struct bytereader : public reader {
   const char *buf;
   int pos;
   int cap;
@@ -123,7 +136,7 @@ struct bytereader {
 };
 
 // devnull is a "byte sink" used drop segments of data.
-struct {
+struct : public reader, public writer {
   int read(char *s, int n) { return 0; }
   int write(const char *s, int n) { return n; }
 } devnull;
@@ -174,12 +187,11 @@ const char TYPE_FLOAT64 = 0x0d;
 
 // basic_encoder encodes basic types like bytes and numeric types. It is a
 // building block for higher level encoders.
-template <class writerT>
 struct basic_encoder {
-  writerT &w;
+  writer &w;
   bool err;
 
-  basic_encoder(writerT &w) : w(w), err(false) {}
+  basic_encoder(writer &w) : w(w), err(false) {}
 
   void encode_bytes(const char *s, int n) {
     if (err) {
@@ -216,12 +228,11 @@ struct basic_encoder {
 
 // basic_decoder decodes basic types like bytes and numeric types. It is a
 // building block for higher level decoders.
-template <class readerT>
 struct basic_decoder {
-  readerT &r;
+  reader &r;
   bool err;
 
-  basic_decoder(readerT &r) : r(r), err(false) {}
+  basic_decoder(reader &r) : r(r), err(false) {}
 
   void decode_bytes(char *s, int n) {
     if (err) {
@@ -263,6 +274,7 @@ struct basic_decoder {
 };
 
 // TODO fix includes so order doesn't matter
+#include "base64.h"
 #include "crc.h"
 #include "datagram.h"
 #include "sensorgram.h"

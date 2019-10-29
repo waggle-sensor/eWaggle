@@ -3,27 +3,13 @@
 #include <sstream>
 #include <vector>
 
-template <class T>
-bool assert_equal(const T &a, const T &b) {
-  bool equal = a == b;
-
-  if (!equal) {
-    std::cout << "assert_equal: " << a << " != " << b << std::endl;
+struct string_writer : public writer {
+  std::string str;
+  int write(const char *s, int n) {
+    str += std::string(s, n);
+    return n;
   }
-
-  return equal;
-}
-
-template <class T>
-bool assert_equal_bytes(const T &a, const T &b, int n) {
-  bool equal = memcmp(a, b, n) == 0;
-
-  if (!equal) {
-    std::cout << "assert_equal_bytes: " << a << " != " << b << std::endl;
-  }
-
-  return equal;
-}
+};
 
 void check_test(std::string name, bool passed) {
   if (passed) {
@@ -36,45 +22,20 @@ void check_test(std::string name, bool passed) {
 bool test_bytebuffer() {
   bytebuffer<64> b;
   b.write("testing", 7);
-
   return b.size() == 7;
 }
 
-bool test_pack() {
-  //   {
-  //     bytebuffer<64> b;
-  //     pack_bytes(b, "hello", 5);
-
-  //     if (b.error() || b.size() != 5) {
-  //       return false;
-  //     }
-
-  //     char s[5];
-  //     unpack_bytes(b, s, 5);
-
-  //     if (b.error()) {
-  //       return false;
-  //     }
-
-  //     if (memcmp("hello", s, 5) != 0) {
-  //       return false;
-  //     }
-  //   }
-
-  return true;
-}
-
 bool test_pack_uint(const char s[], unsigned int x, int size) {
-  bytebuffer<32> b;
-  basic_encoder<typeof(b)> e(b);
+  string_writer w;
+  basic_encoder e(w);
   e.encode_uint(x, size);
-  return assert_equal(b.size(), size) && assert_equal_bytes(b.bytes(), s, size);
+  return w.str == std::string(s, size);
 }
 
 bool test_unpack_uint(const char s[], unsigned int x, int size) {
   bytereader r(s, size);
-  basic_decoder<typeof(r)> d(r);
-  return assert_equal(d.decode_uint(size), x);
+  basic_decoder d(r);
+  return d.decode_uint(size) == x;
 }
 
 bool test_uint(const char s[], unsigned int x, int size) {
@@ -98,7 +59,10 @@ bool test_sensorgram() {
 
   {
     sensorgram<32> s;
-    assert_equal(unpack_sensorgram(b, s), true);
+
+    if (!unpack_sensorgram(b, s)) {
+      return false;
+    }
     // int a = unpack_uint(s.body, 1);
     // int b = unpack_uint(s.body, 2);
     return (s.timestamp == 1) && (s.id == 2) && (s.sub_id == 3) &&
@@ -110,13 +74,11 @@ bool test_sensorgram() {
 }
 
 bool test_base64_encode(std::string input, std::string expect) {
-  std::stringstream s;
-
-  base64_encoder<std::stringstream> e(s);
+  string_writer w;
+  base64_encoder e(w);
   e.write(input.c_str(), input.length());
   e.close();
-
-  return s.str() == expect;
+  return w.str == expect;
 }
 
 std::string wiki_input =
@@ -137,8 +99,6 @@ std::string wiki_expect =
 
 int main() {
   check_test("bytebuffer", test_bytebuffer());
-
-  check_test("test pack", test_pack());
 
   check_test("test uint 1 1", test_uint((const char[]){0x00}, 0x00, 1));
   check_test("test uint 1 2", test_uint((const char[]){0x12}, 0x12, 1));

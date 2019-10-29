@@ -44,13 +44,12 @@ char update_crc(char sum, const char table[], const char s[], int n) {
   return sum;
 }
 
-template <class writerT>
-struct crc8_writer {
-  writerT &w;
+struct crc8_writer : public writer, public closer {
+  writer &w;
   bool closed;
   int sum;
 
-  crc8_writer(writerT &w) : w(w), closed(false), sum(0) {}
+  crc8_writer(writer &w) : w(w), closed(false), sum(0) {}
 
   void close() {
     if (closed) {
@@ -59,7 +58,7 @@ struct crc8_writer {
 
     closed = true;
 
-    basic_encoder<typeof(w)> e(w);
+    basic_encoder e(w);
     e.encode_uint(sum, 1);
   }
 
@@ -73,12 +72,12 @@ struct crc8_writer {
   }
 };
 
-template <class readerT>
-struct crc8_reader {
-  readerT &r;
+// crc8_reader allows a reader
+struct crc8_reader : public reader {
+  reader &r;
   int sum;
 
-  crc8_reader(readerT &r) : r(r), sum(0) {}
+  crc8_reader(reader &r) : r(r), sum(0) {}
 
   int read(char *s, int n) {
     n = r.read(s, n);  // check for error?

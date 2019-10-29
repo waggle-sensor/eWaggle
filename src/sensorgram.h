@@ -20,10 +20,10 @@ struct sensorgram {
 //
 // these could also track the various errors we run into.
 
-template <class writerT, class SG>
-void pack_sensorgram(writerT &writer, SG &sg) {
-  crc8_writer<writerT> w(writer);
-  basic_encoder<typeof(w)> e(w);
+template <class SG>
+void pack_sensorgram(writer &w, SG &sg) {
+  crc8_writer crcw(w);
+  basic_encoder e(crcw);
 
   // write sensorgram content
   e.encode_uint(sg.body.size(), 2);
@@ -36,13 +36,13 @@ void pack_sensorgram(writerT &writer, SG &sg) {
   e.encode_bytes(sg.body.bytes(), sg.body.size());
 
   // write crc sum
-  w.close();
+  crcw.close();
 }
 
-template <class readerT, class SG>
-bool unpack_sensorgram(readerT &reader, SG &sg) {
-  crc8_reader<readerT> r(reader);
-  basic_decoder<typeof(r)> d(r);
+template <class SG>
+bool unpack_sensorgram(reader &r, SG &sg) {
+  crc8_reader crcr(r);
+  basic_decoder d(r);
 
   // read sensorgram content
   int len = d.decode_uint(2);
@@ -53,20 +53,20 @@ bool unpack_sensorgram(readerT &reader, SG &sg) {
   sg.source_id = d.decode_uint(2);
   sg.source_inst = d.decode_uint(1);
 
-  // this is weird...?
+  // this is weird...
   sg.body.clear();
-  copyn(r, sg.body, len);
+  copyn(crcr, sg.body, len);
 
   // throw away trailing crc byte and check for errors
   d.decode_uint(1);
-  return !d.err && r.sum == 0;
+  return !d.err && crcr.sum == 0;
 }
 
-template <class writerT>
-void pack_bytes_val(writerT &w, const char *s, int n) {
-  pack_uint(w, TYPE_BYTES, 1);
-  pack_uint(w, n, 2);
-  w.write(s, n);
+void pack_bytes_val(writer &w, const char *s, int n) {
+  basic_encoder e(w);
+  e.encode_uint(TYPE_BYTES, 1);
+  e.encode_uint(n, 2);
+  e.encode_bytes(s, n);
 }
 
 // template <class writerT>
