@@ -26,6 +26,11 @@ struct sensorgram_encoder {
     }
 
     crc8_writer crcw(w);
+    encode_content(crcw);
+    w.writebyte(crcw.sum);
+  }
+
+  void encode_content(crc8_writer &crcw) {
     basic_encoder e(crcw);
     e.encode_uint(body.size(), 2);
     e.encode_uint(info.timestamp, 4);
@@ -35,7 +40,6 @@ struct sensorgram_encoder {
     e.encode_uint(info.source_id, 2);
     e.encode_uint(info.source_inst, 1);
     e.encode_bytes(body.bytes(), body.size());
-    e.encode_uint(crcw.sum, 1);
   }
 
   void encode_bytes(const char *s, int n) {
@@ -96,9 +100,13 @@ struct sensorgram_decoder {
 
   sensorgram_decoder(reader &r) : r(r) {
     crc8_reader crcr(r);
-    basic_decoder d(r);
+    decode_content(crcr);
+    char crc = r.readbyte();
+    err = crcr.sum != crc;
+  }
 
-    // read sensorgram content
+  void decode_content(crc8_reader &crcr) {
+    basic_decoder d(crcr);
     int len = d.decode_uint(2);
     info.timestamp = d.decode_uint(4);
     info.id = d.decode_uint(2);
@@ -107,11 +115,6 @@ struct sensorgram_decoder {
     info.source_id = d.decode_uint(2);
     info.source_inst = d.decode_uint(1);
     body.readfrom(crcr, len);
-
-    // read final crc byte
-    crcr.readbyte();
-
-    err = d.err || (crcr.sum != 0);
   }
 };
 
