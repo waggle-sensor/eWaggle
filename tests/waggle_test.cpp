@@ -177,46 +177,44 @@ int main() {
 
   check_test("crc", test_crc("hello"));
 
-  // {
-  //   hex_encoder hexw(cout_writer);
+  {
+    hex_encoder hexw(cout_writer);
 
-  //   hexw.write("01", 2);
-  //   std::cout << std::endl;
+    hexw.write((const byte[]){1, 2}, 2);
+    std::cout << std::endl;
 
-  //   basic_encoder be(hexw);
-  //   be.encode_bytes("hello", 5);
-  //   std::cout << std::endl;
-  //   be.encode_uint(0x00, 1);
-  //   std::cout << std::endl;
-  //   be.encode_uint(0x12, 1);
-  //   std::cout << std::endl;
-  //   be.encode_uint(0x1234, 2);
-  //   std::cout << std::endl;
-  //   be.encode_uint(0x123456, 3);
-  //   std::cout << std::endl;
-  //   be.encode_uint(0x12345678, 4);
-  //   std::cout << std::endl;
+    basic_encoder be(hexw);
+    be.encode_uint(0x00, 1);
+    std::cout << std::endl;
+    be.encode_uint(0x12, 1);
+    std::cout << std::endl;
+    be.encode_uint(0x1234, 2);
+    std::cout << std::endl;
+    be.encode_uint(0x123456, 3);
+    std::cout << std::endl;
+    be.encode_uint(0x12345678, 4);
+    std::cout << std::endl;
 
-  //   sensorgram_encoder<256> e(hexw);
-  //   e.info.timestamp = 0x11111111;
-  //   e.info.id = 0x2222;
-  //   e.info.inst = 0x33;
-  //   e.info.sub_id = 0x44;
-  //   e.info.source_id = 0x5555;
-  //   e.info.source_inst = 0x66;
-  //   // e.encode_uint(0x99);
-  //   // e.encode_uint(700);
-  //   // e.encode_uint(80000);
-  //   e.close();
-  //   std::cout << std::endl;
+    sensorgram_encoder<256> e(hexw);
+    e.info.timestamp = 0x11111111;
+    e.info.id = 0x2222;
+    e.info.inst = 0x33;
+    e.info.sub_id = 0x44;
+    e.info.source_id = 0x5555;
+    e.info.source_inst = 0x66;
+    // e.encode_uint(0x99);
+    // e.encode_uint(700);
+    // e.encode_uint(80000);
+    e.close();
+    std::cout << std::endl;
 
-  //   // b64.close();
-  // }
+    // b64.close();
+  }
 
-  // {
-  //   string_buffer b;
-  //   crc8_writer w(b);
-  //   w.write("hello", 5);
-  //   std::cout << (int)w.sum << std::endl;
-  // }
+  {
+    string_buffer b;
+    crc8_writer w(b);
+    w.write((const byte[]){1, 2, 3, 4, 5}, 5);
+    std::cout << (int)w.sum << std::endl;
+  }
 }

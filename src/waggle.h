@@ -7,6 +7,7 @@ typedef unsigned char byte;
 struct reader {
   virtual int read(byte *s, int n) = 0;
 
+  // readbyte is a convinient interface for single reads
   byte readbyte() {
     byte b;
     read(&b, 1);
@@ -18,6 +19,7 @@ struct reader {
 struct writer {
   virtual int write(const byte *s, int n) = 0;
 
+  // writebyte is a convinient interface for single writes
   void writebyte(byte b) { write(&b, 1); }
 };
 
