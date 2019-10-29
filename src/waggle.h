@@ -260,6 +260,7 @@ struct basic_decoder {
 #include "base64.h"
 #include "crc.h"
 #include "datagram.h"
+#include "hex.h"
 #include "sensorgram.h"
 
 #endif

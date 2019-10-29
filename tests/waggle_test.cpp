@@ -4,7 +4,6 @@
 #include <vector>
 
 struct : public writer {
-
   int write(const char *s, int n) {
     std::cout << std::string(s, n);
     return n;
@@ -184,21 +183,19 @@ int main() {
   check_test("crc", test_crc("hello"));
 
   {
-    base64_encoder b64(cout_writer);
-    
-    for (int i = 0; i < 10; i++) {
-      sensorgram_encoder<256> e(b64);
-      e.info.timestamp = 1572368498;
-      e.info.id = 2;
-      e.info.sub_id = i;
-      e.info.source_id = 0;
-      e.info.source_inst = 0;
-      e.encode_uint(6);
-      e.encode_uint(700);
-      e.encode_uint(80000);
-      e.close();
-    }
+    hex_encoder b64(cout_writer);
 
-    b64.close();
+    sensorgram_encoder<256> e(b64);
+    e.info.timestamp = 1572368498;
+    e.info.id = 2;
+    e.info.sub_id = 1;
+    e.info.source_id = 0;
+    e.info.source_inst = 0;
+    // e.encode_uint(6);
+    // e.encode_uint(700);
+    // e.encode_uint(80000);
+    e.close();
+
+    // b64.close();
   }
 }
