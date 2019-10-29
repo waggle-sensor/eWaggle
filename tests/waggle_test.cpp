@@ -5,11 +5,23 @@
 
 // string_writer implements a write buffer on top of the well tested std::string
 // to aid our own testing
-struct string_writer : public writer {
+struct string_buffer : public writer, public reader {
   std::string str;
+
   int write(const char *s, int n) {
     str += std::string(s, n);
     return n;
+  }
+
+  int read(char *s, int n) {
+    std::string front = str.substr(0, n);
+    str = str.substr(n);
+
+    for (int i = 0; i < front.size(); i++) {
+      s[i] = front[i];
+    }
+
+    return front.size();
   }
 };
 
@@ -28,7 +40,7 @@ bool test_bytebuffer() {
 }
 
 bool test_pack_uint(const char s[], unsigned int x, int size) {
-  string_writer w;
+  string_buffer w;
   basic_encoder e(w);
   e.encode_uint(x, size);
   return w.str == std::string(s, size);
@@ -45,42 +57,48 @@ bool test_uint(const char s[], unsigned int x, int size) {
 }
 
 bool test_sensorgram() {
-  bytebuffer<64> b;
+  string_buffer b;
 
-  {
-    sensorgram<32> s;
-    s.timestamp = 1;
-    s.id = 2;
-    s.sub_id = 3;
-    s.source_id = 4;
-    s.source_inst = 5;
-    // pack_uint(s.body, 12, 1);
-    // pack_uint(s.body, 3456, 2);
-    pack_sensorgram(b, s);
-  }
+  sensorgram_encoder<64> e(b);
+  e.info.timestamp = 1;
+  e.info.id = 2;
+  e.info.sub_id = 3;
+  e.info.source_id = 4;
+  e.info.source_inst = 5;
+  // e.encode_uint(1);
+  e.encode_bytes("hello", 5);
+  e.close();
 
-  {
-    sensorgram<32> s;
+  sensorgram_decoder<64> d(b);
 
-    if (!unpack_sensorgram(b, s)) {
-      return false;
-    }
-    // int a = unpack_uint(s.body, 1);
-    // int b = unpack_uint(s.body, 2);
-    return (s.timestamp == 1) && (s.id == 2) && (s.sub_id == 3) &&
-           (s.source_id == 4) && (s.source_inst == 5);
-
-    // && (a == 12) &&
-    //  (b == 3456);
-  }
+  // int a = unpack_uint(s.body, 1);
+  // int b = unpack_uint(s.body, 2);
+  return (e.info.timestamp == d.info.timestamp) && (e.info.id == d.info.id) &&
+         (e.info.sub_id == d.info.sub_id) &&
+         (e.info.source_id == d.info.source_id) &&
+         (e.info.source_inst == d.info.source_inst) && !d.err;
 }
 
 bool test_base64_encode(std::string input, std::string expect) {
-  string_writer w;
+  string_buffer w;
   base64_encoder e(w);
   e.write(input.c_str(), input.length());
   e.close();
   return w.str == expect;
+}
+
+bool test_crc(std::string input) {
+  string_buffer b;
+
+  crc8_writer w(b);
+  w.write(input.c_str(), input.length());
+  w.close();
+
+  crc8_reader r(b);
+  char tmp[100];
+  r.read(tmp, input.length() + 1);
+
+  return (b.str.length() == input.length() + 1) && (r.sum == 0);
 }
 
 std::string wiki_input =
@@ -132,4 +150,6 @@ int main() {
   check_test("base64 3", test_base64_encode("AZQ", "QVpR"));
   check_test("base64 4", test_base64_encode("1234", "MTIzNA"));
   check_test("base64 wiki", test_base64_encode(wiki_input, wiki_expect));
+
+  check_test("crc", test_crc("hello"));
 }

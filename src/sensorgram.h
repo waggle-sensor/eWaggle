@@ -1,106 +1,121 @@
 #ifndef __H_WAGGLE_SENSORGRAM__
 #define __H_WAGGLE_SENSORGRAM__
 
-template <int N>
-struct sensorgram {
+struct sensorgram_info {
   unsigned long timestamp;
   unsigned int id;
   unsigned int inst;
   unsigned int sub_id;
   unsigned int source_id;
   unsigned int source_inst;
-  bytebuffer<N> body;
 };
 
-// sure, we could move the crc out of this too since it's primarily used for
-// transmission. that would clean up the abstraction a bit.
-//
-// of course, we can just move to a sensorgram_encoder / decoder
-// that's just a composition of these two.
-//
-// these could also track the various errors we run into.
+template <int N>
+struct sensorgram_encoder {
+  sensorgram_info info;
+  bytebuffer<N> body;
+  writer &w;
+  bool closed;
+  bool err;
 
-template <class SG>
-void pack_sensorgram(writer &w, SG &sg) {
-  crc8_writer crcw(w);
-  basic_encoder e(crcw);
+  sensorgram_encoder(writer &w) : w(w), closed(false) {}
 
-  // write sensorgram content
-  e.encode_uint(sg.body.size(), 2);
-  e.encode_uint(sg.timestamp, 4);
-  e.encode_uint(sg.id, 2);
-  e.encode_uint(sg.inst, 1);
-  e.encode_uint(sg.sub_id, 1);
-  e.encode_uint(sg.source_id, 2);
-  e.encode_uint(sg.source_inst, 1);
-  e.encode_bytes(sg.body.bytes(), sg.body.size());
+  void close() {
+    if (closed) {
+      return;
+    }
 
-  // write crc sum
-  crcw.close();
-}
+    crc8_writer crcw(w);
+    basic_encoder e(crcw);
 
-template <class SG>
-bool unpack_sensorgram(reader &r, SG &sg) {
-  crc8_reader crcr(r);
-  basic_decoder d(r);
+    e.encode_uint(body.size(), 2);
+    e.encode_uint(info.timestamp, 4);
+    e.encode_uint(info.id, 2);
+    e.encode_uint(info.inst, 1);
+    e.encode_uint(info.sub_id, 1);
+    e.encode_uint(info.source_id, 2);
+    e.encode_uint(info.source_inst, 1);
+    e.encode_bytes(body.bytes(), body.size());
 
-  // read sensorgram content
-  int len = d.decode_uint(2);
-  sg.timestamp = d.decode_uint(4);
-  sg.id = d.decode_uint(2);
-  sg.inst = d.decode_uint(1);
-  sg.sub_id = d.decode_uint(1);
-  sg.source_id = d.decode_uint(2);
-  sg.source_inst = d.decode_uint(1);
+    crcw.close();
+  }
 
-  sg.body.clear();
-  sg.body.readfrom(crcr, len);
+  void encode_bytes(const char *s, int n) {
+    basic_encoder e(body);
+    e.encode_uint(TYPE_BYTES, 1);
+    e.encode_uint(n, 2);
+    e.encode_bytes(s, n);
+  }
 
-  // throw away trailing crc byte and check for errors
-  d.decode_uint(1);
-  return !d.err && crcr.sum == 0;
-}
+  void encode_uint(unsigned long x) {
+    basic_encoder e(body);
 
-void pack_bytes_val(writer &w, const char *s, int n) {
-  basic_encoder e(w);
-  e.encode_uint(TYPE_BYTES, 1);
-  e.encode_uint(n, 2);
-  e.encode_bytes(s, n);
-}
+    if (x <= 0xff) {
+      e.encode_uint(TYPE_UINT8, 1);
+      e.encode_uint(x, 1);
+      return;
+    }
 
-// template <class writerT>
-// void pack_string_val(writerT &w, const char *s) {
-//   int size = string_size(s, 1024);
-//   pack_uint(w, TYPE_STRING, 1);
-//   pack_uint(w, size, 2);
-//   w.write(s, size);
-// }
+    if (x <= 0xffff) {
+      e.encode_uint(TYPE_UINT16, 1);
+      e.encode_uint(x, 2);
+      return;
+    }
 
-// need a value reader / writer too to manage error handling...
+    if (x <= 0xffffff) {
+      e.encode_uint(TYPE_UINT24, 1);
+      e.encode_uint(x, 3);
+      return;
+    }
 
-// template <class readerT>
-// void unpack_string_val(readerT &r, char *s) {
-//   int type = unpack_uint(r, 1);
+    e.encode_uint(TYPE_UINT32, 1);
+    e.encode_uint(x, 4);
+  }
 
-//   // need a way to signal error
-//   if (type != TYPE_STRING) {
-//     return;
-//   }
-
-//   while (r.read(b, 1) == 1 && b[0] != '\0') {
-//     *s++ = b[0];
-//   }
-
-//   *s = '\0';
-// }
-
-template <class writerT>
-void pack_float32(writerT &w, float x) {
   // WARNING Possibly unsafe and unreliable across platforms. Check this
   // carefully!
-  const char *b = (const char *)&x;
-  pack_bytes(w, b, 4);
-}
+  void encode_float32(float x) {
+    basic_encoder e(body);
+    const char *b = (const char *)&x;
+    e.encode_bytes(b, 4);
+  }
+
+  // WARNING Possibly unsafe and unreliable across platforms. Check this
+  // carefully!
+  void pack_float64(double x) {
+    basic_encoder e(body);
+    const char *b = (const char *)&x;
+    e.encode_bytes(b, 8);
+  }
+};
+
+template <int N>
+struct sensorgram_decoder {
+  sensorgram_info info;
+  bytebuffer<N> body;
+  reader &r;
+  bool err;  // need for encoder too
+
+  sensorgram_decoder(reader &r) : r(r) {
+    crc8_reader crcr(r);
+    basic_decoder d(r);
+
+    // read sensorgram content
+    int len = d.decode_uint(2);
+    info.timestamp = d.decode_uint(4);
+    info.id = d.decode_uint(2);
+    info.inst = d.decode_uint(1);
+    info.sub_id = d.decode_uint(1);
+    info.source_id = d.decode_uint(2);
+    info.source_inst = d.decode_uint(1);
+    body.readfrom(crcr, len);
+
+    // throw away trailing crc byte and check for errors
+    d.decode_uint(1);
+
+    err = d.err || (crcr.sum != 0);
+  }
+};
 
 template <class readerT>
 float unpack_float32(readerT &r) {
@@ -109,55 +124,11 @@ float unpack_float32(readerT &r) {
   return *(const float *)b;
 }
 
-template <class writerT>
-void pack_float64(writerT &w, double x) {
-  // WARNING Possibly unsafe and unreliable across platforms. Check this
-  // carefully!
-  const char *b = (const char *)&x;
-  pack_bytes(w, b, 8);
-}
-
 template <class readerT>
 double unpack_float64(readerT &r) {
   char b[8];
   unpack_bytes(r, b, 8);
   return *(const double *)b;
-}
-
-template <class writerT>
-void pack_uint_val(writerT &w, unsigned long x) {
-  if (x <= 0xff) {
-    pack_uint(w, TYPE_UINT8, 1);
-    pack_uint(w, x, 1);
-    return;
-  }
-
-  if (x <= 0xffff) {
-    pack_uint(w, TYPE_UINT16, 1);
-    pack_uint(w, x, 2);
-    return;
-  }
-
-  if (x <= 0xffffff) {
-    pack_uint(w, TYPE_UINT24, 1);
-    pack_uint(w, x, 3);
-    return;
-  }
-
-  pack_uint(w, TYPE_UINT32, 1);
-  pack_uint(w, x, 4);
-}
-
-template <class writerT>
-void pack_float_val(writerT &w, float x) {
-  pack_uint(w, TYPE_FLOAT32, 1);
-  pack_float32(w, x);
-}
-
-template <class writerT>
-void pack_double_val(writerT &w, double x) {
-  pack_uint(w, TYPE_FLOAT64, 1);
-  pack_float64(w, x);
 }
 
 template <class readerT>
