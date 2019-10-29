@@ -2,8 +2,9 @@
 #define __H_WAGGLE_SENSORGRAM__
 
 const char TYPE_NULL = 0x00;
-const char TYPE_BYTES = 0x01;
-const char TYPE_STRING = 0x02;
+
+const char TYPE_BYTE = 0x01;
+const char TYPE_CHAR = 0x02;
 const char TYPE_INT8 = 0x03;
 const char TYPE_UINT8 = 0x04;
 const char TYPE_INT16 = 0x05;
@@ -15,6 +16,20 @@ const char TYPE_UINT32 = 0x0a;
 const char TYPE_FLOAT16 = 0x0b;
 const char TYPE_FLOAT32 = 0x0c;
 const char TYPE_FLOAT64 = 0x0d;
+
+const char TYPE_BYTE_ARRAY = 0x71;
+const char TYPE_STRING = 0x72;
+const char TYPE_INT8_ARRAY = 0x73;
+const char TYPE_UINT8_ARRAY = 0x74;
+const char TYPE_INT16_ARRAY = 0x75;
+const char TYPE_UINT16_ARRAY = 0x76;
+const char TYPE_INT24_ARRAY = 0x77;
+const char TYPE_UINT24_ARRAY = 0x78;
+const char TYPE_INT32_ARRAY = 0x79;
+const char TYPE_UINT32_ARRAY = 0x7a;
+const char TYPE_FLOAT16_ARRAY = 0x7b;
+const char TYPE_FLOAT32_ARRAY = 0x7c;
+const char TYPE_FLOAT64_ARRAY = 0x7d;
 
 struct sensorgram_info {
   unsigned long timestamp;
@@ -59,7 +74,7 @@ struct sensorgram_encoder {
 
   void encode_bytes(const char *s, int n) {
     basic_encoder e(body);
-    e.encode_uint(TYPE_BYTES, 1);
+    e.encode_uint(TYPE_BYTE_ARRAY, 1);
     e.encode_uint(n, 2);
     e.encode_bytes(s, n);
   }
@@ -139,7 +154,7 @@ struct sensorgram_decoder {
 
     basic_decoder d(body);
 
-    if (d.decode_uint(1) != TYPE_BYTES) {
+    if (d.decode_uint(1) != TYPE_BYTE_ARRAY) {
       err = true;
       return 0;
     }
