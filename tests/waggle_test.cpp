@@ -190,7 +190,7 @@ int main() {
       sensorgram_encoder<256> e(b64);
       e.info.timestamp = 1572368498;
       e.info.id = 2;
-      e.info.sub_id = 1;
+      e.info.sub_id = i;
       e.info.source_id = 0;
       e.info.source_inst = 0;
       e.encode_uint(6);
