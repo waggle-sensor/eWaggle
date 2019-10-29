@@ -1,6 +1,21 @@
 #ifndef __H_WAGGLE_SENSORGRAM__
 #define __H_WAGGLE_SENSORGRAM__
 
+const char TYPE_NULL = 0x00;
+const char TYPE_BYTES = 0x01;
+const char TYPE_STRING = 0x02;
+const char TYPE_INT8 = 0x03;
+const char TYPE_UINT8 = 0x04;
+const char TYPE_INT16 = 0x05;
+const char TYPE_UINT16 = 0x06;
+const char TYPE_INT24 = 0x07;
+const char TYPE_UINT24 = 0x08;
+const char TYPE_INT32 = 0x09;
+const char TYPE_UINT32 = 0x0a;
+const char TYPE_FLOAT16 = 0x0b;
+const char TYPE_FLOAT32 = 0x0c;
+const char TYPE_FLOAT64 = 0x0d;
+
 struct sensorgram_info {
   unsigned long timestamp;
   unsigned int id;
