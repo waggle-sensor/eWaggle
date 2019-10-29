@@ -44,29 +44,13 @@ char update_crc(char sum, const char table[], const char s[], int n) {
   return sum;
 }
 
-struct crc8_writer : public writer, public closer {
+struct crc8_writer : public writer {
   writer &w;
-  bool closed;
   char sum;
 
-  crc8_writer(writer &w) : w(w), closed(false), sum(0) {}
-
-  void close() {
-    if (closed) {
-      return;
-    }
-
-    closed = true;
-
-    basic_encoder e(w);
-    e.encode_uint(sum, 1);
-  }
+  crc8_writer(writer &w) : w(w), sum(0) {}
 
   int write(const char *s, int n) {
-    if (closed) {
-      return 0;
-    }
-
     sum = update_crc(sum, crc8_table, s, n);
     return w.write(s, n);
   }

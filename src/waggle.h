@@ -4,11 +4,19 @@
 // reader is the interface providing the basic read method.
 struct reader {
   virtual int read(char *s, int n) = 0;
+
+  char readbyte() {
+    char c;
+    read(&c, 1);
+    return c;
+  }
 };
 
 // writer is the interface providing the basic write method.
 struct writer {
   virtual int write(const char *s, int n) = 0;
+
+  void writebyte(char c) { write(&c, 1); }
 };
 
 // closer is the interface providing the basic close method.

@@ -71,12 +71,10 @@ bool test_sensorgram() {
 
   sensorgram_decoder<64> d(b);
 
-  // int a = unpack_uint(s.body, 1);
-  // int b = unpack_uint(s.body, 2);
   return (e.info.timestamp == d.info.timestamp) && (e.info.id == d.info.id) &&
          (e.info.sub_id == d.info.sub_id) &&
          (e.info.source_id == d.info.source_id) &&
-         (e.info.source_inst == d.info.source_inst) && !d.err;
+         (e.info.source_inst == d.info.source_inst) && (d.err == false);
 }
 
 bool test_base64_encode(std::string input, std::string expect) {
@@ -92,7 +90,7 @@ bool test_crc(std::string input) {
 
   crc8_writer w(b);
   w.write(input.c_str(), input.length());
-  w.close();
+  b.writebyte(w.sum);
 
   if (b.str.length() != input.length() + 1) {
     std::cout << "crc wrong size" << std::endl;
@@ -101,9 +99,9 @@ bool test_crc(std::string input) {
 
   crc8_reader r(b);
   char tmp[256];
-  r.read(tmp, input.length() + 1);
+  r.read(tmp, input.length());
 
-  if (r.sum != 0) {
+  if (r.sum != b.readbyte()) {
     std::cout << "crc wrong value" << std::endl;
     return false;
   }
