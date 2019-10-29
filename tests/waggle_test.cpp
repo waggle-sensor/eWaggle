@@ -94,11 +94,21 @@ bool test_crc(std::string input) {
   w.write(input.c_str(), input.length());
   w.close();
 
+  if (b.str.length() != input.length() + 1) {
+    std::cout << "crc wrong size" << std::endl;
+    return false;
+  }
+
   crc8_reader r(b);
-  char tmp[100];
+  char tmp[256];
   r.read(tmp, input.length() + 1);
 
-  return (b.str.length() == input.length() + 1) && (r.sum == 0);
+  if (r.sum != 0) {
+    std::cout << "crc wrong value" << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 std::string wiki_input =

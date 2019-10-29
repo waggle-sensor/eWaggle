@@ -47,7 +47,7 @@ char update_crc(char sum, const char table[], const char s[], int n) {
 struct crc8_writer : public writer, public closer {
   writer &w;
   bool closed;
-  int sum;
+  char sum;
 
   crc8_writer(writer &w) : w(w), closed(false), sum(0) {}
 
@@ -75,7 +75,7 @@ struct crc8_writer : public writer, public closer {
 // crc8_reader allows a reader
 struct crc8_reader : public reader {
   reader &r;
-  int sum;
+  char sum;
 
   crc8_reader(reader &r) : r(r), sum(0) {}
 
