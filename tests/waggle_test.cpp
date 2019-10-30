@@ -234,11 +234,13 @@ int main() {
   check_test("base64 decode", test_base64_decode());
 
   {
-    const byte *line = (const byte *)"AAYAAAABAAIDBAAFBgQBBAIEA40=";
-    bytebuffer<1024> b;
-    b64decode(line, 29, b);
+    const byte line[] = "AAcAqYrHCK4hLBWzQgQHBFgGJw9s";
+    // in practice, we'd just do writebyte into b off serial port
+    bytebuffer<1024> b(line, sizeof(line));
+    // b64decode(line, sizeof(line), b);
+    base64_decoder b64(b);
 
-    sensorgram_decoder<256> d(b);
+    sensorgram_decoder<256> d(b64);
 
     std::cout << d.info.timestamp << std::endl
               << d.info.id << std::endl

@@ -28,6 +28,31 @@ struct closer {
   virtual void close() = 0;
 };
 
+// int copyn(reader &r, writer &w, int n) {
+//   byte buf[64];
+//   int ntotal = 0;
+
+//   while (n > 0) {
+//     int blocksize = sizeof(buf);
+
+//     if (n < blocksize) {
+//       blocksize = n;
+//     }
+
+//     int nr = r.read(buf, blocksize);
+//     int nw = w.write(buf, nr);
+//     ntotal += nw;
+
+//     if (nw < blocksize) {
+//       return ntotal;
+//     }
+
+//     n -= blocksize;
+//   }
+
+//   return ntotal;
+// }
+
 template <int N>
 struct bytebuffer : public reader, public writer {
   byte arr[N];

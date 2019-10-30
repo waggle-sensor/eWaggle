@@ -179,71 +179,66 @@ struct base64_encoder : public writer, public closer {
   }
 };
 
-// struct base64_decoder : public reader {
-//   reader &r;
-//   byte buf[4];
-//   int nbuf;
-//   byte out[3];
-//   bool err;
+struct base64_decoder : public reader {
+  reader &r;
+  byte buf[4];
+  bytebuffer<3> out;
+  bool err;
 
-//   base64_decoder(reader &r) : r(r), nbuf(0), err(false) {}
+  base64_decoder(reader &r) : r(r), err(false) {}
 
-//   int read(byte *s, int n) {
-//     // need to update state to read n bytes
+  int read(byte *s, int n) {
+    for (int i = 0; i < n; i++) {
+      s[i] = decodebyte();
+    }
 
-//     // ah... right this isn't the implementation we're expecting...
+    return n;
+  }
 
-//     for (int i = 0; i < n; i++) {
-//       if (s[i] == '=') {
-//         decode();
-//         continue;
-//       }
+  byte decodebyte() {
+    if (out.size() == 0) {
+      readbuffer();
+    }
 
-//       buf[nbuf++] = s[i];
+    if (err) {
+      return 0;
+    }
 
-//       if (nbuf == 4) {
-//         decode();
-//       }
-//     }
+    return out.readbyte();
+  }
 
-//     return 0;
-//   }
+  void readbuffer() {
+    int n = r.read(buf, 4);
 
-//   void decode() {
-//     unsigned int x = 0;
+    // trim padding
+    while (n > 0 && buf[n - 1] == '=') {
+      n--;
+    }
 
-//     if (nbuf == 1) {
-//       x = valueof(buf[0]) << 18;
-//     } else if (nbuf == 2) {
-//       x = (valueof(buf[0]) << 18) | (valueof(buf[1]) << 12);
-//     } else if (nbuf == 3) {
-//       x = (valueof(buf[0]) << 18) | (valueof(buf[1]) << 12) |
-//           (valueof(buf[2]) << 6);
-//     } else if (nbuf == 4) {
-//       x = (valueof(buf[0]) << 18) | (valueof(buf[1]) << 12) |
-//           (valueof(buf[2]) << 6) | valueof(buf[3]);
-//     } else {
-//       err = true;
-//       return;
-//     }
+    if (n == 0) {
+      err = true;
+      return;
+    }
 
-//     out[0] = (x >> 16) & 0xff;
-//     out[1] = (x >> 8) & 0xff;
-//     out[2] = x & 0xff;
-//     nbuf = 0;
-//   }
-
-//   // TODO replace with more efficient search
-//   int valueof(byte x) {
-//     for (int i = 0; i < 64; i++) {
-//       if (x == base64[i]) {
-//         return i;
-//       }
-//     }
-
-//     err = true;
-//     return 0;
-//   }
-// };
+    if (n == 1) {
+      unsigned int x = (b64value(buf[0]) << 18);
+      out.writebyte((x >> 16) & 0xff);
+    } else if (n == 2) {
+      unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12);
+      out.writebyte((x >> 16) & 0xff);
+    } else if (n == 3) {
+      unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
+                       (b64value(buf[2]) << 6);
+      out.writebyte((x >> 16) & 0xff);
+      out.writebyte((x >> 8) & 0xff);
+    } else if (n == 4) {
+      unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
+                       (b64value(buf[2]) << 6) | b64value(buf[3]);
+      out.writebyte((x >> 16) & 0xff);
+      out.writebyte((x >> 8) & 0xff);
+      out.writebyte(x & 0xff);
+    }
+  }
+};
 
 #endif
