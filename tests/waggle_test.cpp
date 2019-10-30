@@ -132,6 +132,8 @@ bool test_crc(std::string input) {
   return true;
 }
 
+bool test_base64_value() {}
+
 bool test_base64_decode() {
   // should base64 encoding of {0, 1, ..., 255}
   const byte testdata[] =
@@ -143,12 +145,14 @@ bool test_base64_decode() {
       "wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/"
       "g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==";
 
-  bytebuffer<1024> b;
-  b64decode(testdata, sizeof(testdata), b);
+  bytebuffer<1024> b(testdata, sizeof(testdata));
+  base64_decoder d(b);
+
+  // b64decode(testdata, sizeof(testdata), b);
 
   // check that we've reconstructed {0, 1, ..., 255}
-  for (int i = 0; i < b.size(); i++) {
-    if (b.bytes()[i] != i) {
+  for (int i = 0; i < 256; i++) {
+    if (d.readbyte() != i) {
       return false;
     }
   }

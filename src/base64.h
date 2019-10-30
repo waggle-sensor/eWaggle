@@ -7,24 +7,16 @@ const byte base64[] =
     "0123456789+/";
 
 byte b64value(byte x) {
-  for (int i = 0; i < 64; i++) {
-    if (x == base64[i]) {
-      return i;
-    }
-  }
-
-  return 0;
-
   if ('A' <= x && x <= 'Z') {
     return x - 'A';
   }
 
   if ('a' <= x && x <= 'z') {
-    return (x - 'a') + ('Z' - 'A');
+    return (x - 'a') + 26;
   }
 
   if ('0' <= x && x <= '9') {
-    return (x - '0') + (('z' - 'a') + ('Z' - 'A'));
+    return (x - '0') + 52;
   }
 
   if (x == '+') {
@@ -36,91 +28,6 @@ byte b64value(byte x) {
   }
 
   return 0;
-}
-
-int b64encode(const byte *buf, int n, byte *out) {
-  int pos = 0;
-  int nblocks = n / 3;
-
-  // encode all full blocks
-  for (int i = 0; i < nblocks; i++) {
-    unsigned int x = (buf[0] << 16) | (buf[1] << 8) | buf[2];
-    buf += 3;
-    out[pos++] = base64[(x >> 18) & 63];
-    out[pos++] = base64[(x >> 12) & 63];
-    out[pos++] = base64[(x >> 6) & 63];
-    out[pos++] = base64[x & 63];
-  }
-
-  int remain = n - 3 * nblocks;
-
-  // encode remaining bytes
-  if (remain == 1) {
-    unsigned int x = (buf[0] << 16);
-    out[pos++] = base64[(x >> 18) & 63];
-    out[pos++] = base64[(x >> 12) & 63];
-    out[pos++] = '=';
-    out[pos++] = '=';
-  } else if (remain == 2) {
-    unsigned int x = (buf[0] << 16) | (buf[1] << 8);
-    out[pos++] = base64[(x >> 18) & 63];
-    out[pos++] = base64[(x >> 12) & 63];
-    out[pos++] = base64[(x >> 6) & 63];
-    out[pos++] = '=';
-  }
-
-  out[pos] = 0;
-  return pos;
-}
-
-void b64decode(const byte *buf, int n, writer &w) {
-  byte out[3];
-
-  // trim padding
-  while ((buf[n - 1] == 0) || (buf[n - 1] == '=')) {
-    n--;
-  }
-
-  int nblocks = n / 4;
-
-  // decode full blocks
-  for (int i = 0; i < nblocks; i++) {
-    unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
-                     (b64value(buf[2]) << 6) | b64value(buf[3]);
-    buf += 4;
-    out[0] = (x >> 16) & 0xff;
-    out[1] = (x >> 8) & 0xff;
-    out[2] = x & 0xff;
-    w.write(out, 3);
-  }
-
-  //
-  //   1        2       3
-  // 000000001111111122222222
-  // 000000111111222222333333
-  //   1     2      3     4
-  //
-
-  int remain = n - 4 * nblocks;
-
-  // decode remaining bytes
-  if (remain == 1) {
-    unsigned int x = (b64value(buf[0]) << 18);
-    out[0] = (x >> 16) & 0xff;
-    w.write(out, 1);
-  } else if (remain == 2) {
-    unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12);
-    out[0] = (x >> 16) & 0xff;
-    // out[1] = (x >> 8) & 0xff;
-    w.write(out, 1);
-  } else if (remain == 3) {
-    unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
-                     (b64value(buf[2]) << 6);
-    out[0] = (x >> 16) & 0xff;
-    out[1] = (x >> 8) & 0xff;
-    // out[2] = x & 0xff;
-    w.write(out, 2);
-  }
 }
 
 struct base64_encoder : public writer, public closer {
