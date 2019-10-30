@@ -186,6 +186,8 @@ int main() {
   check_test("crc", test_crc("hello"));
 
   {
+    unsigned int values[5] = {1, 2, 3, 4, 5};
+
     base64_encoder textw(cout_writer);
     sensorgram_encoder<256> e(textw);
     e.info.timestamp = 0x11111111;
@@ -194,10 +196,12 @@ int main() {
     e.info.sub_id = 0x44;
     e.info.source_id = 0x5555;
     e.info.source_inst = 0x66;
-    // e.encode_uint(0x99);
-    // e.encode_uint(700);
-    // e.encode_uint(80000);
+    e.encode_uint(13);
+    e.encode_uint(17);
+    e.encode_uint(1001);
+    e.encode_uint32_array(values, 5);
     e.close();
     textw.close();
+    std::cout << std::endl;
   }
 }

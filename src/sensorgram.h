@@ -17,19 +17,19 @@ const byte TYPE_FLOAT16 = 0x0b;
 const byte TYPE_FLOAT32 = 0x0c;
 const byte TYPE_FLOAT64 = 0x0d;
 
-const byte TYPE_BYTE_ARRAY = 0x71;
-const byte TYPE_STRING = 0x72;
-const byte TYPE_INT8_ARRAY = 0x73;
-const byte TYPE_UINT8_ARRAY = 0x74;
-const byte TYPE_INT16_ARRAY = 0x75;
-const byte TYPE_UINT16_ARRAY = 0x76;
-const byte TYPE_INT24_ARRAY = 0x77;
-const byte TYPE_UINT24_ARRAY = 0x78;
-const byte TYPE_INT32_ARRAY = 0x79;
-const byte TYPE_UINT32_ARRAY = 0x7a;
-const byte TYPE_FLOAT16_ARRAY = 0x7b;
-const byte TYPE_FLOAT32_ARRAY = 0x7c;
-const byte TYPE_FLOAT64_ARRAY = 0x7d;
+const byte TYPE_BYTE_ARRAY = 0x81;
+const byte TYPE_STRING = 0x82;
+const byte TYPE_INT8_ARRAY = 0x83;
+const byte TYPE_UINT8_ARRAY = 0x84;
+const byte TYPE_INT16_ARRAY = 0x85;
+const byte TYPE_UINT16_ARRAY = 0x86;
+const byte TYPE_INT24_ARRAY = 0x87;
+const byte TYPE_UINT24_ARRAY = 0x88;
+const byte TYPE_INT32_ARRAY = 0x89;
+const byte TYPE_UINT32_ARRAY = 0x8a;
+const byte TYPE_FLOAT16_ARRAY = 0x8b;
+const byte TYPE_FLOAT32_ARRAY = 0x8c;
+const byte TYPE_FLOAT64_ARRAY = 0x8d;
 
 struct sensorgram_info {
   unsigned long timestamp;
@@ -109,6 +109,7 @@ struct sensorgram_encoder {
   void encode_float32(float x) {
     basic_encoder e(body);
     const byte *b = (const byte *)&x;
+    e.encode_uint(TYPE_FLOAT32, 1);
     e.encode_bytes(b, 4);
   }
 
@@ -117,7 +118,28 @@ struct sensorgram_encoder {
   void encode_float64(double x) {
     basic_encoder e(body);
     const byte *b = (const byte *)&x;
+    e.encode_uint(TYPE_FLOAT64, 1);
     e.encode_bytes(b, 8);
+  }
+
+  void encode_uint8_array(const unsigned char s[], int count) {
+    basic_encoder e(body);
+    e.encode_uint(TYPE_UINT8_ARRAY, 1);
+    e.encode_uint(count, 2);
+
+    for (int i = 0; i < count; i++) {
+      e.encode_uint(s[i], 1);
+    }
+  }
+
+  void encode_uint32_array(const unsigned int s[], int count) {
+    basic_encoder e(body);
+    e.encode_uint(TYPE_UINT32_ARRAY, 1);
+    e.encode_uint(count, 2);
+
+    for (int i = 0; i < count; i++) {
+      e.encode_uint(s[i], 4);
+    }
   }
 };
 
