@@ -11,6 +11,24 @@ struct : public writer {
 
 } cout_writer;
 
+struct bytereader : public reader {
+  const byte *buf;
+  int size;
+  int pos;
+
+  bytereader(const byte buf[], int size) : buf(buf), size(size), pos(0) {}
+
+  int read(byte *s, int n) {
+    int i = 0;
+
+    while (i < n && pos < size) {
+      s[i++] = buf[pos++];
+    }
+
+    return i;
+  }
+};
+
 // string_writer implements a write buffer on top of the well tested std::string
 // to aid our own testing
 struct string_buffer : public writer, public reader {
@@ -132,10 +150,8 @@ bool test_crc(std::string input) {
   return true;
 }
 
-bool test_base64_value() {}
-
 bool test_base64_decode() {
-  // should base64 encoding of {0, 1, ..., 255}
+  // base64 encoding of {0, 1, ..., 255}
   const byte testdata[] =
       "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMz"
       "Q1Njc4OTo7PD0+"
@@ -145,10 +161,8 @@ bool test_base64_decode() {
       "wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/"
       "g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==";
 
-  bytebuffer<1024> b(testdata, sizeof(testdata));
-  base64_decoder d(b);
-
-  // b64decode(testdata, sizeof(testdata), b);
+  bytereader r(testdata, sizeof(testdata));
+  base64_decoder d(r);
 
   // check that we've reconstructed {0, 1, ..., 255}
   for (int i = 0; i < 256; i++) {
@@ -239,10 +253,8 @@ int main() {
 
   {
     const byte line[] = "AAcAqYrHCK4hLBWzQgQHBFgGJw9s";
-    // in practice, we'd just do writebyte into b off serial port
-    bytebuffer<1024> b(line, sizeof(line));
-    // b64decode(line, sizeof(line), b);
-    base64_decoder b64(b);
+    bytereader r(line, sizeof(line));
+    base64_decoder b64(r);
 
     sensorgram_decoder<256> d(b64);
 
