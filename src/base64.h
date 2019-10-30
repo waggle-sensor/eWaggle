@@ -97,6 +97,10 @@ struct base64_decoder : public reader {
   int read(byte *s, int n) {
     for (int i = 0; i < n; i++) {
       s[i] = decodebyte();
+
+      if (err) {
+        return i;
+      }
     }
 
     return n;
