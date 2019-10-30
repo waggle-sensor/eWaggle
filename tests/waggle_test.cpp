@@ -132,6 +132,30 @@ bool test_crc(std::string input) {
   return true;
 }
 
+bool test_base64_decode() {
+  // should base64 encoding of {0, 1, ..., 255}
+  const byte testdata[] =
+      "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMz"
+      "Q1Njc4OTo7PD0+"
+      "P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3Bxcn"
+      "N0dXZ3eHl6e3x9fn+"
+      "AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+"
+      "wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/"
+      "g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==";
+
+  bytebuffer<1024> b;
+  b64decode(testdata, sizeof(testdata), b);
+
+  // check that we've reconstructed {0, 1, ..., 255}
+  for (int i = 0; i < b.size(); i++) {
+    if (b.bytes()[i] != i) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 std::string wiki_input =
     "Man is distinguished, not only by his reason, but by this singular "
     "passion from other animals, "
@@ -186,7 +210,8 @@ int main() {
   check_test("crc", test_crc("hello"));
 
   {
-    unsigned int values[5] = {1, 2, 3, 4, 5};
+    unsigned int values1[5] = {1, 2, 3, 4, 5};
+    unsigned int values2[4] = {6, 7, 8, 9};
 
     base64_encoder textw(cout_writer);
     sensorgram_encoder<256> e(textw);
@@ -199,9 +224,29 @@ int main() {
     e.encode_uint(13);
     e.encode_uint(17);
     e.encode_uint(1001);
-    e.encode_uint32_array(values, 5);
+    e.encode_uint32_array(values1, 5);
+    e.encode_uint32_array(values2, 4);
     e.close();
     textw.close();
     std::cout << std::endl;
+  }
+
+  check_test("base64 decode", test_base64_decode());
+
+  {
+    const byte *line = (const byte *)"AAYAAAABAAIDBAAFBgQBBAIEA40=";
+    bytebuffer<1024> b;
+    b64decode(line, 29, b);
+
+    sensorgram_decoder<256> d(b);
+
+    std::cout << d.info.timestamp << std::endl
+              << d.info.id << std::endl
+              << d.info.inst << std::endl
+              << d.info.sub_id << std::endl;
+
+    std::cout << d.decode_uint() << std::endl;
+    std::cout << d.decode_uint() << std::endl;
+    std::cout << d.decode_uint() << std::endl;
   }
 }
