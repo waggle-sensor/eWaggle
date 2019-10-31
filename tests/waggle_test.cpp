@@ -93,6 +93,10 @@ bool test_sensorgram() {
 
   sensorgram_decoder<64> d(b);
 
+  if (!d.decode()) {
+    return false;
+  }
+
   if (d.decode_uint() != 6) {
     return false;
   }
@@ -258,13 +262,15 @@ int main() {
 
     sensorgram_decoder<256> d(b64);
 
-    std::cout << d.info.timestamp << std::endl
-              << d.info.id << std::endl
-              << d.info.inst << std::endl
-              << d.info.sub_id << std::endl;
+    while (d.decode()) {
+      std::cout << d.info.timestamp << std::endl
+                << d.info.id << std::endl
+                << d.info.inst << std::endl
+                << d.info.sub_id << std::endl;
 
-    std::cout << d.decode_uint() << std::endl;
-    std::cout << d.decode_uint() << std::endl;
-    std::cout << d.decode_uint() << std::endl;
+      std::cout << d.decode_uint() << std::endl;
+      std::cout << d.decode_uint() << std::endl;
+      std::cout << d.decode_uint() << std::endl;
+    }
   }
 }

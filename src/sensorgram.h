@@ -150,14 +150,16 @@ struct sensorgram_decoder {
   reader &r;
   bool err;  // need for encoder too
 
-  sensorgram_decoder(reader &r) : r(r) {
+  sensorgram_decoder(reader &r) : r(r), err(false) {}
+
+  bool decode() {
+    if (err) {
+      return false;
+    }
+
     crc8_reader crcr(r);
-    decode_content(crcr);
 
-    err = (crcr.sum != r.readbyte());
-  }
-
-  void decode_content(crc8_reader &crcr) {
+    // read sensorgram content
     basic_decoder d(crcr);
     int len = d.decode_uint(2);
     info.timestamp = d.decode_uint(4);
@@ -166,7 +168,15 @@ struct sensorgram_decoder {
     info.sub_id = d.decode_uint(1);
     info.source_id = d.decode_uint(2);
     info.source_inst = d.decode_uint(1);
+    body.clear();
     body.readfrom(crcr, len);
+
+    // read crc and compare with computed sum
+    if (crcr.sum != r.readbyte()) {
+      err = true;
+    }
+
+    return !err;
   }
 
   int decode_bytes(byte *s, int max_size) {
