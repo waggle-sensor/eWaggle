@@ -73,6 +73,11 @@ struct sensorgram_encoder {
 
     w.writebyte(crcw.sum);
 
+    // check basic encoder for errors
+    if (e.err) {
+      err = true;
+    }
+
     return !err;
   }
 
@@ -174,6 +179,11 @@ struct sensorgram_decoder {
     info.source_inst = d.decode_uint(1);
     body.clear();
     body.readfrom(crcr, len);
+
+    // check basic decoder for errors
+    if (d.err) {
+      err = true;
+    }
 
     // read crc and compare with computed sum
     if (crcr.sum != r.readbyte()) {

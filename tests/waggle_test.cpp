@@ -78,7 +78,7 @@ bool test_uint(const byte s[], unsigned int x, int size) {
 }
 
 bool test_sensorgram() {
-  string_buffer b;
+  bytebuffer<1024> b;
 
   sensorgram_encoder<64> e(b);
   e.info.timestamp = 1;
@@ -259,8 +259,8 @@ int main() {
   check_test("base64 decode", test_base64_decode());
 
   {
-    const byte line[] = "AAcAqYrHCK4hLBWzQgQHBFgGJw9s";
-    bytereader r(line, sizeof(line));
+    const byte line[] = "AAdduvm7CK4hLBWzQgQHBFgGJw8J";
+    bytebuffer<1024> r(line, sizeof(line));
 
     base64_decoder b64d(r);
     sensorgram_decoder<256> d(b64d);
