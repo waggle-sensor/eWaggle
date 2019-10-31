@@ -1,5 +1,10 @@
 all: importlib micro.hex wagman.bin
 
+installdep:
+	arduino-cli core update-index
+	arduino-cli core install arduino:avr
+	arduino-cli core install arduino:sam
+
 importlib:
 	cp ../../src/* .
 
