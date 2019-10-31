@@ -91,6 +91,20 @@ struct bytebuffer : public reader, public writer {
     return n;
   }
 
+  // int writeto(writer &w, int n) {
+  //   if (n == -1) {
+  //     n = size();
+  //   }
+
+  //   // could make more efficient...but doesn't matter for now.
+  //   for (int i = 0; i < n; i++) {
+  //     w.writebyte(r.readbyte());
+  //   }
+
+  //   // TODO check for errors on this
+  //   return n;
+  // }
+
   void realign() {
     if (front == 0) {
       return;

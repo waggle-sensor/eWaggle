@@ -89,11 +89,12 @@ bool test_sensorgram() {
   e.encode_uint(6);
   e.encode_uint(700);
   e.encode_uint(80000);
-  e.close();
+  e.encode();
 
   sensorgram_decoder<64> d(b);
 
   if (!d.decode()) {
+    std::cout << "failed to decode!" << std::endl;
     return false;
   }
 
@@ -119,7 +120,7 @@ bool test_base64_encode(std::string input, std::string expect) {
   string_buffer w;
   base64_encoder e(w);
   e.write((const byte *)input.c_str(), input.length());
-  e.close();
+  e.encode();
   return w.str == expect;
 }
 
@@ -236,6 +237,7 @@ int main() {
     unsigned int values2[4] = {6, 7, 8, 9};
 
     base64_encoder textw(cout_writer);
+
     sensorgram_encoder<256> e(textw);
     e.info.timestamp = 0x11111111;
     e.info.id = 0x2222;
@@ -248,7 +250,8 @@ int main() {
     e.encode_uint(1001);
     e.encode_uint32_array(values1, 5);
     e.encode_uint32_array(values2, 4);
-    e.close();
+    e.encode();
+
     textw.close();
     std::cout << std::endl;
   }
@@ -258,11 +261,13 @@ int main() {
   {
     const byte line[] = "AAcAqYrHCK4hLBWzQgQHBFgGJw9s";
     bytereader r(line, sizeof(line));
-    base64_decoder b64(r);
 
-    sensorgram_decoder<256> d(b64);
+    base64_decoder b64d(r);
+    sensorgram_decoder<256> d(b64d);
 
     while (d.decode()) {
+      std::cout << "---" << std::endl;
+
       std::cout << d.info.timestamp << std::endl
                 << d.info.id << std::endl
                 << d.info.inst << std::endl

@@ -40,27 +40,24 @@ struct sensorgram_info {
   unsigned int source_inst;
 };
 
+// TODO think a little more about interface / naming for close / encode
+
 template <int N>
 struct sensorgram_encoder {
   sensorgram_info info;
   bytebuffer<N> body;
   writer &w;
-  bool closed;
   bool err;
 
-  sensorgram_encoder(writer &w) : w(w), closed(false) {}
+  sensorgram_encoder(writer &w) : w(w), err(false) {}
 
-  void close() {
-    if (closed) {
-      return;
+  bool encode() {
+    if (err) {
+      return false;
     }
 
     crc8_writer crcw(w);
-    encode_content(crcw);
-    w.writebyte(crcw.sum);
-  }
 
-  void encode_content(crc8_writer &crcw) {
     basic_encoder e(crcw);
     e.encode_uint(body.size(), 2);
     e.encode_uint(info.timestamp, 4);
@@ -69,7 +66,14 @@ struct sensorgram_encoder {
     e.encode_uint(info.sub_id, 1);
     e.encode_uint(info.source_id, 2);
     e.encode_uint(info.source_inst, 1);
+
+    // this is ugly. should just have a writeto operation
     e.encode_bytes(body.bytes(), body.size());
+    body.clear();
+
+    w.writebyte(crcw.sum);
+
+    return !err;
   }
 
   void encode_bytes(const byte *s, int n) {
