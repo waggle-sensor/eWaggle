@@ -69,7 +69,7 @@ struct sensorgram_encoder {
 
     // this is ugly. should just have a writeto operation
     e.encode_bytes(body.bytes(), body.size());
-    body.clear();
+    body.reset();
 
     w.writebyte(crcw.sum);
 
@@ -177,7 +177,7 @@ struct sensorgram_decoder {
     info.sub_id = d.decode_uint(1);
     info.source_id = d.decode_uint(2);
     info.source_inst = d.decode_uint(1);
-    body.clear();
+    body.reset();
     body.readfrom(crcr, len);
 
     // check basic decoder for errors

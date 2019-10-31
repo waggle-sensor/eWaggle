@@ -41,16 +41,16 @@ struct bytebuffer : public reader, public writer {
   int max_size() const { return N; }
   bool error() const { return err; }
 
-  void clear() {
+  void reset() {
     front = 0;
     back = 0;
     err = false;
   }
 
-  bytebuffer() { clear(); }
+  bytebuffer() { reset(); }
 
   bytebuffer(const byte *s, int n) {
-    clear();
+    reset();
     write(s, n);
   }
 
@@ -235,7 +235,6 @@ struct basic_decoder {
 #include "base64.h"
 #include "crc.h"
 #include "datagram.h"
-#include "hex.h"
 #include "sensorgram.h"
 
 #endif

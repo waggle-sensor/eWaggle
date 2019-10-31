@@ -6,30 +6,6 @@ const byte base64[] =
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789+/";
 
-byte b64value(byte x) {
-  if ('A' <= x && x <= 'Z') {
-    return x - 'A';
-  }
-
-  if ('a' <= x && x <= 'z') {
-    return (x - 'a') + 26;
-  }
-
-  if ('0' <= x && x <= '9') {
-    return (x - '0') + 52;
-  }
-
-  if (x == '+') {
-    return 62;
-  }
-
-  if (x == '/') {
-    return 63;
-  }
-
-  return 0;
-}
-
 struct base64_encoder : public writer, public closer {
   writer &w;
   byte buf[3];
@@ -81,7 +57,10 @@ struct base64_encoder : public writer, public closer {
       return;
     }
 
-    w.write(out, 4);
+    if (w.write(out, 4) != 4) {
+      err = true;
+    }
+
     nbuf = 0;
   }
 };
@@ -149,6 +128,35 @@ struct base64_decoder : public reader {
       out.writebyte((x >> 8) & 0xff);
       out.writebyte(x & 0xff);
     }
+
+    if (out.err) {
+      err = true;
+    }
+  }
+
+  byte b64value(byte x) {
+    if ('A' <= x && x <= 'Z') {
+      return x - 'A';
+    }
+
+    if ('a' <= x && x <= 'z') {
+      return (x - 'a') + 26;
+    }
+
+    if ('0' <= x && x <= '9') {
+      return (x - '0') + 52;
+    }
+
+    if (x == '+') {
+      return 62;
+    }
+
+    if (x == '/') {
+      return 63;
+    }
+
+    err = true;
+    return 0;
   }
 };
 
