@@ -4,7 +4,7 @@ bytebuffer<256> recv_buf;
 
 struct : public writer {
   int write(const byte *s, int n) { return SerialUSB.write(s, n); }
-} serial_writer;
+} serialio;
 
 void setup() {
   pinMode(13, OUTPUT);
@@ -46,7 +46,7 @@ void show_sensorgram_info() {
 
   // decode sensorgrams in buffer
   while (d.decode()) {
-    base64_encoder b64e(serial_writer);
+    base64_encoder b64e(serialio);
     sensorgram_encoder<64> e(b64e);
 
     // build sensorgram content
@@ -67,6 +67,6 @@ void show_sensorgram_info() {
     e.encode();
 
     b64e.close();
-    serial_writer.writebyte('\n');
+    serialio.writebyte('\n');
   }
 }
