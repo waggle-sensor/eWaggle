@@ -1,7 +1,5 @@
 #include "waggle.h"
 
-bytebuffer<256> recv_buf;
-
 // wrap serial device so we can stream sensorgram packets
 struct : public writer {
   int write(const byte *s, int n) { return SerialUSB.write(s, n); }
@@ -19,6 +17,8 @@ void setup() {
     delay(100);
   }
 }
+
+bytebuffer<256> recv_buf;
 
 // loop reads incoming characters off the serial port. if it receives a newline
 // then it processes all the messages contained.
