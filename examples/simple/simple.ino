@@ -2,6 +2,7 @@
 
 bytebuffer<256> recv_buf;
 
+// wrap serial device so we can stream sensorgram packets
 struct : public writer {
   int write(const byte *s, int n) { return SerialUSB.write(s, n); }
 } serialio;
@@ -19,6 +20,8 @@ void setup() {
   }
 }
 
+// loop reads incoming characters off the serial port. if it receives a newline
+// then it processes all the messages contained.
 void loop() {
   while (SerialUSB.available()) {
     int c = SerialUSB.read();
@@ -27,7 +30,7 @@ void loop() {
       digitalWrite(13, HIGH);
       delay(50);
 
-      show_sensorgram_info();
+      process_messages();
       recv_buf.reset();
 
       digitalWrite(13, LOW);
@@ -38,9 +41,9 @@ void loop() {
   }
 }
 
-// read waiting sensorgrams and output result with incremented timestamp and
-// made up data
-void show_sensorgram_info() {
+// process_messages decodes each sensorgram in the buffer and responds
+// with incremented timestamp and made up data
+void process_messages() {
   base64_decoder b64d(recv_buf);
   sensorgram_decoder<64> d(b64d);
 
