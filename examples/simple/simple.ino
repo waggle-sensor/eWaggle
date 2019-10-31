@@ -60,6 +60,7 @@ void process_messages() {
     e.info.source_id = d.info.source_id;
     e.info.source_inst = d.info.source_inst;
 
+    // make up some values to respond with
     e.encode_uint(1);
     e.encode_uint(3);
     unsigned int arr1[] = {2, 3, 5, 7};
