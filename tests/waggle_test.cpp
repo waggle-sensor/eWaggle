@@ -34,6 +34,9 @@ struct bytereader : public reader {
 struct string_buffer : public writer, public reader {
   std::string str;
 
+  string_buffer() {}
+  string_buffer(const std::string &s) : str(s) {}
+
   int write(const byte *s, int n) {
     str.append((const char *)s, n);
     return n;
@@ -58,6 +61,17 @@ bool test_bytebuffer() {
   bytebuffer<64> b;
   b.write((const byte *)"testing", 7);
   return b.size() == 7;
+}
+
+bool test_bytebuffer_readfrom(std::string expect) {
+  string_buffer s(expect);
+
+  bytebuffer<100> b;
+  b.readfrom(s, expect.size());
+
+  std::string out((const char *)b.bytes(), b.size());
+
+  return expect == out;
 }
 
 bool test_pack_uint(const byte s[], unsigned int x, int size) {
@@ -197,6 +211,9 @@ std::string wiki_expect =
 
 int main() {
   check_test("bytebuffer", test_bytebuffer());
+
+  check_test("bytebuffer readfrom 1", test_bytebuffer_readfrom(""));
+  check_test("bytebuffer readfrom 2", test_bytebuffer_readfrom("hello"));
 
   check_test("test uint 1 1", test_uint((const byte[]){0x00}, 0x00, 1));
   check_test("test uint 1 2", test_uint((const byte[]){0x12}, 0x12, 1));
