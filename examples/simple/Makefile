@@ -6,10 +6,12 @@ installdep:
 	arduino-cli core install arduino:sam
 
 micro.hex: simple.ino ../../src/*
-	arduino-cli compile -b arduino:avr:micro -o micro
+	mkdir -p firmware
+	arduino-cli compile -b arduino:avr:micro -o firmware/micro
 
 arduino_due_x.bin: simple.ino ../../src/*
-	arduino-cli compile -b arduino:sam:arduino_due_x -o arduino_due_x
+	mkdir -p firmware
+	arduino-cli compile -b arduino:sam:arduino_due_x -o firmware/arduino_due_x
 
 clean:
-	rm -f micro.* arduino_due_x.*
+	rm -rf firmware/
