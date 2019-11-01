@@ -1,4 +1,4 @@
 #!/bin/bash
 
 make micro.hex
-arduino-cli upload --debug -b arduino:avr:micro -i micro.hex -p $1
+arduino-cli upload -v -b arduino:avr:micro -i micro.hex -p $1
