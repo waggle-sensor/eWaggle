@@ -1,4 +1,3 @@
 #!/bin/bash
 
-make micro.hex
 arduino-cli upload -v -b arduino:avr:micro -i firmware/micro.hex -p $1
