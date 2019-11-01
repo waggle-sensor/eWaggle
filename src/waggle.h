@@ -231,10 +231,9 @@ struct basic_decoder {
   }
 };
 
-// TODO fix includes so order doesn't matter
-#include "base64.h"
-#include "crc.h"
-#include "datagram.h"
-#include "sensorgram.h"
+#include "waggle/base64.h"
+#include "waggle/crc.h"
+#include "waggle/datagram.h"
+#include "waggle/sensorgram.h"
 
 #endif
