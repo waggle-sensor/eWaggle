@@ -1,8 +1,17 @@
 #include "waggle.h"
 
-// wrap serial device so we can stream sensorgram packets
+// serial_writer wraps SerialUSB into the writer interface and ensures
+// nonblocking writes
 struct : public writer {
-  int write(const byte *s, int n) { return SerialUSB.write(s, n); }
+  int write(const byte *s, int n) {
+    int maxn = SerialUSB.availableForWrite();
+
+    if (n > maxn) {
+      n = maxn;
+    }
+
+    return SerialUSB.write(s, n);
+  }
 } serial_writer;
 
 void setup() {
