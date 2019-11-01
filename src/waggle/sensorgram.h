@@ -1,6 +1,8 @@
 #ifndef __H_WAGGLE_SENSORGRAM__
 #define __H_WAGGLE_SENSORGRAM__
 
+#include "waggle/bytebuffer.h"
+
 const byte TYPE_NULL = 0x00;
 
 const byte TYPE_BYTE = 0x01;

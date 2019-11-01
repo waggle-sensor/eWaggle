@@ -1,6 +1,8 @@
 #ifndef __H_WAGGLE_BASE64__
 #define __H_WAGGLE_BASE64__
 
+#include "waggle/bytebuffer.h"
+
 const byte base64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
