@@ -30,7 +30,6 @@ struct closer {
 
 #include "waggle/base64.h"
 #include "waggle/bytebuffer.h"
-#include "waggle/datagram.h"
 #include "waggle/sensorgram.h"
 
 #endif
