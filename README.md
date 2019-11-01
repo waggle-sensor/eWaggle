@@ -3,29 +3,20 @@
 `eWaggle` is a module aimed at Arduino-like systems which provides simple interfaces
 for interacting with the Waggle platform.
 
-It provides functionality in a few core areas:
+## Getting Started
 
-* Protocols - Interfaces for working with Waggle data formats such as sensorgrams and datagrams.
-* Messaging - Interfaces for sending and receiving message frames over UART links.
-* Development - Helper objects to facilitate testing and debugging. Supports native builds for local testing.
+### Installing Library
 
-## Installation
+On macOS, the standard installation is:
 
-### Installation as Arduino Package
-
-1. Download .ZIP of Repo - From Github, download this repo as a ZIP from the "Clone or download" button.
-
-2. Install .ZIP in Arduino IDE - You can install the .ZIP file directly in the Arduino IDE using "Sketch -> Include Library -> Add .ZIP Library".
-
-### Manual Installation
-
-Clone the `eWaggle` repo and add `eWaggle/src` to your project's include path.
-For example, your project's build process should have something like:
-
-```make
-c++ -I/path/to/eWaggle/src ...
+```sh
+cd ~/Documents/Arduino/libraries
+git clone https://github.com/waggle-sensor/eWaggle waggle
 ```
 
-## Examples
+On Linux, the standard installation is:
 
-Examples can be found in the [examples directory](./examples).
+```sh
+cd ~/Arduino/libraries
+git clone https://github.com/waggle-sensor/eWaggle waggle
+```
