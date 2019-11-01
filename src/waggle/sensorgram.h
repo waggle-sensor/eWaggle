@@ -1,7 +1,9 @@
 #ifndef __H_WAGGLE_SENSORGRAM__
 #define __H_WAGGLE_SENSORGRAM__
 
+#include "waggle/basic.h"
 #include "waggle/bytebuffer.h"
+#include "waggle/crc.h"
 
 const byte TYPE_NULL = 0x00;
 

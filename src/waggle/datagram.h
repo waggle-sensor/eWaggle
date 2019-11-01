@@ -1,6 +1,10 @@
 #ifndef __H_WAGGLE_DATAGRAM__
 #define __H_WAGGLE_DATAGRAM__
 
+#include "waggle/basic.h"
+#include "waggle/bytebuffer.h"
+#include "waggle/crc.h"
+
 // template <int N>
 // struct datagram {
 //   unsigned int protocol_version;
