@@ -1,0 +1,10 @@
+{
+    "name": "waggle",
+    "keywords": "waggle",
+    "description": "Provides clean abstractions to the Waggle stack.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/waggle-sensor/eWaggle"
+    },
+    "frameworks": "arduino"
+}
