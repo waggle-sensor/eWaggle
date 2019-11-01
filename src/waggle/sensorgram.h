@@ -53,7 +53,14 @@ struct sensorgram_encoder {
   writer &w;
   bool err;
 
-  sensorgram_encoder(writer &w) : w(w), err(false) {}
+  sensorgram_encoder(writer &w) : w(w), err(false) {
+    info.timestamp = 0;
+    info.id = 0;
+    info.inst = 0;
+    info.sub_id = 0;
+    info.source_id = 0;
+    info.source_inst = 0;
+  }
 
   bool encode() {
     if (err) {
