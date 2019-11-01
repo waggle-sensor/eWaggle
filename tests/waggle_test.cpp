@@ -63,6 +63,16 @@ bool test_bytebuffer() {
   return b.size() == 7;
 }
 
+bool test_bytebuffer_read(std::string expect) {
+  bytebuffer<100> b((const byte *)expect.c_str(), expect.size());
+
+  byte buf[100];
+  int n = b.read(buf, expect.size());
+
+  std::string out((const char *)buf, n);
+  return expect == out;
+}
+
 bool test_bytebuffer_readfrom(std::string expect) {
   string_buffer s(expect);
 
@@ -211,6 +221,9 @@ std::string wiki_expect =
 
 int main() {
   check_test("bytebuffer", test_bytebuffer());
+
+  check_test("bytebuffer read 1", test_bytebuffer_read(""));
+  check_test("bytebuffer read 2", test_bytebuffer_read("hello"));
 
   check_test("bytebuffer readfrom 1", test_bytebuffer_readfrom(""));
   check_test("bytebuffer readfrom 2", test_bytebuffer_readfrom("hello"));
