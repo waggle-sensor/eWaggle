@@ -8,7 +8,7 @@ const byte base64[] =
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789+/";
 
-struct base64_encoder : public writer, public closer {
+struct base64_encoder final : public writer, public closer {
   writer &w;
   byte buf[3];
   int nbuf;
@@ -18,12 +18,20 @@ struct base64_encoder : public writer, public closer {
   base64_encoder(writer &w) : w(w), nbuf(0), err(false) {}
 
   void close() {
-    if (!err && nbuf > 0) {
+    if (err) {
+      return;
+    }
+
+    if (nbuf > 0) {
       encode();
     }
   }
 
   int write(const byte *b, int n) {
+    if (err) {
+      return 0;
+    }
+
     for (int i = 0; i < n; i++) {
       buf[nbuf++] = b[i];
 
@@ -67,7 +75,7 @@ struct base64_encoder : public writer, public closer {
   }
 };
 
-struct base64_decoder : public reader {
+struct base64_decoder final : public reader {
   reader &r;
   byte buf[4];
   bytebuffer<3> out;

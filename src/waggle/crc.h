@@ -34,7 +34,8 @@ byte update_crc(byte sum, const byte table[], const byte *s, int n) {
   return sum;
 }
 
-struct crc8_writer : public writer {
+// crc8_writer computes the crc8 of the byte stream written to it
+struct crc8_writer final : public writer {
   writer &w;
   byte sum;
 
@@ -46,8 +47,8 @@ struct crc8_writer : public writer {
   }
 };
 
-// crc8_reader allows a reader
-struct crc8_reader : public reader {
+// crc8_reader computes the crc8 of the byte stream read from it
+struct crc8_reader final : public reader {
   reader &r;
   byte sum;
 
