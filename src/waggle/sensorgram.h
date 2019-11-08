@@ -161,6 +161,20 @@ struct sensorgram_encoder {
       e.encode_uint(s[i], 4);
     }
   }
+
+  void encode_values() {}
+
+  template <class... Args>
+  void encode_values(unsigned int x, Args... args) {
+    encode_uint(x);
+    encode_values(args...);
+  }
+
+  template <class... Args>
+  void encode_values(const byte *s, int n, Args... args) {
+    encode_bytes(s, n);
+    encode_values(args...);
+  }
 };
 
 template <int N>

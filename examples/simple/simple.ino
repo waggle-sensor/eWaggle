@@ -69,15 +69,22 @@ void process_messages() {
     e.info.source_id = d.info.source_id;
     e.info.source_inst = d.info.source_inst;
 
-    // make up some values to respond with
-    e.encode_uint(1);
-    e.encode_uint(3);
-    unsigned int arr1[] = {2, 3, 5, 7};
-    e.encode_uint32_array(arr1, 4);
-    e.encode_uint(200);
-    unsigned int arr2[] = {11, 13, 17};
-    e.encode_uint32_array(arr2, 3);
-    e.encode();
+    switch (e.info.id) {
+      case 1: {
+        e.encode_uint(1);
+        e.encode();
+      } break;
+      case 2: {
+        e.encode_uint(1);
+        e.encode_uint(2);
+        e.encode();
+      } break;
+      case 3: {
+        byte data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+        e.encode_bytes(data, 8);
+        e.encode();
+      } break;
+    }
 
     b64e.close();
     serial_writer.writebyte('\n');
