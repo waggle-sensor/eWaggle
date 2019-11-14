@@ -1,7 +1,9 @@
 #ifndef __H_WAGGLE__
 #define __H_WAGGLE__
 
-typedef unsigned char byte;
+#include <stdint.h>
+
+typedef uint8_t byte;
 
 // reader is the interface providing the basic read method.
 struct reader {

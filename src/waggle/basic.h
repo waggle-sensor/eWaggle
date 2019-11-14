@@ -21,7 +21,8 @@ struct basic_encoder final {
     }
   }
 
-  void encode_uint(unsigned int x, int size) {
+  template <class T>
+  void encode_uint(T x, int size) {
     if (err) {
       return;
     }
@@ -36,7 +37,7 @@ struct basic_encoder final {
 
     // encode x in network byte order
     for (int i = size - 1; i >= 0; i--) {
-      s[i] = (byte)x;
+      s[i] = (byte)x & 0xff;
       x >>= 8;
     }
 
@@ -68,26 +69,25 @@ struct basic_decoder final {
     return n2;
   }
 
-  unsigned int decode_uint(int size) {
+  template <class T>
+  void decode_uint(T &x, int size) {
     if (err) {
-      return 0;
+      return;
     }
 
-    unsigned int x = 0;
     byte s[size];
-
     decode_bytes(s, size);
 
     if (err) {
-      return 0;
+      return;
     }
+
+    x = 0;
 
     for (int i = 0; i < size; i++) {
       x <<= 8;
       x |= (s[i] & 0xff);
     }
-
-    return x;
   }
 };
 

@@ -5,43 +5,43 @@
 #include "waggle/bytebuffer.h"
 #include "waggle/crc.h"
 
-const byte TYPE_NULL = 0x00;
+const uint8_t TYPE_NULL = 0x00;
 
-const byte TYPE_BYTE = 0x01;
-const byte TYPE_CHAR = 0x02;
-const byte TYPE_INT8 = 0x03;
-const byte TYPE_UINT8 = 0x04;
-const byte TYPE_INT16 = 0x05;
-const byte TYPE_UINT16 = 0x06;
-const byte TYPE_INT24 = 0x07;
-const byte TYPE_UINT24 = 0x08;
-const byte TYPE_INT32 = 0x09;
-const byte TYPE_UINT32 = 0x0a;
-const byte TYPE_FLOAT16 = 0x0b;
-const byte TYPE_FLOAT32 = 0x0c;
-const byte TYPE_FLOAT64 = 0x0d;
+const uint8_t TYPE_BYTE = 0x01;
+const uint8_t TYPE_CHAR = 0x02;
+const uint8_t TYPE_INT8 = 0x03;
+const uint8_t TYPE_UINT8 = 0x04;
+const uint8_t TYPE_INT16 = 0x05;
+const uint8_t TYPE_UINT16 = 0x06;
+const uint8_t TYPE_INT24 = 0x07;
+const uint8_t TYPE_UINT24 = 0x08;
+const uint8_t TYPE_INT32 = 0x09;
+const uint8_t TYPE_UINT32 = 0x0a;
+const uint8_t TYPE_FLOAT16 = 0x0b;
+const uint8_t TYPE_FLOAT32 = 0x0c;
+const uint8_t TYPE_FLOAT64 = 0x0d;
 
-const byte TYPE_BYTE_ARRAY = 0x81;
-const byte TYPE_STRING = 0x82;
-const byte TYPE_INT8_ARRAY = 0x83;
-const byte TYPE_UINT8_ARRAY = 0x84;
-const byte TYPE_INT16_ARRAY = 0x85;
-const byte TYPE_UINT16_ARRAY = 0x86;
-const byte TYPE_INT24_ARRAY = 0x87;
-const byte TYPE_UINT24_ARRAY = 0x88;
-const byte TYPE_INT32_ARRAY = 0x89;
-const byte TYPE_UINT32_ARRAY = 0x8a;
-const byte TYPE_FLOAT16_ARRAY = 0x8b;
-const byte TYPE_FLOAT32_ARRAY = 0x8c;
-const byte TYPE_FLOAT64_ARRAY = 0x8d;
+const uint8_t TYPE_BYTE_ARRAY = 0x81;
+const uint8_t TYPE_STRING = 0x82;
+const uint8_t TYPE_INT8_ARRAY = 0x83;
+const uint8_t TYPE_UINT8_ARRAY = 0x84;
+const uint8_t TYPE_INT16_ARRAY = 0x85;
+const uint8_t TYPE_UINT16_ARRAY = 0x86;
+const uint8_t TYPE_INT24_ARRAY = 0x87;
+const uint8_t TYPE_UINT24_ARRAY = 0x88;
+const uint8_t TYPE_INT32_ARRAY = 0x89;
+const uint8_t TYPE_UINT32_ARRAY = 0x8a;
+const uint8_t TYPE_FLOAT16_ARRAY = 0x8b;
+const uint8_t TYPE_FLOAT32_ARRAY = 0x8c;
+const uint8_t TYPE_FLOAT64_ARRAY = 0x8d;
 
 struct sensorgram_info {
-  unsigned long timestamp;
-  unsigned int id;
-  unsigned int inst;
-  unsigned int sub_id;
-  unsigned int source_id;
-  unsigned int source_inst;
+  uint32_t timestamp;
+  uint16_t id;
+  uint8_t inst;
+  uint8_t sub_id;
+  uint16_t source_id;
+  uint8_t source_inst;
 };
 
 // TODO think a little more about interface / naming for close / encode
@@ -99,7 +99,8 @@ struct sensorgram_encoder {
     e.encode_bytes(s, n);
   }
 
-  void encode_uint(unsigned int x) {
+  template <class T>
+  void encode_uint(T x) {
     basic_encoder e(body);
 
     if (x <= 0xff) {
@@ -195,13 +196,14 @@ struct sensorgram_decoder {
 
     // read sensorgram content
     basic_decoder d(crcr);
-    int len = d.decode_uint(2);
-    info.timestamp = d.decode_uint(4);
-    info.id = d.decode_uint(2);
-    info.inst = d.decode_uint(1);
-    info.sub_id = d.decode_uint(1);
-    info.source_id = d.decode_uint(2);
-    info.source_inst = d.decode_uint(1);
+    int len;
+    d.decode_uint(len, 2);
+    d.decode_uint(info.timestamp, 4);
+    d.decode_uint(info.id, 2);
+    d.decode_uint(info.inst, 1);
+    d.decode_uint(info.sub_id, 1);
+    d.decode_uint(info.source_id, 2);
+    d.decode_uint(info.source_inst, 1);
     body.reset();
     body.readfrom(crcr, len);
 
@@ -225,12 +227,16 @@ struct sensorgram_decoder {
 
     basic_decoder d(body);
 
-    if (d.decode_uint(1) != TYPE_BYTE_ARRAY) {
+    uint8_t type;
+    d.decode_uint(type, 1);
+
+    if (type != TYPE_BYTE_ARRAY) {
       err = true;
       return 0;
     }
 
-    int size = d.decode_uint(2);
+    uint16_t size;
+    d.decode_uint(size, 2);
 
     if (size > max_size) {
       err = true;
@@ -246,26 +252,33 @@ struct sensorgram_decoder {
     return size;
   }
 
-  unsigned int decode_uint() {
+  uint32_t decode_uint() {
     if (err) {
       return 0;
     }
 
     basic_decoder d(body);
-    unsigned int x;
+    uint8_t type;
+    d.decode_uint(type, 1);
 
-    switch (d.decode_uint(1)) {
+    if (err) {
+      return 0;
+    }
+
+    uint32_t x;
+
+    switch (type) {
       case TYPE_UINT8:
-        x = d.decode_uint(1);
+        d.decode_uint(x, 1);
         break;
       case TYPE_UINT16:
-        x = d.decode_uint(2);
+        d.decode_uint(x, 2);
         break;
       case TYPE_UINT24:
-        x = d.decode_uint(3);
+        d.decode_uint(x, 3);
         break;
       case TYPE_UINT32:
-        x = d.decode_uint(4);
+        d.decode_uint(x, 4);
         break;
       default:
         err = true;
