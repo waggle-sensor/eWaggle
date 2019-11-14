@@ -1,6 +1,7 @@
 #ifndef __H_WAGGLE_BASE64__
 #define __H_WAGGLE_BASE64__
 
+#include <stdint.h>
 #include "waggle/bytebuffer.h"
 
 const byte base64[] =
@@ -45,19 +46,19 @@ struct base64_encoder final : public writer, public closer {
 
   void encode() {
     if (nbuf == 1) {
-      unsigned int x = (buf[0] << 16);
+      uint32_t x = (buf[0] << 16);
       out[0] = base64[(x >> 18) & 63];
       out[1] = base64[(x >> 12) & 63];
       out[2] = '=';
       out[3] = '=';
     } else if (nbuf == 2) {
-      unsigned int x = (buf[0] << 16) | (buf[1] << 8);
+      uint32_t x = (buf[0] << 16) | (buf[1] << 8);
       out[0] = base64[(x >> 18) & 63];
       out[1] = base64[(x >> 12) & 63];
       out[2] = base64[(x >> 6) & 63];
       out[3] = '=';
     } else if (nbuf == 3) {
-      unsigned int x = (buf[0] << 16) | (buf[1] << 8) | buf[2];
+      uint32_t x = (buf[0] << 16) | (buf[1] << 8) | buf[2];
       out[0] = base64[(x >> 18) & 63];
       out[1] = base64[(x >> 12) & 63];
       out[2] = base64[(x >> 6) & 63];
@@ -121,19 +122,19 @@ struct base64_decoder final : public reader {
     }
 
     if (n == 1) {
-      unsigned int x = (b64value(buf[0]) << 18);
+      uint32_t x = (b64value(buf[0]) << 18);
       out.writebyte((x >> 16) & 0xff);
     } else if (n == 2) {
-      unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12);
+      uint32_t x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12);
       out.writebyte((x >> 16) & 0xff);
     } else if (n == 3) {
-      unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
-                       (b64value(buf[2]) << 6);
+      uint32_t x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
+                   (b64value(buf[2]) << 6);
       out.writebyte((x >> 16) & 0xff);
       out.writebyte((x >> 8) & 0xff);
     } else if (n == 4) {
-      unsigned int x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
-                       (b64value(buf[2]) << 6) | b64value(buf[3]);
+      uint32_t x = (b64value(buf[0]) << 18) | (b64value(buf[1]) << 12) |
+                   (b64value(buf[2]) << 6) | b64value(buf[3]);
       out.writebyte((x >> 16) & 0xff);
       out.writebyte((x >> 8) & 0xff);
       out.writebyte(x & 0xff);
@@ -144,7 +145,7 @@ struct base64_decoder final : public reader {
     }
   }
 
-  byte b64value(byte x) {
+  uint32_t b64value(byte x) {
     if ('A' <= x && x <= 'Z') {
       return x - 'A';
     }
