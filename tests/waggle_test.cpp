@@ -94,7 +94,9 @@ bool test_pack_uint(const byte s[], unsigned int x, int size) {
 bool test_unpack_uint(const byte s[], unsigned int x, int size) {
   bytebuffer<64> r(s, size);
   basic_decoder d(r);
-  return d.decode_uint(size) == x;
+  unsigned int x2;
+  d.decode_uint(x2, size);
+  return x == x2;
 }
 
 bool test_uint(const byte s[], unsigned int x, int size) {
