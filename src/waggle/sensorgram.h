@@ -99,8 +99,8 @@ struct sensorgram_encoder {
     e.encode_bytes(s, n);
   }
 
-  template <class T>
-  void encode_uint(T x) {
+  // template <class T>
+  void encode_uint(uint32_t x) {
     basic_encoder e(body);
 
     if (x <= 0xff) {

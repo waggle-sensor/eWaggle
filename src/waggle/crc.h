@@ -28,7 +28,7 @@ const byte crc8_table[256] = {
 
 byte update_crc(byte sum, const byte table[], const byte *s, int n) {
   for (int i = 0; i < n; i++) {
-    sum = crc8_table[sum ^ s[i]];
+    sum = table[sum ^ s[i]];
   }
 
   return sum;

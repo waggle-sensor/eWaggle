@@ -45,8 +45,6 @@ struct base64_encoder final : public writer, public closer {
   }
 
   void encode() {
-    uint32_t b3[3] = {0, 0, 0};
-
     if (nbuf == 1) {
       uint32_t x = ((uint32_t)buf[0] << 16);
       out[0] = base64[(x >> 18) & 63];
