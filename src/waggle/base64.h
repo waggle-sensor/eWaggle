@@ -45,20 +45,23 @@ struct base64_encoder final : public writer, public closer {
   }
 
   void encode() {
+    uint32_t b3[3] = {0, 0, 0};
+
     if (nbuf == 1) {
-      uint32_t x = (buf[0] << 16);
+      uint32_t x = ((uint32_t)buf[0] << 16);
       out[0] = base64[(x >> 18) & 63];
       out[1] = base64[(x >> 12) & 63];
       out[2] = '=';
       out[3] = '=';
     } else if (nbuf == 2) {
-      uint32_t x = (buf[0] << 16) | (buf[1] << 8);
+      uint32_t x = ((uint32_t)buf[0] << 16) | ((uint32_t)buf[1] << 8);
       out[0] = base64[(x >> 18) & 63];
       out[1] = base64[(x >> 12) & 63];
       out[2] = base64[(x >> 6) & 63];
       out[3] = '=';
     } else if (nbuf == 3) {
-      uint32_t x = (buf[0] << 16) | (buf[1] << 8) | buf[2];
+      uint32_t x =
+          ((uint32_t)buf[0] << 16) | ((uint32_t)buf[1] << 8) | (uint32_t)buf[2];
       out[0] = base64[(x >> 18) & 63];
       out[1] = base64[(x >> 12) & 63];
       out[2] = base64[(x >> 6) & 63];
@@ -145,7 +148,7 @@ struct base64_decoder final : public reader {
     }
   }
 
-  uint32_t b64value(byte x) {
+  uint32_t b64value(uint32_t x) {
     if ('A' <= x && x <= 'Z') {
       return x - 'A';
     }
