@@ -196,7 +196,7 @@ struct sensorgram_decoder {
 
     // read sensorgram content
     basic_decoder d(crcr);
-    int len;
+    int len = 0;
     d.decode_uint(len, 2);
     d.decode_uint(info.timestamp, 4);
     d.decode_uint(info.id, 2);
